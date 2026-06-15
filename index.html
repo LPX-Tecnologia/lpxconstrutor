@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1A3A5C">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkxQWENvbnN0cnV0b3IiLAogICJzaG9ydF9uYW1lIjogIkxQWCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMUEzQTVDIiwKICAidGhlbWVfY29sb3IiOiAiI0Y0NzkyMCIsCiAgIm9yaWVudGF0aW9uIjogInBvcnRyYWl0IiwKICAiaWNvbnMiOiBbXQp9">
+    <title>LPXConstrutor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1A3A5C 0%, #2C5F8A 50%, #1A3A5C 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        .splash-screen {
+            background: linear-gradient(135deg, #1A3A5C, #2C5F8A);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeOut 0.5s ease 2s forwards;
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .splash-icon {
+            font-size: 100px;
+            animation: pulse 2s infinite;
+        }
+        
+        .splash-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: 3px;
+            margin-top: 20px;
+        }
+        
+        .splash-subtitle {
+            font-size: 16px;
+            color: #F47920;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin-top: 40px;
+            overflow: hidden;
+        }
+        
+        .loading-bar-fill {
+            height: 100%;
+            background: #F47920;
+            border-radius: 2px;
+            animation: loading 2s ease-in-out;
+        }
+        
+        @keyframes loading {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        
+        .screen {
+            display: none;
+            padding: 30px;
+            min-height: 600px;
+        }
+        
+        .screen.active {
+            display: block;
+            animation: slideUp 0.5s ease;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-icon {
+            font-size: 50px;
+        }
+        
+        .logo-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1A3A5C;
+            margin-top: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #F8F8F8;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #F47920;
+            background: white;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-primary {
+            background: #F47920;
+            color: white;
+        }
+        
+        .btn-primary:active {
+            background: #D56510;
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #1A3A5C;
+            border: 2px solid #1A3A5C;
+            margin-top: 10px;
+        }
+        
+        .btn-ponto {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+        }
+        
+        .btn-ponto:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-entrada { background: #4CAF50; }
+        .btn-almoco { background: #FF9800; }
+        .btn-retorno { background: #2196F3; }
+        .btn-saida { background: #F44336; }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .alert-card {
+            background: linear-gradient(135deg, #F47920, #FF6B35);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stars {
+            color: #FFD700;
+            font-size: 24px;
+            letter-spacing: 5px;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px 15px;
+            transition: all 0.3s;
+        }
+        
+        .nav-item.active {
+            color: #F47920;
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .location-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .location-ok {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .location-error {
+            background: #F44336;
+            color: white;
+        }
+        
+        .resumo-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #F0F0F0;
+        }
+        
+        .resumo-total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1A3A5C;
+            margin-top: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            z-index: 2000;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-icon">🏗️</div>
+        <div class="splash-title">LPXCONSTRUTOR</div>
+        <div class="splash-subtitle">Construindo Conexões</div>
+        <div class="loading-bar">
+            <div class="loading-bar-fill"></div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display:none">
+        <!-- Tela de Login -->
+        <div class="screen active" id="loginScreen">
+            <div class="logo">
+                <div class="logo-icon">🏗️</div>
+                <div class="logo-text">LPXCONSTRUTOR</div>
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">📧 E-mail ou CPF</div>
+                <input type="text" class="input-field" placeholder="Digite seu e-mail ou CPF" id="loginEmail">
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">🔒 Senha</div>
+                <input type="password" class="input-field" placeholder="Digite sua senha" id="loginSenha">
+            </div>
+            
+            <button class="btn btn-primary" onclick="fazerLogin()">
+                🔑 ENTRAR
+            </button>
+            
+            <button class="btn btn-secondary" onclick="mostrarTela('recuperarSenhaScreen')">
+                Esqueceu a senha?
+            </button>
+            
+            <button class="btn btn-secondary" onclick="mostrarTela('cadastroScreen')">
+                Não tem conta? Cadastre-se
+            </button>
+        </div>
+
+        <!-- Tela de Cadastro -->
+        <div class="screen" id="cadastroScreen">
+            <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">CRIAR CONTA</h2>
+            
+            <div class="input-group">
+                <div class="input-label">👤 Nome Completo</div>
+                <input type="text" class="input-field" placeholder="Seu nome completo">
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">📧 E-mail</div>
+                <input type="email" class="input-field" placeholder="seu@email.com">
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">📱 Celular/WhatsApp</div>
+                <input type="tel" class="input-field" placeholder="(11) 99999-9999">
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">🔢 CPF</div>
+                <input type="text" class="input-field" placeholder="000.000.000-00">
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">🛠️ Profissão</div>
+                <select class="input-field" style="background:#F8F8F8">
+                    <option value="">Selecione sua profissão</option>
+                    <option value="servente">Servente</option>
+                    <option value="pedreiro">Pedreiro</option>
+                    <option value="carpinteiro">Carpinteiro</option>
+                    <option value="armador">Armador</option>
+                    <option value="encanador">Encanador</option>
+                    <option value="eletricista">Eletricista</option>
+                    <option value="pintor">Pintor</option>
+                    <option value="gesseiro">Gesseiro</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">🔒 Criar Senha</div>
+                <input type="password" class="input-field" placeholder="Mínimo 6 caracteres">
+            </div>
+            
+            <button class="btn btn-primary" onclick="cadastrar()">
+                ✅ FINALIZAR CADASTRO
+            </button>
+            
+            <button class="btn btn-secondary" onclick="mostrarTela('loginScreen')">
+                ← Voltar para Login
+            </button>
+        </div>
+
+        <!-- Tela Principal (Home) -->
+        <div class="screen" id="homeScreen">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <div style="font-size:12px; color:#666;">Bem-vindo,</div>
+                    <div style="font-size:20px; font-weight:bold; color:#1A3A5C;">João Silva</div>
+                    <div style="font-size:14px; color:#F47920;">Pedreiro ⭐ 4.8</div>
+                </div>
+                <div onclick="mostrarNotificacoes()" style="position:relative; cursor:pointer;">
+                    <span style="font-size:24px;">🔔</span>
+                    <span style="position:absolute; top:-5px; right:-5px; background:#F44336; color:white; border-radius:10px; padding:2px 6px; font-size:11px;">3</span>
+                </div>
+            </div>
+            
+            <!-- Alerta de Pagamento -->
+            <div class="alert-card" onclick="mostrarTela('financeiroScreen')">
+                <div style="font-size:30px;">💰</div>
+                <div style="font-size:18px; font-weight:bold; margin-top:10px;">
+                    Faltam 3 dias para o pagamento!
+                </div>
+                <div style="margin-top:5px;">Carlos Obras • R$ 3.750,00</div>
+                <div style="font-size:12px; opacity:0.8; margin-top:5px;">Data: 20/06/2026</div>
+            </div>
+            
+            <!-- Botão de Ponto -->
+            <button class="btn-ponto btn-entrada" onclick="baterPonto('entrada')">
+                🟢 BATER ENTRADA
+            </button>
+            <button class="btn-ponto btn-almoco" onclick="baterPonto('almoco')">
+                🟡 INICIAR ALMOÇO
+            </button>
+            <button class="btn-ponto btn-retorno" onclick="baterPonto('retorno')">
+                🔵 RETORNAR ALMOÇO
+            </button>
+            <button class="btn-ponto btn-saida" onclick="baterPonto('saida')">
+                🔴 BATER SAÍDA
+            </button>
+            
+            <!-- Status -->
+            <div style="margin-top:20px; padding:15px; background:#F8F8F8; border-radius:10px; text-align:center;">
+                <div style="font-size:14px; color:#666;">HOJE</div>
+                <div style="font-size:24px; font-weight:bold; color:#1A3A5C; margin-top:5px;">R$ 200,00</div>
+                <div style="font-size:12px; color:#666; margin-top:5px;">8h trabalhadas • R$25,00/h</div>
+            </div>
+        </div>
+
+        <!-- Tela de Perfil -->
+        <div class="screen" id="perfilScreen">
+            <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">MEU PERFIL</h2>
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:80px;">👷</div>
+                <div style="font-size:22px; font-weight:bold; color:#1A3A5C; margin-top:10px;">João Silva</div>
+                <div style="font-size:16px; color:#F47920;">Pedreiro • 5 anos de experiência</div>
+                <div class="stars" style="margin-top:10px;">⭐⭐⭐⭐⭐</div>
+                <div style="color:#666;">4.8 • 15 avaliações</div>
+            </div>
+            
+            <div class="card">
+                <div style="font-weight:bold; margin-bottom:10px;">📞 Contato</div>
+                <div>📱 (11) 99999-9999</div>
+                <div>📧 joao.silva@email.com</div>
+            </div>
+            
+            <div class="card">
+                <div style="font-weight:bold; margin-bottom:10px;">🛠️ Habilidades</div>
+                <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                    <span style="background:#F0F0F0; padding:5px 15px; border-radius:15px;">Alvenaria</span>
+                    <span style="background:#F0F0F0; padding:5px 15px; border-radius:15px;">Revestimento</span>
+                    <span style="background:#F0F0F0; padding:5px 15px; border-radius:15px;">Assentamento</span>
+                    <span style="background:#F0F0F0; padding:5px 15px; border-radius:15px;">Concreto</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div style="font-weight:bold; margin-bottom:10px;">⭐ Avaliações Recentes</div>
+                <div style="border-bottom:1px solid #F0F0F0; padding:10px 0;">
+                    <div class="stars">⭐⭐⭐⭐⭐</div>
+                    <div>"Excelente profissional, muito pontual!"</div>
+                    <div style="color:#666; font-size:12px;">Empreiteiro Carlos • 15/06/2026</div>
+                </div>
+                <div style="border-bottom:1px solid #F0F0F0; padding:10px 0;">
+                    <div class="stars">⭐⭐⭐⭐⭐</div>
+                    <div>"Trabalho de qualidade, superou expectativas"</div>
+                    <div style="color:#666; font-size:12px;">Empreiteira Maria • 10/06/2026</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de Notificação -->
+    <div class="toast" id="toast" style="display:none;"></div>
+
+    <!-- Navegação Inferior -->
+    <div class="bottom-nav" id="bottomNav" style="display:none;">
+        <div class="nav-item active" onclick="mostrarTela('homeScreen')">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">Início</div>
+        </div>
+        <div class="nav-item" onclick="mostrarTela('pontoScreen')">
+            <div class="nav-icon">⏰</div>
+            <div class="nav-label">Ponto</div>
+        </div>
+        <div class="nav-item" onclick="mostrarTela('perfilScreen')">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Perfil</div>
+        </div>
+        <div class="nav-item" onclick="mostrarTela('financeiroScreen')">
+            <div class="nav-icon">💰</div>
+            <div class="nav-label">Financeiro</div>
+        </div>
+        <div class="nav-item" onclick="mostrarTela('loginScreen')">
+            <div class="nav-icon">🚪</div>
+            <div class="nav-label">Sair</div>
+        </div>
+    </div>
+
+    <script>
+        // Controle de Telas
+        function mostrarTela(telaId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(telaId).classList.add('active');
+            
+            // Mostrar nav apenas nas telas principais
+            const telasComNav = ['homeScreen', 'perfilScreen', 'pontoScreen', 'financeiroScreen'];
+            document.getElementById('bottomNav').style.display = 
+                telasComNav.includes(telaId) ? 'flex' : 'none';
+            
+            // Atualizar nav ativo
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            if (telaId === 'homeScreen') document.querySelector('.nav-item:nth-child(1)').classList.add('active');
+            if (telaId === 'pontoScreen') document.querySelector('.nav-item:nth-child(2)').classList.add('active');
+            if (telaId === 'perfilScreen') document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+            if (telaId === 'financeiroScreen') document.querySelector('.nav-item:nth-child(4)').classList.add('active');
+        }
+        
+        function fazerLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const senha = document.getElementById('loginSenha').value;
+            
+            if (email && senha) {
+                mostrarToast('✅ Login realizado com sucesso!');
+                setTimeout(() => mostrarTela('homeScreen'), 1000);
+            } else {
+                mostrarToast('❌ Preencha todos os campos!');
+            }
+        }
+        
+        function cadastrar() {
+            mostrarToast('✅ Cadastro realizado com sucesso!');
+            setTimeout(() => mostrarTela('homeScreen'), 1000);
+        }
+        
+        function baterPonto(tipo) {
+            const agora = new Date();
+            const hora = agora.toLocaleTimeString();
+            
+            // Verificar GPS (simulado)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        mostrarToast(`✅ ${tipo.toUpperCase()} registrado às ${hora}`);
+                    },
+                    (error) => {
+                        mostrarToast('⚠️ Ative o GPS para bater ponto!');
+                    }
+                );
+            } else {
+                mostrarToast(`✅ ${tipo.toUpperCase()} registrado às ${hora}`);
+            }
+        }
+        
+        function mostrarToast(mensagem) {
+            const toast = document.getElementById('toast');
+            toast.textContent = mensagem;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        function mostrarNotificacoes() {
+            mostrarToast('🔔 3 novas notificações');
+        }
+        
+        // Inicialização
+        setTimeout(() => {
+            document.getElementById('splashScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+        }, 2000);
+        
+        // Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(() => {
+                    console.log('Service Worker registrado!');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
