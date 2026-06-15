@@ -69,7 +69,7 @@ O **LPXConstrutor** é um aplicativo desenvolvido para criar um banco de dados d
 4. Pronto! Funciona como app!
 
 ### MÉTODO 2: App Nativo (Android)
-1. Baixe o APK em: [Link para download]
+1. Baixe o APK em: (https://lpx-tecnologia.github.io/lpxconstrutor/)
 2. Instale no seu celular
 3. Abra e faça o cadastro
 
