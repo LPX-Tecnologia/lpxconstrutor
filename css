@@ -447,4 +447,70 @@ select.input-field {
 .tab.active {
     background: var(--white);
     color: var(--secondary);
-    box-shadow
+    box-shadow: var(--shadow-md);
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: 25px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gray-800);
+    color: var(--white);
+    padding: 14px 22px;
+    border-radius: var(--radius-full);
+    z-index: 300;
+    font-weight: 700;
+    font-size: 14px;
+    max-width: 90%;
+    text-align: center;
+}
+
+/* FILE UPLOAD */
+.file-upload {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 15px;
+    background: var(--gray-50);
+}
+
+.file-upload:hover {
+    border-color: var(--secondary);
+    background: rgba(244, 121, 32, 0.05);
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--gray-100); }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
