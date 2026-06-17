@@ -1918,20 +1918,183 @@
         }
         
         function carregarAlertas() {
-            const container = document.getElementById('alertasContainer');
-            const hoje = new Date();
-            const dataPgto = new Date(hoje.getTime() + (3 * 24 * 60 * 60 * 1000));
+    const container = document.getElementById('alertasContainer');
+    
+    if (!usuarioLogado) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const conexoes = carregarDados('conexoes') || [];
+    const usuarios = carregarDados('usuarios') || [];
+    const hoje = new Date();
+    let html = '';
+    
+    // ============================================
+    // ALERTAS PARA PROFISSIONAIS
+    // ============================================
+    if (usuarioLogado.tipo === 'profissional') {
+        // Buscar conexões ativas onde o profissional foi contratado
+        const minhasConexoes = conexoes.filter(c => 
+            c.profissionalId === usuarioLogado.id && c.ativa
+        );
+        
+        if (minhasConexoes.length === 0) {
+            html += `
+                <div class="alert-card" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+                    <div style="font-size:24px;">📋</div>
+                    <div style="font-weight:bold; margin-top:5px;">Nenhum contrato ativo</div>
+                    <div style="font-size:13px; opacity:0.9;">Quando um empreiteiro te contratar, os alertas aparecerão aqui!</div>
+                </div>
+            `;
+        } else {
+            minhasConexoes.forEach(conexao => {
+                const empreiteiro = usuarios.find(u => u.id === conexao.empreiteiroId);
+                
+                if (conexao.dataPagamento) {
+                    const dataPagamento = new Date(conexao.dataPagamento + 'T00:00:00');
+                    const diffDias = Math.ceil((dataPagamento - hoje) / (1000 * 60 * 60 * 24));
+                    
+                    let corAlerta = '';
+                    let icone = '';
+                    let mensagem = '';
+                    
+                    if (diffDias < 0) {
+                        // Pagamento atrasado
+                        corAlerta = 'alert-danger';
+                        icone = '🚨';
+                        mensagem = `⚠️ PAGAMENTO ATRASADO HÁ ${Math.abs(diffDias)} DIAS!`;
+                    } else if (diffDias === 0) {
+                        // Hoje é o dia
+                        corAlerta = 'alert-card';
+                        icone = '💰';
+                        mensagem = '🎉 HOJE É DIA DE PAGAMENTO!';
+                    } else if (diffDias === 1) {
+                        // Amanhã
+                        corAlerta = 'alert-warning';
+                        icone = '⏰';
+                        mensagem = '🔔 AMANHÃ É DIA DE PAGAMENTO!';
+                    } else if (diffDias <= 3) {
+                        // 2-3 dias
+                        corAlerta = 'alert-warning';
+                        icone = '📅';
+                        mensagem = `Faltam ${diffDias} dias para o pagamento!`;
+                    } else {
+                        // Mais de 3 dias
+                        icone = '📋';
+                        mensagem = `Pagamento em ${diffDias} dias`;
+                    }
+                    
+                    html += `
+                        <div class="alert-card ${corAlerta}" style="margin-bottom:12px;">
+                            <div style="font-size:28px;">${icone}</div>
+                            <div style="font-weight:bold; margin-top:5px; font-size:16px;">${mensagem}</div>
+                            <div style="font-size:14px; margin-top:5px;">
+                                🏢 ${empreiteiro?.nome || 'Empreiteiro'}
+                            </div>
+                            <div style="font-size:14px;">
+                                🏗️ ${conexao.obra}
+                            </div>
+                            <div style="font-size:18px; font-weight:bold; margin-top:5px;">
+                                💰 R$ ${(conexao.valorHora * 160).toFixed(2)}
+                            </div>
+                            <div style="font-size:12px; opacity:0.8; margin-top:5px;">
+                                📅 Data: ${formatarData(conexao.dataPagamento)}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+    }
+    
+    // ============================================
+    // ALERTAS PARA EMPREITEIROS
+    // ============================================
+    else if (usuarioLogado.tipo === 'empreiteiro') {
+        // Buscar conexões ativas onde o empreiteiro contratou
+        const minhasConexoes = conexoes.filter(c => 
+            c.empreiteiroId === usuarioLogado.id && c.ativa
+        );
+        
+        if (minhasConexoes.length === 0) {
+            html += `
+                <div class="alert-card" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+                    <div style="font-size:24px;">📋</div>
+                    <div style="font-weight:bold; margin-top:5px;">Nenhum profissional contratado</div>
+                    <div style="font-size:13px; opacity:0.9;">Contrate profissionais para gerenciar os pagamentos aqui!</div>
+                </div>
+            `;
+        } else {
+            // Próximos pagamentos
+            let temPagamentoProximo = false;
             
-            container.innerHTML = `
-                <div class="alert-card alert-warning">
-                    <div style="font-size:24px;">💰</div>
-                    <div style="font-weight:bold; margin-top:5px;">⚠️ Faltam 3 dias para o pagamento!</div>
-                    <div style="font-size:14px;">Empreiteiro: Carlos Obras</div>
-                    <div style="font-size:14px;">Valor: R$ 3.750,00</div>
-                    <div style="font-size:12px; opacity:0.8;">Data: ${formatarData(dataPgto.toISOString())}</div>
+            minhasConexoes.forEach(conexao => {
+                const profissional = usuarios.find(u => u.id === conexao.profissionalId);
+                
+                if (conexao.dataPagamento) {
+                    const dataPagamento = new Date(conexao.dataPagamento + 'T00:00:00');
+                    const diffDias = Math.ceil((dataPagamento - hoje) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDias <= 3 && diffDias >= 0) {
+                        temPagamentoProximo = true;
+                        
+                        let corAlerta = diffDias === 0 ? 'alert-card' : 'alert-warning';
+                        let icone = diffDias === 0 ? '💰' : '📅';
+                        let mensagem = diffDias === 0 ? 
+                            'HOJE é dia de pagar!' : 
+                            `Faltam ${diffDias} dias para pagar!`;
+                        
+                        html += `
+                            <div class="alert-card ${corAlerta}" style="margin-bottom:12px;">
+                                <div style="font-size:28px;">${icone}</div>
+                                <div style="font-weight:bold; margin-top:5px; font-size:16px;">${mensagem}</div>
+                                <div style="font-size:14px; margin-top:5px;">
+                                    👷 ${profissional?.nome || 'Profissional'}
+                                </div>
+                                <div style="font-size:14px;">
+                                    🏗️ ${conexao.obra}
+                                </div>
+                                <div style="font-size:18px; font-weight:bold; margin-top:5px;">
+                                    💰 R$ ${(conexao.valorHora * 160).toFixed(2)}
+                                </div>
+                                <div style="font-size:12px; opacity:0.8; margin-top:5px;">
+                                    📅 Vencimento: ${formatarData(conexao.dataPagamento)}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+            
+            if (!temPagamentoProximo) {
+                html += `
+                    <div class="alert-card" style="background: linear-gradient(135deg, #10B981, #059669);">
+                        <div style="font-size:24px;">✅</div>
+                        <div style="font-weight:bold; margin-top:5px;">Tudo em dia!</div>
+                        <div style="font-size:13px; opacity:0.9;">Nenhum pagamento próximo. Fique tranquilo!</div>
+                    </div>
+                `;
+            }
+            
+            // Resumo da folha de pagamento
+            const totalFolha = minhasConexoes.reduce((total, c) => total + (c.valorHora * 160), 0);
+            const totalProfissionais = minhasConexoes.length;
+            
+            html += `
+                <div class="alert-card" style="background: linear-gradient(135deg, #1A3A5C, #2C5F8A); margin-top:10px;">
+                    <div style="font-size:20px;">📊</div>
+                    <div style="font-weight:bold; margin-top:5px;">Resumo da Folha</div>
+                    <div style="font-size:14px; margin-top:5px;">👷 ${totalProfissionais} profissionais ativos</div>
+                    <div style="font-size:18px; font-weight:bold; margin-top:5px;">💰 Total: R$ ${totalFolha.toFixed(2)}</div>
+                    <div style="font-size:11px; opacity:0.7; margin-top:5px;">*Estimativa para 160h/mês</div>
                 </div>
             `;
         }
+    }
+    
+    container.innerHTML = html;
+}
         
         // ============================================
         // UTILITÁRIOS
