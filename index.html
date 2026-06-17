@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1A3A5C">
     <title>LPXConstrutor</title>
-
-   
+    
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
     
@@ -151,7 +150,6 @@
                 <div style="text-align:center; margin-bottom:20px;">
                     <div style="font-size:40px;">🔑</div>
                     <p style="color:#10B981; font-weight:bold;">Código verificado!</p>
-                    <p style="color:#666;">Agora crie uma nova senha</p>
                 </div>
                 <div class="input-group">
                     <div class="input-label">🔒 Nova Senha</div>
@@ -187,101 +185,65 @@
         </div>
     </div>
 
-    <!-- TELA DE PUBLICAR OBRA -->
+    <!-- TELA PUBLICAR OBRA -->
     <div class="screen" id="publicarObraScreen">
         <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">PUBLICAR OBRA</h2>
-        
         <div class="card">
+            <div class="input-group"><div class="input-label">🏗️ Nome da Obra</div><input type="text" class="input-field" id="obraNome"></div>
+            <div class="input-group"><div class="input-label">📍 Endereço</div><input type="text" class="input-field" id="obraEndereco"></div>
+            <div class="input-group"><div class="input-label">📝 Descrição</div><textarea class="input-field" id="obraDescricao" rows="2"></textarea></div>
+            <div class="input-group"><div class="input-label">👷 Profissões</div><input type="text" class="input-field" id="obraProfissoes"></div>
+            <div class="input-group"><div class="input-label">💰 Valor/hora</div><input type="number" class="input-field" id="obraValorHora" step="0.01"></div>
             <div class="input-group">
-                <div class="input-label">🏗️ Nome da Obra</div>
-                <input type="text" class="input-field" id="obraNome" placeholder="Ex: Residencial Parque">
-            </div>
-            <div class="input-group">
-                <div class="input-label">📍 Endereço</div>
-                <input type="text" class="input-field" id="obraEndereco" placeholder="Rua, número, bairro">
-            </div>
-            <div class="input-group">
-                <div class="input-label">📝 Descrição</div>
-                <textarea class="input-field" id="obraDescricao" rows="3" placeholder="Descreva a obra..."></textarea>
-            </div>
-            <div class="input-group">
-                <div class="input-label">👷 Profissões necessárias</div>
-                <input type="text" class="input-field" id="obraProfissoes" placeholder="Ex: Pedreiro, Eletricista, Pintor">
-            </div>
-            <div class="input-group">
-                <div class="input-label">💰 Valor por hora (R$)</div>
-                <input type="number" class="input-field" id="obraValorHora" placeholder="25.00" step="0.01">
-            </div>
-            <div class="input-group">
-                <div class="input-label">📸 Foto da Obra</div>
-                <div class="file-upload" onclick="document.getElementById('obraFoto').click()">
-                    <div style="font-size:40px;">📸</div>
-                    <div style="color:#666;">Clique para adicionar foto</div>
-                </div>
+                <div class="input-label">📸 Foto</div>
+                <div class="file-upload" onclick="document.getElementById('obraFoto').click()"><div style="font-size:40px;">📸</div></div>
                 <input type="file" id="obraFoto" accept="image/*" style="display:none" onchange="previewFotoObra(event)">
                 <img id="obraPreview" style="width:100%; border-radius:12px; display:none; margin-top:10px;">
             </div>
-            <button class="btn btn-primary" onclick="publicarObra()">📢 PUBLICAR OBRA</button>
+            <button class="btn btn-primary" onclick="publicarObra()">📢 PUBLICAR</button>
             <button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Cancelar</button>
         </div>
     </div>
 
-    <!-- TELA DE BUSCA -->
+    <!-- TELA BUSCA -->
     <div class="screen" id="buscaScreen">
-        <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">🔍 BUSCAR PROFISSIONAIS</h2>
-        <div class="input-group">
-            <input type="text" class="input-field" id="buscaInput" placeholder="Buscar por nome ou profissão..." oninput="buscarProfissionais()">
-        </div>
+        <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">🔍 BUSCAR</h2>
+        <div class="input-group"><input type="text" class="input-field" id="buscaInput" placeholder="Nome ou profissão..." oninput="buscarProfissionais()"></div>
         <div id="buscaResultados"></div>
     </div>
 
-    <!-- TELA DE PERFIL -->
+    <!-- TELA PERFIL -->
     <div class="screen" id="perfilScreen">
         <div class="profile-header">
             <div class="profile-avatar" onclick="document.getElementById('perfilFoto').click()">
-                <img id="perfilAvatarImg" style="display:none;">
-                <span id="perfilAvatarDefault">👷</span>
+                <img id="perfilAvatarImg" style="display:none;"><span id="perfilAvatarDefault">👷</span>
                 <div class="camera-icon">📷</div>
             </div>
             <input type="file" id="perfilFoto" accept="image/*" style="display:none" onchange="mudarFotoPerfil(event)">
-            
             <h2 id="perfilNome" style="color:#1A3A5C; margin-top:15px;">Seu Nome</h2>
             <p id="perfilProfissao" style="color:#F47920;">Sua Profissão</p>
             <div id="perfilEstrelas" class="stars">⭐⭐⭐⭐⭐</div>
             <p id="perfilAvaliacoes" style="color:#666;">0 avaliações</p>
-            <div id="perfilTags"></div>
         </div>
-        
         <div class="card">
-            <h3 style="color:#1A3A5C; margin-bottom:15px;">✏️ EDITAR INFORMAÇÕES</h3>
+            <h3>✏️ EDITAR</h3>
             <div class="input-group"><div class="input-label">👤 Nome</div><input type="text" class="input-field" id="editNome"></div>
             <div class="input-group"><div class="input-label">📱 Celular</div><input type="tel" class="input-field" id="editCelular"></div>
             <div class="input-group"><div class="input-label">📧 E-mail</div><input type="email" class="input-field" id="editEmail"></div>
-            <div class="input-group"><div class="input-label">🛠️ Profissão</div>
-                <select class="input-field" id="editProfissao">
-                    <option value="">Selecione</option>
-                    <option value="servente">Servente</option><option value="pedreiro">Pedreiro</option>
-                    <option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option>
-                    <option value="encanador">Encanador</option><option value="eletricista">Eletricista</option>
-                    <option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option>
-                </select>
-            </div>
+            <div class="input-group"><div class="input-label">🛠️ Profissão</div><select class="input-field" id="editProfissao"><option value="">Selecione</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div>
             <div class="input-group"><div class="input-label">📅 Experiência</div><input type="number" class="input-field" id="editExperiencia"></div>
             <div class="input-group"><div class="input-label">🛠️ Habilidades</div><input type="text" class="input-field" id="editHabilidades"></div>
             <button class="btn btn-primary" onclick="salvarPerfil()">💾 SALVAR</button>
         </div>
-        
-        <div class="card"><h3 style="color:#1A3A5C;">📊 HISTÓRICO</h3><div id="historicoTrabalhos"></div></div>
-        <div class="card"><h3 style="color:#1A3A5C;">📝 FEEDBACKS</h3><div id="feedbacksContainer"></div></div>
-        
-        <button class="btn btn-danger" onclick="sair()" style="margin-top:10px;">🚪 SAIR</button>
+        <div class="card"><h3>📊 HISTÓRICO</h3><div id="historicoTrabalhos"></div></div>
+        <div class="card"><h3>📝 FEEDBACKS</h3><div id="feedbacksContainer"></div></div>
+        <button class="btn btn-danger" onclick="sair()">🚪 SAIR</button>
     </div>
 
-    <!-- MODAL CONTRATAÇÃO -->
+    <!-- MODAIS -->
     <div class="modal" id="modalContratar">
         <div class="modal-content">
-            <h3 style="color:#1A3A5C;">🤝 CONTRATAR</h3>
-            <div id="modalContratarInfo"></div>
+            <h3>🤝 CONTRATAR</h3><div id="modalContratarInfo"></div>
             <div class="input-group"><div class="input-label">🏗️ Obra</div><input type="text" class="input-field" id="contratarObra"></div>
             <div class="input-group"><div class="input-label">💰 Valor/hora</div><input type="number" class="input-field" id="contratarValor" step="0.01"></div>
             <div class="input-group"><div class="input-label">📅 Pagamento</div><input type="date" class="input-field" id="contratarDataPagamento"></div>
@@ -290,18 +252,11 @@
         </div>
     </div>
 
-    <!-- MODAL DEMISSÃO -->
     <div class="modal" id="modalDemitir">
         <div class="modal-content">
-            <h3 style="color:#EF4444;">⚠️ ENCERRAR</h3>
-            <div id="modalDemitirInfo"></div>
+            <h3 style="color:#EF4444;">⚠️ ENCERRAR</h3><div id="modalDemitirInfo"></div>
             <div class="input-group"><div class="input-label">📝 Motivo</div><textarea class="input-field" id="demitirMotivo" rows="2"></textarea></div>
-            <div class="input-group"><div class="input-label">⭐ Avaliação</div>
-                <select class="input-field" id="demitirEstrelas">
-                    <option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option>
-                    <option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option>
-                </select>
-            </div>
+            <div class="input-group"><div class="input-label">⭐ Avaliação</div><select class="input-field" id="demitirEstrelas"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select></div>
             <div class="input-group"><div class="input-label">💡 Melhorar</div><textarea class="input-field" id="demitirMelhorar" rows="2"></textarea></div>
             <div class="input-group"><div class="input-label">👍 Pontos fortes</div><textarea class="input-field" id="demitirPontosFortes" rows="2"></textarea></div>
             <button class="btn btn-danger" onclick="confirmarDemissao()">⚠️ ENCERRAR</button>
@@ -309,13 +264,10 @@
         </div>
     </div>
 
-    <!-- MODAL SUCESSO -->
     <div class="modal" id="modalSucesso">
         <div class="modal-content" style="text-align:center;">
-            <div style="font-size:70px;">✅</div>
-            <h2 style="color:#10B981;">Senha Alterada!</h2>
-            <p style="color:#666;">Sua senha foi atualizada com sucesso.</p>
-            <button class="btn btn-primary" onclick="fecharModal('modalSucesso'); mostrarTela('loginScreen');">🔑 IR PARA LOGIN</button>
+            <div style="font-size:70px;">✅</div><h2 style="color:#10B981;">Senha Alterada!</h2>
+            <button class="btn btn-primary" onclick="fecharModal('modalSucesso');mostrarTela('loginScreen');">🔑 LOGIN</button>
         </div>
     </div>
 
@@ -331,7 +283,7 @@
     <div class="toast" id="toast" style="display:none;"></div>
 
     <!-- JAVASCRIPT -->
-    <script src="javascript/"></script>
+    <script src="javascript/script.js"></script>
 
 </body>
 </html>
