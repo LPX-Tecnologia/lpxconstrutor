@@ -3,36 +3,556 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1A3A5C">
-    <link rel="manifest" href="manifest.json">
     <title>LPXConstrutor</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    
-    <!-- Fonte Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================ */
+        /* CSS COMPLETO AQUI DENTRO                      */
+        /* ============================================ */
+        
+        :root {
+            --primary: #1A3A5C;
+            --primary-light: #2C5F8A;
+            --primary-dark: #0F2440;
+            --secondary: #F47920;
+            --secondary-light: #FF9A4D;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --white: #FFFFFF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+            --shadow-2xl: 0 25px 50px rgba(0,0,0,0.25);
+            --radius: 12px;
+            --radius-xl: 20px;
+            --radius-full: 9999px;
+            --transition: all 0.3s ease;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F3F4F6;
+            color: #1F2937;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #0F2440, #1A3A5C, #2C5F8A);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .header::after {
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(90deg, #F47920, #FF9A4D, #F47920);
+            margin-top: 10px;
+            border-radius: 2px;
+        }
+        
+        .header-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .header-subtitle {
+            font-size: 13px;
+            color: #F47920;
+            letter-spacing: 4px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        /* TELAS */
+        .screen {
+            display: none;
+            padding: 20px 16px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* CARDS */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid #E5E7EB;
+        }
+        
+        /* INPUTS */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            background: #F9FAFB;
+            color: #1F2937;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            border-color: #F47920;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.1);
+        }
+        
+        textarea.input-field {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+        
+        /* BOTÕES */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif;
+            margin-top: 10px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #F47920, #D56510);
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 121, 32, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #1A3A5C, #2C5F8A);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #F47920;
+            border: 2px solid #F47920;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+            width: auto;
+            display: inline-block;
+        }
+        
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 5px 15px;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 12px;
+            color: #9CA3AF;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            background: none;
+            transition: all 0.3s;
+        }
+        
+        .nav-item.active {
+            color: #F47920;
+            background: rgba(244, 121, 32, 0.08);
+        }
+        
+        .nav-icon {
+            font-size: 22px;
+            margin-bottom: 3px;
+        }
+        
+        /* PERFIL */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #F47920;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .camera-icon {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: #F47920;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 3px solid white;
+        }
+        
+        .stars {
+            color: #FBBF24;
+            font-size: 26px;
+            letter-spacing: 3px;
+        }
+        
+        /* BADGES E TAGS */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 3px;
+            text-transform: uppercase;
+        }
+        
+        .badge-success { background: #D1FAE5; color: #10B981; }
+        .badge-danger { background: #FEE2E2; color: #EF4444; }
+        .badge-info { background: #DBEAFE; color: #3B82F6; }
+        
+        .tag {
+            background: rgba(244, 121, 32, 0.1);
+            color: #F47920;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 2px;
+        }
+        
+        /* FEED */
+        .feed-card {
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .feed-card-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #F9FAFB;
+        }
+        
+        .feed-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1A3A5C;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        .feed-user-name {
+            font-weight: 700;
+        }
+        
+        .feed-time {
+            font-size: 11px;
+            color: #6B7280;
+        }
+        
+        .feed-card-image {
+            width: 100%;
+            height: 220px;
+            background: #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            overflow: hidden;
+        }
+        
+        .feed-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .feed-card-body {
+            padding: 18px;
+        }
+        
+        .feed-card-title {
+            font-weight: 700;
+            font-size: 17px;
+            margin-bottom: 5px;
+        }
+        
+        /* LISTA */
+        .lista-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #1A3A5C;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+        }
+        
+        .lista-nome {
+            font-weight: 700;
+        }
+        
+        .lista-detalhe {
+            font-size: 12px;
+            color: #6B7280;
+        }
+        
+        /* ALERTAS */
+        .alert-card {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-warning {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+        }
+        
+        /* CONEXÕES */
+        .conexao-card {
+            border-left: 4px solid #10B981;
+        }
+        
+        .conexao-card.desconectado {
+            border-left: 4px solid #EF4444;
+        }
+        
+        .historico-item {
+            padding: 14px;
+            border-left: 4px solid #3B82F6;
+            background: #F9FAFB;
+            margin-bottom: 10px;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        /* TABS */
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            background: #E5E7EB;
+            border-radius: 12px;
+            padding: 4px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            border: none;
+            background: transparent;
+            color: #6B7280;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #F47920;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        /* TOAST */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1F2937;
+            color: white;
+            padding: 14px 22px;
+            border-radius: 30px;
+            z-index: 300;
+            font-weight: 700;
+            font-size: 14px;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        /* FILE UPLOAD */
+        .file-upload {
+            border: 2px dashed #D1D5DB;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+            background: #F9FAFB;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ============================================ -->
-    <!-- HEADER                                        -->
-    <!-- ============================================ -->
+    <!-- HEADER -->
     <div class="header">
         <div class="header-title">🏗️ LPXCONSTRUTOR</div>
         <div class="header-subtitle">Rede Profissional da Construção</div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- TELA DE LOGIN                                -->
-    <!-- ============================================ -->
+    <!-- TELA DE LOGIN -->
     <div class="screen active" id="loginScreen">
         <div style="text-align:center; margin:30px 0;">
             <div style="font-size:80px;">🏗️</div>
-            <h2 style="color:var(--primary); margin-top:10px; font-size:28px;">LPXCONSTRUTOR</h2>
-            <p style="color:var(--secondary); font-weight:600;">Rede Profissional da Construção</p>
+            <h2 style="color:#1A3A5C; margin-top:10px;">LPXCONSTRUTOR</h2>
+            <p style="color:#F47920; font-weight:600;">Rede Profissional da Construção</p>
         </div>
         
         <div class="card">
@@ -40,406 +560,20 @@
                 <div class="input-label">📧 E-mail ou CPF</div>
                 <input type="text" class="input-field" id="loginEmail" placeholder="Digite seu e-mail ou CPF">
             </div>
-            
             <div class="input-group">
                 <div class="input-label">🔒 Senha</div>
                 <input type="password" class="input-field" id="loginSenha" placeholder="Digite sua senha">
             </div>
-            
             <button class="btn btn-primary" onclick="fazerLogin()">🔑 ENTRAR</button>
             <button class="btn btn-outline" onclick="recuperarSenha()">🔐 Esqueceu a senha?</button>
             <button class="btn btn-outline" onclick="mostrarTela('cadastroScreen')">📝 Criar Conta</button>
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- TELA DE CADASTRO                             -->
-    <!-- ============================================ -->
-    <div class="screen" id="cadastroScreen">
-        <h2 style="text-align:center; color:var(--primary); margin-bottom:20px;">CRIAR CONTA</h2>
-        
-        <div class="card">
-            <div class="input-group">
-                <div class="input-label">👤 Nome Completo</div>
-                <input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🏢 Tipo de Conta</div>
-                <select class="input-field" id="cadTipo" onchange="toggleProfissao()">
-                    <option value="profissional">👷 Profissional (Pedreiro, Pintor, etc.)</option>
-                    <option value="empreiteiro">🏢 Empreiteiro (Contrata profissionais)</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📧 E-mail</div>
-                <input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📱 Celular/WhatsApp</div>
-                <input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🔢 CPF</div>
-                <input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00">
-            </div>
-            
-            <div class="input-group" id="grupoProfissao">
-                <div class="input-label">🛠️ Profissão</div>
-                <select class="input-field" id="cadProfissao">
-                    <option value="">Selecione sua profissão</option>
-                    <option value="servente">Servente</option>
-                    <option value="pedreiro">Pedreiro</option>
-                    <option value="carpinteiro">Carpinteiro</option>
-                    <option value="armador">Armador</option>
-                    <option value="encanador">Encanador</option>
-                    <option value="eletricista">Eletricista</option>
-                    <option value="pintor">Pintor</option>
-                    <option value="gesseiro">Gesseiro</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📅 Anos de Experiência</div>
-                <input type="number" class="input-field" id="cadExperiencia" placeholder="Ex: 5" min="0" max="50">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🔒 Criar Senha</div>
-                <input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres">
-            </div>
-            
-            <button class="btn btn-primary" onclick="cadastrar()">✅ FINALIZAR CADASTRO</button>
-            <button class="btn btn-outline" onclick="mostrarTela('loginScreen')">← Voltar para Login</button>
-        </div>
-    </div>
+    <!-- OUTRAS TELAS AQUI... -->
+    <!-- (Use o mesmo padrão das telas que já criamos) -->
 
-    <!-- ============================================ -->
-    <!-- TELA DE RECUPERAÇÃO DE SENHA                 -->
-    <!-- ============================================ -->
-    <div class="screen" id="recuperarSenhaScreen">
-        <div style="text-align:center; margin:30px 0;">
-            <div style="font-size:60px;">🔐</div>
-            <h2 style="color:var(--primary);">Recuperar Senha</h2>
-            <p style="color:var(--gray-600);">Não se preocupe! Vamos te ajudar.</p>
-        </div>
-        
-        <div class="card">
-            <div id="recuperarPasso1">
-                <div class="input-group">
-                    <div class="input-label">📧 Digite seu e-mail ou CPF cadastrado</div>
-                    <input type="text" class="input-field" id="recEmail" placeholder="seu@email.com ou 000.000.000-00">
-                </div>
-                
-                <div class="input-group">
-                    <div class="input-label">🔢 Escolha como receber o código</div>
-                    <select class="input-field" id="recMetodo">
-                        <option value="email">📧 E-mail</option>
-                        <option value="sms">📱 SMS</option>
-                    </select>
-                </div>
-                
-                <button class="btn btn-primary" onclick="enviarCodigoRecuperacao()">📤 ENVIAR CÓDIGO</button>
-            </div>
-            
-            <div id="recuperarPasso2" style="display:none;">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:40px;">📩</div>
-                    <p style="color:var(--success); font-weight:bold;">Código enviado!</p>
-                    <p style="color:var(--gray-600); font-size:14px;" id="recMensagemEnvio"></p>
-                </div>
-                
-                <div class="input-group">
-                    <div class="input-label">🔢 Digite o código recebido</div>
-                    <input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6" inputmode="numeric">
-                </div>
-                
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-primary" onclick="verificarCodigo()" style="flex:2;">✅ VERIFICAR</button>
-                    <button class="btn btn-outline" id="btnReenviar" onclick="enviarCodigoRecuperacao()" style="flex:1;">🔄 Reenviar</button>
-                </div>
-                
-                <p style="text-align:center; margin-top:15px; font-size:12px; color:var(--gray-500);">
-                    Não recebeu? Verifique spam ou tente reenviar
-                </p>
-            </div>
-            
-            <div id="recuperarPasso3" style="display:none;">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:40px;">🔑</div>
-                    <p style="color:var(--success); font-weight:bold;">Código verificado!</p>
-                    <p style="color:var(--gray-600);">Agora crie uma nova senha</p>
-                </div>
-                
-                <div class="input-group">
-                    <div class="input-label">🔒 Nova Senha</div>
-                    <input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres">
-                </div>
-                
-                <div class="input-group">
-                    <div class="input-label">🔒 Confirmar Nova Senha</div>
-                    <input type="password" class="input-field" id="recConfirmarSenha" placeholder="Repita a senha">
-                </div>
-                
-                <button class="btn btn-success" onclick="criarNovaSenha()">💾 SALVAR NOVA SENHA</button>
-            </div>
-            
-            <button class="btn btn-outline" onclick="mostrarTela('loginScreen')" style="margin-top:10px;">← Voltar para Login</button>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- TELA HOME (FEED + REDE)                      -->
-    <!-- ============================================ -->
-    <div class="screen" id="homeScreen">
-        <div id="alertasContainer"></div>
-        
-        <div class="tabs">
-            <button class="tab active" onclick="mudarTab('feed', this)">📱 Feed de Obras</button>
-            <button class="tab" onclick="mudarTab('rede', this)">🔗 Minha Rede</button>
-        </div>
-        
-        <div id="feedTab">
-            <div id="feedContainer"></div>
-            <button class="btn btn-primary" onclick="mostrarTela('publicarObraScreen')">📸 PUBLICAR OBRA</button>
-        </div>
-        
-        <div id="redeTab" style="display:none;">
-            <div id="redeContainer"></div>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- TELA DE PUBLICAR OBRA                        -->
-    <!-- ============================================ -->
-    <div class="screen" id="publicarObraScreen">
-        <h2 style="text-align:center; color:var(--primary); margin-bottom:20px;">PUBLICAR OBRA</h2>
-        
-        <div class="card">
-            <div class="input-group">
-                <div class="input-label">🏗️ Nome da Obra</div>
-                <input type="text" class="input-field" id="obraNome" placeholder="Ex: Residencial Parque">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📍 Endereço</div>
-                <input type="text" class="input-field" id="obraEndereco" placeholder="Rua, número, bairro">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📝 Descrição</div>
-                <textarea class="input-field" id="obraDescricao" rows="3" placeholder="Descreva a obra..."></textarea>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">👷 Profissões necessárias</div>
-                <input type="text" class="input-field" id="obraProfissoes" placeholder="Ex: Pedreiro, Eletricista, Pintor">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">💰 Valor por hora (R$)</div>
-                <input type="number" class="input-field" id="obraValorHora" placeholder="25.00" step="0.01">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📸 Foto da Obra</div>
-                <div class="file-upload" onclick="document.getElementById('obraFoto').click()">
-                    <div style="font-size:40px;">📸</div>
-                    <div style="color:var(--gray-600);">Clique para adicionar foto</div>
-                </div>
-                <input type="file" id="obraFoto" accept="image/*" style="display:none" onchange="previewFotoObra(event)">
-                <img id="obraPreview" style="width:100%; border-radius:12px; display:none; margin-top:10px;">
-            </div>
-            
-            <button class="btn btn-primary" onclick="publicarObra()">📢 PUBLICAR OBRA</button>
-            <button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Cancelar</button>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- TELA DE BUSCAR PROFISSIONAIS                 -->
-    <!-- ============================================ -->
-    <div class="screen" id="buscaScreen">
-        <h2 style="text-align:center; color:var(--primary); margin-bottom:20px;">🔍 BUSCAR PROFISSIONAIS</h2>
-        
-        <div class="input-group">
-            <input type="text" class="input-field" id="buscaInput" placeholder="Buscar por nome ou profissão..." oninput="buscarProfissionais()">
-        </div>
-        
-        <div id="buscaResultados"></div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- TELA DE PERFIL (EDITÁVEL)                    -->
-    <!-- ============================================ -->
-    <div class="screen" id="perfilScreen">
-        <div class="profile-header">
-            <div class="profile-avatar" onclick="document.getElementById('perfilFoto').click()">
-                <img id="perfilAvatarImg" style="display:none;">
-                <span id="perfilAvatarDefault">👷</span>
-                <div class="camera-icon">📷</div>
-            </div>
-            <input type="file" id="perfilFoto" accept="image/*" style="display:none" onchange="mudarFotoPerfil(event)">
-            
-            <h2 id="perfilNome" style="color:var(--primary); margin-top:15px;">Seu Nome</h2>
-            <p id="perfilProfissao" style="color:var(--secondary);">Sua Profissão</p>
-            <div id="perfilEstrelas" class="stars">⭐⭐⭐⭐⭐</div>
-            <p id="perfilAvaliacoes" style="color:var(--gray-500);">0 avaliações</p>
-            <div id="perfilTags"></div>
-        </div>
-        
-        <div class="card">
-            <h3 style="color:var(--primary); margin-bottom:15px;">✏️ EDITAR INFORMAÇÕES</h3>
-            
-            <div class="input-group">
-                <div class="input-label">👤 Nome</div>
-                <input type="text" class="input-field" id="editNome" placeholder="Seu nome">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📱 Celular</div>
-                <input type="tel" class="input-field" id="editCelular" placeholder="(11) 99999-9999">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📧 E-mail</div>
-                <input type="email" class="input-field" id="editEmail" placeholder="seu@email.com">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🛠️ Profissão</div>
-                <select class="input-field" id="editProfissao">
-                    <option value="">Selecione</option>
-                    <option value="servente">Servente</option>
-                    <option value="pedreiro">Pedreiro</option>
-                    <option value="carpinteiro">Carpinteiro</option>
-                    <option value="armador">Armador</option>
-                    <option value="encanador">Encanador</option>
-                    <option value="eletricista">Eletricista</option>
-                    <option value="pintor">Pintor</option>
-                    <option value="gesseiro">Gesseiro</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📅 Anos de Experiência</div>
-                <input type="number" class="input-field" id="editExperiencia" placeholder="Ex: 5">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🛠️ Habilidades</div>
-                <input type="text" class="input-field" id="editHabilidades" placeholder="Alvenaria, Revestimento, Pintura">
-            </div>
-            
-            <button class="btn btn-primary" onclick="salvarPerfil()">💾 SALVAR ALTERAÇÕES</button>
-        </div>
-        
-        <div class="card">
-            <h3 style="color:var(--primary); margin-bottom:15px;">📊 HISTÓRICO DE TRABALHOS</h3>
-            <div id="historicoTrabalhos"></div>
-        </div>
-        
-        <div class="card">
-            <h3 style="color:var(--primary); margin-bottom:15px;">📝 FEEDBACKS (O QUE MELHORAR)</h3>
-            <div id="feedbacksContainer"></div>
-        </div>
-        
-        <button class="btn btn-danger" onclick="sair()" style="margin-top:10px;">🚪 SAIR</button>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- TELA DE PERFIL PÚBLICO                       -->
-    <!-- ============================================ -->
-    <div class="screen" id="perfilPublicoScreen">
-        <div id="perfilPublicoConteudo"></div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- MODAL DE CONTRATAÇÃO                         -->
-    <!-- ============================================ -->
-    <div class="modal" id="modalContratar">
-        <div class="modal-content">
-            <h3 style="color:var(--primary); margin-bottom:15px;">🤝 CONTRATAR PROFISSIONAL</h3>
-            <div id="modalContratarInfo"></div>
-            
-            <div class="input-group">
-                <div class="input-label">🏗️ Obra</div>
-                <input type="text" class="input-field" id="contratarObra" placeholder="Nome da obra">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">💰 Valor por hora (R$)</div>
-                <input type="number" class="input-field" id="contratarValor" placeholder="25.00" step="0.01">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📅 Data de Pagamento</div>
-                <input type="date" class="input-field" id="contratarDataPagamento">
-            </div>
-            
-            <button class="btn btn-success" onclick="confirmarContratacao()">✅ CONTRATAR</button>
-            <button class="btn btn-outline" onclick="fecharModal('modalContratar')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- MODAL DE DEMISSÃO                            -->
-    <!-- ============================================ -->
-    <div class="modal" id="modalDemitir">
-        <div class="modal-content">
-            <h3 style="color:var(--danger); margin-bottom:15px;">⚠️ ENCERRAR CONTRATO</h3>
-            <div id="modalDemitirInfo"></div>
-            
-            <div class="input-group">
-                <div class="input-label">📝 Motivo do encerramento</div>
-                <textarea class="input-field" id="demitirMotivo" rows="2" placeholder="Explique o motivo..."></textarea>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">⭐ Avaliação Final</div>
-                <select class="input-field" id="demitirEstrelas">
-                    <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
-                    <option value="4">⭐⭐⭐⭐ Muito Bom</option>
-                    <option value="3">⭐⭐⭐ Bom</option>
-                    <option value="2">⭐⭐ Regular</option>
-                    <option value="1">⭐ Ruim</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">💡 O que precisa melhorar?</div>
-                <textarea class="input-field" id="demitirMelhorar" rows="2" placeholder="Pontos de melhoria..."></textarea>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">👍 Pontos fortes</div>
-                <textarea class="input-field" id="demitirPontosFortes" rows="2" placeholder="O que faz bem..."></textarea>
-            </div>
-            
-            <button class="btn btn-danger" onclick="confirmarDemissao()">⚠️ ENCERRAR CONTRATO</button>
-            <button class="btn btn-outline" onclick="fecharModal('modalDemitir')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- MODAL DE SUCESSO                             -->
-    <!-- ============================================ -->
-    <div class="modal" id="modalSucesso">
-        <div class="modal-content" style="text-align:center;">
-            <div style="font-size:70px;">✅</div>
-            <h2 style="color:var(--success); margin:15px 0;">Senha Alterada!</h2>
-            <p style="color:var(--gray-600);">Sua senha foi atualizada com sucesso.</p>
-            <p style="color:var(--gray-600); margin-bottom:15px;">Agora você pode fazer login com sua nova senha.</p>
-            <button class="btn btn-primary" onclick="fecharModal('modalSucesso'); mostrarTela('loginScreen');">🔑 IR PARA LOGIN</button>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- BOTTOM NAVIGATION                            -->
-    <!-- ============================================ -->
+    <!-- BOTTOM NAV -->
     <div class="bottom-nav" id="bottomNav" style="display:none;">
         <button class="nav-item active" onclick="mostrarTela('homeScreen')">
             <div class="nav-icon">🏠</div>Início
@@ -455,15 +589,13 @@
         </button>
     </div>
 
-    <!-- ============================================ -->
-    <!-- TOAST                                        -->
-    <!-- ============================================ -->
+    <!-- TOAST -->
     <div class="toast" id="toast" style="display:none;"></div>
 
-    <!-- ============================================ -->
-    <!-- JAVASCRIPT                                    -->
-    <!-- ============================================ -->
-    <script src="javascript/script.js"></script>
+    <script>
+        // Todo o JavaScript aqui dentro
+        // (Cole todo o código do script.js aqui)
+    </script>
 
 </body>
 </html>
