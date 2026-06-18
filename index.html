@@ -449,5 +449,31 @@
         console.log('✅ LPXCONSTRUTOR FUNCIONANDO!');
         alert('✅ JAVASCRIPT CARREGADO COM SUCESSO!');
         </script>
+
+                <!-- TELA DE DETALHE DA OBRA -->
+        <div class="screen" id="detalheObraScreen">
+            <div id="detalheObraConteudo"></div>
+        </div>
+        
+        <!-- TELA DE PERFIL PÚBLICO -->
+        <div class="screen" id="perfilPublicoScreen">
+            <div id="perfilPublicoConteudo"></div>
+        </div>
+        
+        <!-- MODAL DE CHAT/CONTRATAÇÃO -->
+        <div class="modal" id="modalChat">
+            <div class="modal-content">
+                <h3 style="color:#1A3A5C; margin-bottom:15px;">💬 CONTATO</h3>
+                <div id="modalChatInfo"></div>
+                <div class="input-group">
+                    <div class="input-label">📝 Mensagem</div>
+                    <textarea class="input-field" id="chatMensagem" rows="3" placeholder="Olá! Tenho interesse no seu trabalho..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="enviarMensagem()">📤 ENVIAR MENSAGEM</button>
+                <button class="btn btn-success" onclick="contratarPeloChat()">🤝 CONTRATAR</button>
+                <button class="btn btn-outline" onclick="fecharModal('modalChat')">Fechar</button>
+            </div>
+        </div>
+    
 </body>
 </html>
