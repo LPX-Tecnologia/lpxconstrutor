@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1A3A5C">
     <title>LPXConstrutor</title>
-    
-    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Fonte Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -27,16 +23,9 @@
             <h2 style="color:#1A3A5C; margin-top:10px;">LPXCONSTRUTOR</h2>
             <p style="color:#F47920; font-weight:600;">Rede Profissional da Construção</p>
         </div>
-        
         <div class="card">
-            <div class="input-group">
-                <div class="input-label">📧 E-mail ou CPF</div>
-                <input type="text" class="input-field" id="loginEmail" placeholder="Digite seu e-mail ou CPF">
-            </div>
-            <div class="input-group">
-                <div class="input-label">🔒 Senha</div>
-                <input type="password" class="input-field" id="loginSenha" placeholder="Digite sua senha">
-            </div>
+            <div class="input-group"><div class="input-label">📧 E-mail ou CPF</div><input type="text" class="input-field" id="loginEmail" placeholder="Digite seu e-mail ou CPF"></div>
+            <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="loginSenha" placeholder="Digite sua senha"></div>
             <button class="btn btn-primary" onclick="fazerLogin()">🔑 ENTRAR</button>
             <button class="btn btn-outline" onclick="recuperarSenha()">🔐 Esqueceu a senha?</button>
             <button class="btn btn-outline" onclick="mostrarTela('cadastroScreen')">📝 Criar Conta</button>
@@ -46,160 +35,63 @@
     <!-- TELA DE CADASTRO -->
     <div class="screen" id="cadastroScreen">
         <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">CRIAR CONTA</h2>
-        
         <div class="card">
-            <div class="input-group">
-                <div class="input-label">👤 Nome Completo</div>
-                <input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🏢 Tipo de Conta</div>
-                <select class="input-field" id="cadTipo" onchange="toggleProfissao()">
-                    <option value="profissional">👷 Profissional (Pedreiro, Pintor, etc.)</option>
-                    <option value="empreiteiro">🏢 Empreiteiro (Contrata profissionais)</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📧 E-mail</div>
-                <input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📱 Celular/WhatsApp</div>
-                <input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🔢 CPF</div>
-                <input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00">
-            </div>
-            
-            <div class="input-group" id="grupoProfissao">
-                <div class="input-label">🛠️ Profissão</div>
-                <select class="input-field" id="cadProfissao">
-                    <option value="">Selecione sua profissão</option>
-                    <option value="servente">Servente</option>
-                    <option value="pedreiro">Pedreiro</option>
-                    <option value="carpinteiro">Carpinteiro</option>
-                    <option value="armador">Armador</option>
-                    <option value="encanador">Encanador</option>
-                    <option value="eletricista">Eletricista</option>
-                    <option value="pintor">Pintor</option>
-                    <option value="gesseiro">Gesseiro</option>
-                </select>
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">📅 Anos de Experiência</div>
-                <input type="number" class="input-field" id="cadExperiencia" placeholder="Ex: 5" min="0" max="50">
-            </div>
-            
-            <div class="input-group">
-                <div class="input-label">🔒 Criar Senha</div>
-                <input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres">
-            </div>
-            
-            <button class="btn btn-primary" onclick="cadastrar()">✅ FINALIZAR CADASTRO</button>
-            <button class="btn btn-outline" onclick="mostrarTela('loginScreen')">← Voltar para Login</button>
+            <div class="input-group"><div class="input-label">👤 Nome Completo</div><input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo"></div>
+            <div class="input-group"><div class="input-label">🏢 Tipo de Conta</div><select class="input-field" id="cadTipo" onchange="toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
+            <div class="input-group"><div class="input-label">📧 E-mail</div><input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com"></div>
+            <div class="input-group"><div class="input-label">📱 Celular</div><input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999"></div>
+            <div class="input-group"><div class="input-label">🔢 CPF</div><input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00"></div>
+            <div class="input-group" id="grupoProfissao"><div class="input-label">🛠️ Profissão</div><select class="input-field" id="cadProfissao"><option value="">Selecione</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div>
+            <div class="input-group"><div class="input-label">📅 Experiência</div><input type="number" class="input-field" id="cadExperiencia" placeholder="Ex: 5"></div>
+            <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres"></div>
+            <button class="btn btn-primary" onclick="cadastrar()">✅ FINALIZAR</button>
+            <button class="btn btn-outline" onclick="mostrarTela('loginScreen')">← Voltar</button>
         </div>
     </div>
 
     <!-- TELA DE RECUPERAÇÃO DE SENHA -->
     <div class="screen" id="recuperarSenhaScreen">
-        <div style="text-align:center; margin:30px 0;">
-            <div style="font-size:60px;">🔐</div>
-            <h2 style="color:#1A3A5C;">Recuperar Senha</h2>
-            <p style="color:#666;">Não se preocupe! Vamos te ajudar.</p>
-        </div>
-        
+        <div style="text-align:center; margin:30px 0;"><div style="font-size:60px;">🔐</div><h2 style="color:#1A3A5C;">Recuperar Senha</h2></div>
         <div class="card">
             <div id="recuperarPasso1">
-                <div class="input-group">
-                    <div class="input-label">📧 Digite seu e-mail ou CPF cadastrado</div>
-                    <input type="text" class="input-field" id="recEmail" placeholder="seu@email.com ou 000.000.000-00">
-                </div>
-                <div class="input-group">
-                    <div class="input-label">🔢 Escolha como receber o código</div>
-                    <select class="input-field" id="recMetodo">
-                        <option value="email">📧 E-mail</option>
-                        <option value="sms">📱 SMS</option>
-                    </select>
-                </div>
+                <div class="input-group"><div class="input-label">📧 E-mail ou CPF</div><input type="text" class="input-field" id="recEmail" placeholder="seu@email.com"></div>
                 <button class="btn btn-primary" onclick="enviarCodigoRecuperacao()">📤 ENVIAR CÓDIGO</button>
             </div>
-            
             <div id="recuperarPasso2" style="display:none;">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:40px;">📩</div>
-                    <p style="color:#10B981; font-weight:bold;">Código enviado!</p>
-                    <p style="color:#666; font-size:14px;" id="recMensagemEnvio"></p>
-                </div>
-                <div class="input-group">
-                    <div class="input-label">🔢 Digite o código recebido</div>
-                    <input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6">
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-primary" onclick="verificarCodigo()" style="flex:2;">✅ VERIFICAR</button>
-                    <button class="btn btn-outline" id="btnReenviar" onclick="enviarCodigoRecuperacao()" style="flex:1;">🔄 Reenviar</button>
-                </div>
+                <p style="color:#10B981; font-weight:bold; text-align:center;">Código enviado!</p>
+                <div class="input-group"><div class="input-label">🔢 Código</div><input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6"></div>
+                <button class="btn btn-primary" onclick="verificarCodigo()">✅ VERIFICAR</button>
             </div>
-            
             <div id="recuperarPasso3" style="display:none;">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:40px;">🔑</div>
-                    <p style="color:#10B981; font-weight:bold;">Código verificado!</p>
-                </div>
-                <div class="input-group">
-                    <div class="input-label">🔒 Nova Senha</div>
-                    <input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres">
-                </div>
-                <div class="input-group">
-                    <div class="input-label">🔒 Confirmar Nova Senha</div>
-                    <input type="password" class="input-field" id="recConfirmarSenha" placeholder="Repita a senha">
-                </div>
-                <button class="btn btn-success" onclick="criarNovaSenha()">💾 SALVAR NOVA SENHA</button>
+                <p style="color:#10B981; font-weight:bold; text-align:center;">Código verificado!</p>
+                <div class="input-group"><div class="input-label">🔒 Nova Senha</div><input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres"></div>
+                <div class="input-group"><div class="input-label">🔒 Confirmar</div><input type="password" class="input-field" id="recConfirmarSenha" placeholder="Repita a senha"></div>
+                <button class="btn btn-success" onclick="criarNovaSenha()">💾 SALVAR</button>
             </div>
-            
-            <button class="btn btn-outline" onclick="mostrarTela('loginScreen')" style="margin-top:10px;">← Voltar para Login</button>
+            <button class="btn btn-outline" onclick="mostrarTela('loginScreen')" style="margin-top:10px;">← Voltar</button>
         </div>
     </div>
 
     <!-- TELA HOME -->
     <div class="screen" id="homeScreen">
         <div id="alertasContainer"></div>
-        
         <div class="tabs">
             <button class="tab active" onclick="mudarTab('feed', this)">📱 Feed</button>
             <button class="tab" onclick="mudarTab('rede', this)">🔗 Minha Rede</button>
         </div>
-        
-        <div id="feedTab">
-            <div id="feedContainer"></div>
-            <button class="btn btn-primary" onclick="mostrarTela('publicarObraScreen')">📸 PUBLICAR OBRA</button>
-        </div>
-        
-        <div id="redeTab" style="display:none;">
-            <div id="redeContainer"></div>
-        </div>
+        <div id="feedTab"><div id="feedContainer"></div><button class="btn btn-primary" onclick="mostrarTela('publicarObraScreen')">📸 PUBLICAR OBRA</button></div>
+        <div id="redeTab" style="display:none;"><div id="redeContainer"></div></div>
     </div>
 
     <!-- TELA PUBLICAR OBRA -->
     <div class="screen" id="publicarObraScreen">
-        <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">PUBLICAR OBRA</h2>
+        <h2 style="text-align:center; color:#1A3A5C;">PUBLICAR OBRA</h2>
         <div class="card">
-            <div class="input-group"><div class="input-label">🏗️ Nome da Obra</div><input type="text" class="input-field" id="obraNome"></div>
+            <div class="input-group"><div class="input-label">🏗️ Nome</div><input type="text" class="input-field" id="obraNome"></div>
             <div class="input-group"><div class="input-label">📍 Endereço</div><input type="text" class="input-field" id="obraEndereco"></div>
             <div class="input-group"><div class="input-label">📝 Descrição</div><textarea class="input-field" id="obraDescricao" rows="2"></textarea></div>
             <div class="input-group"><div class="input-label">👷 Profissões</div><input type="text" class="input-field" id="obraProfissoes"></div>
             <div class="input-group"><div class="input-label">💰 Valor/hora</div><input type="number" class="input-field" id="obraValorHora" step="0.01"></div>
-            <div class="input-group">
-                <div class="input-label">📸 Foto</div>
-                <div class="file-upload" onclick="document.getElementById('obraFoto').click()"><div style="font-size:40px;">📸</div></div>
-                <input type="file" id="obraFoto" accept="image/*" style="display:none" onchange="previewFotoObra(event)">
-                <img id="obraPreview" style="width:100%; border-radius:12px; display:none; margin-top:10px;">
-            </div>
             <button class="btn btn-primary" onclick="publicarObra()">📢 PUBLICAR</button>
             <button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Cancelar</button>
         </div>
@@ -207,7 +99,7 @@
 
     <!-- TELA BUSCA -->
     <div class="screen" id="buscaScreen">
-        <h2 style="text-align:center; color:#1A3A5C; margin-bottom:20px;">🔍 BUSCAR</h2>
+        <h2 style="text-align:center; color:#1A3A5C;">🔍 BUSCAR</h2>
         <div class="input-group"><input type="text" class="input-field" id="buscaInput" placeholder="Nome ou profissão..." oninput="buscarProfissionais()"></div>
         <div id="buscaResultados"></div>
     </div>
@@ -215,55 +107,39 @@
     <!-- TELA PERFIL -->
     <div class="screen" id="perfilScreen">
         <div class="profile-header">
-            <div class="profile-avatar" onclick="document.getElementById('perfilFoto').click()">
-                <img id="perfilAvatarImg" style="display:none;"><span id="perfilAvatarDefault">👷</span>
-                <div class="camera-icon">📷</div>
-            </div>
+            <div class="profile-avatar" onclick="document.getElementById('perfilFoto').click()"><span id="perfilAvatarDefault">👷</span><div class="camera-icon">📷</div></div>
             <input type="file" id="perfilFoto" accept="image/*" style="display:none" onchange="mudarFotoPerfil(event)">
-            <h2 id="perfilNome" style="color:#1A3A5C; margin-top:15px;">Seu Nome</h2>
+            <h2 id="perfilNome" style="color:#1A3A5C;">Seu Nome</h2>
             <p id="perfilProfissao" style="color:#F47920;">Sua Profissão</p>
-            <div id="perfilEstrelas" class="stars">⭐⭐⭐⭐⭐</div>
-            <p id="perfilAvaliacoes" style="color:#666;">0 avaliações</p>
         </div>
         <div class="card">
             <h3>✏️ EDITAR</h3>
             <div class="input-group"><div class="input-label">👤 Nome</div><input type="text" class="input-field" id="editNome"></div>
             <div class="input-group"><div class="input-label">📱 Celular</div><input type="tel" class="input-field" id="editCelular"></div>
             <div class="input-group"><div class="input-label">📧 E-mail</div><input type="email" class="input-field" id="editEmail"></div>
-            <div class="input-group"><div class="input-label">🛠️ Profissão</div><select class="input-field" id="editProfissao"><option value="">Selecione</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div>
-            <div class="input-group"><div class="input-label">📅 Experiência</div><input type="number" class="input-field" id="editExperiencia"></div>
-            <div class="input-group"><div class="input-label">🛠️ Habilidades</div><input type="text" class="input-field" id="editHabilidades"></div>
             <button class="btn btn-primary" onclick="salvarPerfil()">💾 SALVAR</button>
         </div>
-        <div class="card"><h3>📊 HISTÓRICO</h3><div id="historicoTrabalhos"></div></div>
-        <div class="card"><h3>📝 FEEDBACKS</h3><div id="feedbacksContainer"></div></div>
         <button class="btn btn-danger" onclick="sair()">🚪 SAIR</button>
     </div>
 
-    <!-- MODAIS -->
-    <div class="modal" id="modalContratar">
+    <!-- TELA DETALHE DA OBRA -->
+    <div class="screen" id="detalheObraScreen"><div id="detalheObraConteudo"></div></div>
+
+    <!-- TELA PERFIL PÚBLICO -->
+    <div class="screen" id="perfilPublicoScreen"><div id="perfilPublicoConteudo"></div></div>
+
+    <!-- MODAL CHAT -->
+    <div class="modal" id="modalChat">
         <div class="modal-content">
-            <h3>🤝 CONTRATAR</h3><div id="modalContratarInfo"></div>
-            <div class="input-group"><div class="input-label">🏗️ Obra</div><input type="text" class="input-field" id="contratarObra"></div>
-            <div class="input-group"><div class="input-label">💰 Valor/hora</div><input type="number" class="input-field" id="contratarValor" step="0.01"></div>
-            <div class="input-group"><div class="input-label">📅 Pagamento</div><input type="date" class="input-field" id="contratarDataPagamento"></div>
-            <button class="btn btn-success" onclick="confirmarContratacao()">✅ CONTRATAR</button>
-            <button class="btn btn-outline" onclick="fecharModal('modalContratar')">Cancelar</button>
+            <h3 style="color:#1A3A5C;">💬 CONTATO</h3>
+            <div id="modalChatInfo"></div>
+            <div class="input-group"><div class="input-label">📝 Mensagem</div><textarea class="input-field" id="chatMensagem" rows="3"></textarea></div>
+            <button class="btn btn-primary" onclick="enviarMensagem()">📤 ENVIAR</button>
+            <button class="btn btn-outline" onclick="fecharModal('modalChat')">Fechar</button>
         </div>
     </div>
 
-    <div class="modal" id="modalDemitir">
-        <div class="modal-content">
-            <h3 style="color:#EF4444;">⚠️ ENCERRAR</h3><div id="modalDemitirInfo"></div>
-            <div class="input-group"><div class="input-label">📝 Motivo</div><textarea class="input-field" id="demitirMotivo" rows="2"></textarea></div>
-            <div class="input-group"><div class="input-label">⭐ Avaliação</div><select class="input-field" id="demitirEstrelas"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select></div>
-            <div class="input-group"><div class="input-label">💡 Melhorar</div><textarea class="input-field" id="demitirMelhorar" rows="2"></textarea></div>
-            <div class="input-group"><div class="input-label">👍 Pontos fortes</div><textarea class="input-field" id="demitirPontosFortes" rows="2"></textarea></div>
-            <button class="btn btn-danger" onclick="confirmarDemissao()">⚠️ ENCERRAR</button>
-            <button class="btn btn-outline" onclick="fecharModal('modalDemitir')">Cancelar</button>
-        </div>
-    </div>
-
+    <!-- MODAL SUCESSO -->
     <div class="modal" id="modalSucesso">
         <div class="modal-content" style="text-align:center;">
             <div style="font-size:70px;">✅</div><h2 style="color:#10B981;">Senha Alterada!</h2>
@@ -282,198 +158,294 @@
     <!-- TOAST -->
     <div class="toast" id="toast" style="display:none;"></div>
 
-    <!-- JAVASCRIPT -->
-   <script>
-        function salvarDados(c,d){localStorage.setItem(c,JSON.stringify(d))}
-        function carregarDados(c){var d=localStorage.getItem(c);return d?JSON.parse(d):null}
-        var usuarioLogado=carregarDados('usuarioLogado'),codigoRecuperacao=null,usuarioRecuperando=null;
-        if(!carregarDados('usuarios')){salvarDados('usuarios',[{id:1001,tipo:'profissional',nome:'João Silva',email:'joao@email.com',celular:'(11)99999-0001',cpf:'111.111.111-11',profissao:'pedreiro',experiencia:8,senha:'123456',fotoPerfil:''},{id:2001,tipo:'empreiteiro',nome:'Carlos Obras',email:'carlos@email.com',celular:'(11)99999-0003',cpf:'333.333.333-33',profissao:'',experiencia:15,senha:'123456',fotoPerfil:''}])}
-        if(!carregarDados('obras')){salvarDados('obras',[{id:1,usuarioId:2001,nome:'Residencial Parque Verde',endereco:'Rua das Flores, 123',valorHora:25,data:new Date().toISOString()}])}
-        
-        function mostrarTela(id){
-        document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
-        document.getElementById(id).classList.add('active');
-        var nav=document.getElementById('bottomNav');
-        if(nav)nav.style.display=['homeScreen','buscaScreen','publicarObraScreen','perfilScreen'].includes(id)?'flex':'none';
-        if(id==='homeScreen')carregarFeed();
-        if(id==='perfilScreen')carregarPerfil();
-        if(id==='buscaScreen')buscarProfissionais();
-        }
-        
-        function mostrarToast(m,t){
-        var toast=document.getElementById('toast');
-        if(!toast)return;
-        toast.textContent=m;
-        toast.style.background=t==='erro'?'#EF4444':t==='sucesso'?'#10B981':'#1F2937';
-        toast.style.display='block';
-        setTimeout(function(){toast.style.display='none'},3000);
-        }
-        
-        function toggleProfissao(){
-        var g=document.getElementById('grupoProfissao');
-        var t=document.getElementById('cadTipo');
-        if(g&&t)g.style.display=t.value==='profissional'?'block':'none';
-        }
-        
-        function fazerLogin(){
-        var e=document.getElementById('loginEmail').value.trim();
-        var s=document.getElementById('loginSenha').value;
-        if(!e||!s){mostrarToast('Preencha todos os campos!','erro');return;}
-        var u=(carregarDados('usuarios')||[]).find(function(u){return(u.email===e||u.cpf===e)&&u.senha===s});
-        if(u){usuarioLogado=u;salvarDados('usuarioLogado',u);mostrarToast('Bem-vindo, '+u.nome+'!','sucesso');setTimeout(function(){mostrarTela('homeScreen')},500)}
-        else{mostrarToast('E-mail/CPF ou senha invalidos!','erro')}
-        }
-        
-        function cadastrar(){
-        var t=document.getElementById('cadTipo').value;
-        var n=document.getElementById('cadNome').value.trim();
-        var e=document.getElementById('cadEmail').value.trim();
-        var c=document.getElementById('cadCelular').value.trim();
-        var p=document.getElementById('cadCPF').value.trim();
-        var pr=t==='profissional'?document.getElementById('cadProfissao').value:'';
-        var ex=document.getElementById('cadExperiencia').value;
-        var s=document.getElementById('cadSenha').value;
-        if(!n||!e||!c||!p||!s){mostrarToast('Preencha todos os campos!','erro');return;}
-        if(s.length<6){mostrarToast('Senha minima de 6 caracteres!','erro');return;}
-        var usuarios=carregarDados('usuarios')||[];
-        if(usuarios.find(function(u){return u.email===e||u.cpf===p})){mostrarToast('E-mail ou CPF ja cadastrado!','erro');return;}
-        var novo={id:Date.now(),tipo:t,nome:n,email:e,celular:c,cpf:p,profissao:pr,experiencia:parseInt(ex)||0,senha:s,fotoPerfil:''};
-        usuarios.push(novo);salvarDados('usuarios',usuarios);
-        usuarioLogado=novo;salvarDados('usuarioLogado',novo);
-        mostrarToast('Cadastro realizado!','sucesso');setTimeout(function(){mostrarTela('homeScreen')},500);
-        }
-        
-        function recuperarSenha(){
-        document.getElementById('recuperarPasso1').style.display='block';
-        document.getElementById('recuperarPasso2').style.display='none';
-        document.getElementById('recuperarPasso3').style.display='none';
-        mostrarTela('recuperarSenhaScreen');
-        }
-        
-        function enviarCodigoRecuperacao(){
-        var e=document.getElementById('recEmail').value.trim();
-        if(!e)return;
-        var u=(carregarDados('usuarios')||[]).find(function(u){return u.email===e||u.cpf.replace(/\D/g,'')===e.replace(/\D/g,'')});
-        if(!u){mostrarToast('E-mail/CPF nao encontrado!','erro');return;}
-        codigoRecuperacao=Math.floor(100000+Math.random()*900000).toString();
-        usuarioRecuperando=u;
-        alert('Seu codigo: '+codigoRecuperacao);
-        document.getElementById('recuperarPasso1').style.display='none';
-        document.getElementById('recuperarPasso2').style.display='block';
-        }
-        
-        function verificarCodigo(){
-        if(document.getElementById('recCodigo').value.trim()!==codigoRecuperacao){mostrarToast('Codigo invalido!','erro');return;}
-        document.getElementById('recuperarPasso2').style.display='none';
-        document.getElementById('recuperarPasso3').style.display='block';
-        }
-        
-        function criarNovaSenha(){
-        var n=document.getElementById('recNovaSenha').value;
-        var c=document.getElementById('recConfirmarSenha').value;
-        if(!n||n.length<6)return;
-        if(n!==c){mostrarToast('Senhas nao coincidem!','erro');return;}
-        var usuarios=carregarDados('usuarios')||[];
-        var i=usuarios.findIndex(function(u){return u.id===usuarioRecuperando.id});
-        if(i!==-1){usuarios[i].senha=n;salvarDados('usuarios',usuarios);}
-        mostrarToast('Senha alterada!','sucesso');setTimeout(function(){mostrarTela('loginScreen')},1000);
-        }
-        
-        function carregarPerfil(){
-        if(!usuarioLogado)return;
-        document.getElementById('perfilNome').textContent=usuarioLogado.nome;
-        document.getElementById('perfilProfissao').textContent=usuarioLogado.tipo==='profissional'?usuarioLogado.profissao+' - '+usuarioLogado.experiencia+' anos':'EMPREITEIRO';
-        document.getElementById('editNome').value=usuarioLogado.nome||'';
-        document.getElementById('editCelular').value=usuarioLogado.celular||'';
-        document.getElementById('editEmail').value=usuarioLogado.email||'';
-        }
-        
-        function salvarPerfil(){
-        if(!usuarioLogado)return;
-        usuarioLogado.nome=document.getElementById('editNome').value.trim();
-        usuarioLogado.celular=document.getElementById('editCelular').value.trim();
-        usuarioLogado.email=document.getElementById('editEmail').value.trim();
-        var usuarios=carregarDados('usuarios')||[];
-        var i=usuarios.findIndex(function(u){return u.id===usuarioLogado.id});
-        if(i!==-1){usuarios[i]=usuarioLogado;salvarDados('usuarios',usuarios);}
-        salvarDados('usuarioLogado',usuarioLogado);
-        mostrarToast('Perfil atualizado!','sucesso');
-        }
-        
-        function carregarFeed(){
-        var obras=carregarDados('obras')||[];
-        var c=document.getElementById('feedContainer');
-        if(!c)return;
-        if(obras.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma obra!</h3></div>';return;}
-        c.innerHTML=obras.map(function(o){return'<div class="feed-card"><div class="feed-card-header"><div class="feed-avatar">🏢</div><div class="feed-user-name">Empreiteiro</div></div><div class="feed-card-image">🏗️</div><div class="feed-card-body"><h3>'+o.nome+'</h3><p>📍 '+o.endereco+'</p><p>💰 R$'+o.valorHora+'/h</p></div></div>'}).join('');
-        }
-        
-        function publicarObra(){
-        var n=document.getElementById('obraNome').value.trim();
-        var e=document.getElementById('obraEndereco').value.trim();
-        if(!n||!e)return;
-        var obras=carregarDados('obras')||[];
-        obras.unshift({id:Date.now(),nome:n,endereco:e,valorHora:25,data:new Date().toISOString()});
-        salvarDados('obras',obras);
-        mostrarToast('Obra publicada!','sucesso');mostrarTela('homeScreen');
-        }
-        
-        function buscarProfissionais(){
-        var p=(carregarDados('usuarios')||[]).filter(function(u){return u.tipo==='profissional'});
-        var c=document.getElementById('buscaResultados');
-        if(!c)return;
-        c.innerHTML=p.map(function(u){return'<div class="card"><strong>'+u.nome+'</strong><br>'+u.profissao+' - '+u.experiencia+' anos<br>📱 '+u.celular+'</div>'}).join('');
-        }
-        
-        function mudarTab(tab,btn){
-        document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
-        btn.classList.add('active');
-        document.getElementById('feedTab').style.display=tab==='feed'?'block':'none';
-        document.getElementById('redeTab').style.display=tab==='rede'?'block':'none';
-        }
-        
-        function carregarRede(){
-        var c=document.getElementById('redeContainer');
-        if(c)c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>🔗 Nenhuma conexao</h3></div>';
-        }
-        
-        function fecharModal(id){var m=document.getElementById(id);if(m)m.classList.remove('active');}
-        
-        function sair(){usuarioLogado=null;salvarDados('usuarioLogado',null);mostrarTela('loginScreen');}
-        
-        function mudarFotoPerfil(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){document.getElementById('perfilAvatarImg').src=ev.target.result;document.getElementById('perfilAvatarImg').style.display='block';document.getElementById('perfilAvatarDefault').style.display='none';usuarioLogado.fotoPerfil=ev.target.result;salvarDados('usuarioLogado',usuarioLogado)};r.readAsDataURL(f)}
-        
-        function previewFotoObra(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){document.getElementById('obraPreview').src=ev.target.result;document.getElementById('obraPreview').style.display='block'};r.readAsDataURL(f)}
-        
-        if(usuarioLogado)mostrarTela('homeScreen');
-        console.log('✅ LPXCONSTRUTOR FUNCIONANDO!');
-        alert('✅ JAVASCRIPT CARREGADO COM SUCESSO!');
-        </script>
-
-                <!-- TELA DE DETALHE DA OBRA -->
-        <div class="screen" id="detalheObraScreen">
-            <div id="detalheObraConteudo"></div>
-        </div>
-        
-        <!-- TELA DE PERFIL PÚBLICO -->
-        <div class="screen" id="perfilPublicoScreen">
-            <div id="perfilPublicoConteudo"></div>
-        </div>
-        
-        <!-- MODAL DE CHAT/CONTRATAÇÃO -->
-        <div class="modal" id="modalChat">
-            <div class="modal-content">
-                <h3 style="color:#1A3A5C; margin-bottom:15px;">💬 CONTATO</h3>
-                <div id="modalChatInfo"></div>
-                <div class="input-group">
-                    <div class="input-label">📝 Mensagem</div>
-                    <textarea class="input-field" id="chatMensagem" rows="3" placeholder="Olá! Tenho interesse no seu trabalho..."></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="enviarMensagem()">📤 ENVIAR MENSAGEM</button>
-                <button class="btn btn-success" onclick="contratarPeloChat()">🤝 CONTRATAR</button>
-                <button class="btn btn-outline" onclick="fecharModal('modalChat')">Fechar</button>
-            </div>
-        </div>
+    <!-- JAVASCRIPT COMPLETO E ATUALIZADO -->
+    <script>
+    // ============================================
+    // BANCO DE DADOS
+    // ============================================
+    function salvarDados(c,d){localStorage.setItem(c,JSON.stringify(d))}
+    function carregarDados(c){var d=localStorage.getItem(c);return d?JSON.parse(d):null}
     
+    var usuarioLogado=carregarDados('usuarioLogado');
+    var obraSelecionada=null;
+    var perfilSelecionado=null;
+    var codigoRecuperacao=null;
+    var usuarioRecuperando=null;
+    
+    if(!carregarDados('usuarios')){
+    salvarDados('usuarios',[
+    {id:1001,tipo:'profissional',nome:'João Silva',email:'joao@email.com',celular:'(11)99999-0001',profissao:'pedreiro',experiencia:8,habilidades:'Alvenaria, Revestimento',senha:'123456',fotoPerfil:'',avaliacoes:[]},
+    {id:1002,tipo:'profissional',nome:'Maria Santos',email:'maria@email.com',celular:'(11)99999-0002',profissao:'pintor',experiencia:5,habilidades:'Pintura, Textura',senha:'123456',fotoPerfil:'',avaliacoes:[]},
+    {id:2001,tipo:'empreiteiro',nome:'Carlos Obras',email:'carlos@email.com',celular:'(11)99999-0003',profissao:'',experiencia:15,senha:'123456',fotoPerfil:''}
+    ])}
+    if(!carregarDados('obras')){
+    salvarDados('obras',[
+    {id:1,usuarioId:2001,nome:'Residencial Parque Verde',endereco:'Rua das Flores, 123',descricao:'Construção de sobrado com 3 quartos.',profissoes:'Pedreiro, Eletricista',valorHora:25,data:new Date().toISOString(),interessados:[]}
+    ])}
+    if(!carregarDados('conexoes'))salvarDados('conexoes',[])
+    
+    // ============================================
+    // NAVEGAÇÃO
+    // ============================================
+    function mostrarTela(id){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+    document.getElementById(id).classList.add('active');
+    var nav=document.getElementById('bottomNav');
+    if(nav)nav.style.display=['homeScreen','buscaScreen','publicarObraScreen','perfilScreen'].includes(id)?'flex':'none';
+    if(id==='homeScreen')carregarFeed();
+    if(id==='perfilScreen')carregarMeuPerfil();
+    if(id==='buscaScreen')buscarProfissionais();
+    }
+    
+    function mostrarToast(m,t){
+    var toast=document.getElementById('toast');
+    if(!toast)return;
+    toast.textContent=m;
+    toast.style.background=t==='erro'?'#EF4444':t==='sucesso'?'#10B981':'#1F2937';
+    toast.style.display='block';
+    setTimeout(function(){toast.style.display='none'},3000);
+    }
+    
+    function fecharModal(id){var m=document.getElementById(id);if(m)m.classList.remove('active');}
+    
+    function mudarTab(tab,btn){
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+    btn.classList.add('active');
+    document.getElementById('feedTab').style.display=tab==='feed'?'block':'none';
+    document.getElementById('redeTab').style.display=tab==='rede'?'block':'none';
+    }
+    
+    function toggleProfissao(){
+    var g=document.getElementById('grupoProfissao');
+    var t=document.getElementById('cadTipo');
+    if(g&&t)g.style.display=t.value==='profissional'?'block':'none';
+    }
+    
+    // LOGIN
+    function fazerLogin(){
+    var e=document.getElementById('loginEmail').value.trim();
+    var s=document.getElementById('loginSenha').value;
+    if(!e||!s){mostrarToast('Preencha todos os campos!','erro');return;}
+    var u=(carregarDados('usuarios')||[]).find(function(u){return(u.email===e||u.cpf===e)&&u.senha===s});
+    if(u){usuarioLogado=u;salvarDados('usuarioLogado',u);mostrarToast('Bem-vindo, '+u.nome+'!','sucesso');setTimeout(function(){mostrarTela('homeScreen')},500)}
+    else{mostrarToast('E-mail/CPF ou senha inválidos!','erro')}
+    }
+    
+    // CADASTRO
+    function cadastrar(){
+    var t=document.getElementById('cadTipo').value;
+    var n=document.getElementById('cadNome').value.trim();
+    var e=document.getElementById('cadEmail').value.trim();
+    var c=document.getElementById('cadCelular').value.trim();
+    var p=document.getElementById('cadCPF').value.trim();
+    var pr=t==='profissional'?document.getElementById('cadProfissao').value:'';
+    var ex=document.getElementById('cadExperiencia').value;
+    var s=document.getElementById('cadSenha').value;
+    if(!n||!e||!c||!p||!s){mostrarToast('Preencha todos os campos!','erro');return;}
+    if(s.length<6){mostrarToast('Senha mínima de 6 caracteres!','erro');return;}
+    var usuarios=carregarDados('usuarios')||[];
+    if(usuarios.find(function(u){return u.email===e||u.cpf===p})){mostrarToast('E-mail/CPF já cadastrado!','erro');return;}
+    var novo={id:Date.now(),tipo:t,nome:n,email:e,celular:c,cpf:p,profissao:pr,experiencia:parseInt(ex)||0,senha:s,fotoPerfil:'',avaliacoes:[]};
+    usuarios.push(novo);salvarDados('usuarios',usuarios);
+    usuarioLogado=novo;salvarDados('usuarioLogado',novo);
+    mostrarToast('Cadastro realizado!','sucesso');setTimeout(function(){mostrarTela('homeScreen')},500);
+    }
+    
+    // RECUPERAÇÃO DE SENHA
+    function recuperarSenha(){
+    document.getElementById('recuperarPasso1').style.display='block';
+    document.getElementById('recuperarPasso2').style.display='none';
+    document.getElementById('recuperarPasso3').style.display='none';
+    mostrarTela('recuperarSenhaScreen');
+    }
+    function enviarCodigoRecuperacao(){
+    var e=document.getElementById('recEmail').value.trim();
+    if(!e)return;
+    var u=(carregarDados('usuarios')||[]).find(function(u){return u.email===e||u.cpf.replace(/\D/g,'')===e.replace(/\D/g,'')});
+    if(!u){mostrarToast('E-mail/CPF não encontrado!','erro');return;}
+    codigoRecuperacao=Math.floor(100000+Math.random()*900000).toString();
+    usuarioRecuperando=u;
+    alert('Seu código é: '+codigoRecuperacao);
+    document.getElementById('recuperarPasso1').style.display='none';
+    document.getElementById('recuperarPasso2').style.display='block';
+    }
+    function verificarCodigo(){
+    if(document.getElementById('recCodigo').value.trim()!==codigoRecuperacao){mostrarToast('Código inválido!','erro');return;}
+    document.getElementById('recuperarPasso2').style.display='none';
+    document.getElementById('recuperarPasso3').style.display='block';
+    }
+    function criarNovaSenha(){
+    var n=document.getElementById('recNovaSenha').value;
+    var c=document.getElementById('recConfirmarSenha').value;
+    if(!n||n.length<6)return;
+    if(n!==c){mostrarToast('Senhas não coincidem!','erro');return;}
+    var usuarios=carregarDados('usuarios')||[];
+    var i=usuarios.findIndex(function(u){return u.id===usuarioRecuperando.id});
+    if(i!==-1){usuarios[i].senha=n;salvarDados('usuarios',usuarios);}
+    mostrarToast('Senha alterada!','sucesso');setTimeout(function(){mostrarTela('loginScreen')},1000);
+    }
+    
+    // PERFIL
+    function carregarMeuPerfil(){
+    if(!usuarioLogado)return;
+    document.getElementById('perfilNome').textContent=usuarioLogado.nome;
+    document.getElementById('perfilProfissao').textContent=usuarioLogado.tipo==='profissional'?usuarioLogado.profissao+' • '+usuarioLogado.experiencia+' anos':'EMPREITEIRO';
+    document.getElementById('editNome').value=usuarioLogado.nome||'';
+    document.getElementById('editCelular').value=usuarioLogado.celular||'';
+    document.getElementById('editEmail').value=usuarioLogado.email||'';
+    }
+    function salvarPerfil(){
+    if(!usuarioLogado)return;
+    usuarioLogado.nome=document.getElementById('editNome').value.trim();
+    usuarioLogado.celular=document.getElementById('editCelular').value.trim();
+    usuarioLogado.email=document.getElementById('editEmail').value.trim();
+    var usuarios=carregarDados('usuarios')||[];
+    var i=usuarios.findIndex(function(u){return u.id===usuarioLogado.id});
+    if(i!==-1){usuarios[i]=usuarioLogado;salvarDados('usuarios',usuarios);}
+    salvarDados('usuarioLogado',usuarioLogado);
+    mostrarToast('Perfil atualizado!','sucesso');
+    }
+    
+    // ============================================
+    // FEED DE OBRAS (CLICÁVEL)
+    // ============================================
+    function carregarFeed(){
+    var obras=carregarDados('obras')||[];
+    var container=document.getElementById('feedContainer');
+    if(!container)return;
+    if(obras.length===0){
+    container.innerHTML='<div class="card" style="text-align:center;padding:40px;"><div style="font-size:60px;">🏗️</div><h3>Nenhuma obra!</h3></div>';
+    return;
+    }
+    var usuarios=carregarDados('usuarios')||[];
+    container.innerHTML=obras.map(function(obra){
+    var autor=usuarios.find(function(u){return u.id===obra.usuarioId});
+    return '<div class="feed-card" style="cursor:pointer;" onclick="verDetalheObra('+obra.id+')">'+
+    '<div class="feed-card-header"><div class="feed-avatar">🏢</div><div class="feed-user-info"><div class="feed-user-name">'+(autor?autor.nome:'Empreiteiro')+'</div><div class="feed-time">'+new Date(obra.data).toLocaleDateString('pt-BR')+'</div></div></div>'+
+    '<div class="feed-card-image">🏗️</div>'+
+    '<div class="feed-card-body"><div class="feed-card-title">'+obra.nome+'</div><p>📍 '+obra.endereco+'</p><p>💰 R$ '+obra.valorHora+'/h</p><p style="font-size:11px;color:#F47920;">👆 Clique para ver detalhes</p></div></div>';
+    }).join('');
+    }
+    
+    // DETALHE DA OBRA
+    function verDetalheObra(obraId){
+    var obras=carregarDados('obras')||[];
+    var obra=obras.find(function(o){return o.id===obraId});
+    if(!obra)return;
+    var usuarios=carregarDados('usuarios')||[];
+    var autor=usuarios.find(function(u){return u.id===obra.usuarioId});
+    var jaCandidatou=obra.interessados&&obra.interessados.some(function(i){return i.profissionalId===usuarioLogado?.id});
+    
+    var html='<div style="text-align:center;margin-bottom:20px;"><div style="font-size:60px;">🏗️</div><h2 style="color:#1A3A5C;">'+obra.nome+'</h2></div>'+
+    '<div class="card"><p><strong>📍 Endereço:</strong> '+obra.endereco+'</p><p><strong>📝 Descrição:</strong> '+(obra.descricao||'Não informado')+'</p><p><strong>💰 Valor:</strong> R$ '+obra.valorHora+'/h</p><p><strong>👷 Profissões:</strong> '+(obra.profissoes||'Não informado')+'</p><p><strong>🏢 Empreiteiro:</strong> '+(autor?autor.nome:'Não informado')+'</p></div>';
+    
+    if(usuarioLogado&&usuarioLogado.tipo==='profissional'){
+    if(jaCandidatou){html+='<div class="alert-card" style="text-align:center;">✅ Você já se candidatou!</div>';}
+    else{html+='<button class="btn btn-primary" onclick="candidatarObra('+obra.id+')">✋ TENHO INTERESSE NESTA VAGA</button>';}
+    }
+    
+    html+='<button class="btn btn-outline" onclick="mostrarTela(\'homeScreen\')">← Voltar</button>';
+    document.getElementById('detalheObraConteudo').innerHTML=html;
+    mostrarTela('detalheObraScreen');
+    }
+    
+    function candidatarObra(obraId){
+    if(!usuarioLogado||usuarioLogado.tipo!=='profissional'){mostrarToast('Apenas profissionais!','erro');return;}
+    var obras=carregarDados('obras')||[];
+    var idx=obras.findIndex(function(o){return o.id===obraId});
+    if(idx===-1)return;
+    if(!obras[idx].interessados)obras[idx].interessados=[];
+    if(obras[idx].interessados.find(function(i){return i.profissionalId===usuarioLogado.id})){mostrarToast('Já se candidatou!','erro');return;}
+    obras[idx].interessados.push({profissionalId:usuarioLogado.id,data:new Date().toISOString(),status:'pendente'});
+    salvarDados('obras',obras);
+    mostrarToast('✅ Candidatura enviada!','sucesso');
+    verDetalheObra(obraId);
+    }
+    
+    // PERFIL PÚBLICO
+    function verPerfilPublico(userId){
+    var usuarios=carregarDados('usuarios')||[];
+    var user=usuarios.find(function(u){return u.id===userId});
+    if(!user)return;
+    perfilSelecionado=user;
+    var html='<div class="profile-header"><div class="profile-avatar"><span>👷</span></div><h2 style="color:#1A3A5C;">'+user.nome+'</h2><p style="color:#F47920;">'+user.profissao+' • '+user.experiencia+' anos</p></div>'+
+    '<div class="card"><h3>📞 Contato</h3><p>📱 '+user.celular+'</p><p>📧 '+user.email+'</p></div>'+
+    '<div class="card"><h3>🛠️ Habilidades</h3><p>'+(user.habilidades||'Não informado')+'</p></div>';
+    if(usuarioLogado&&usuarioLogado.id!==user.id){
+    html+='<button class="btn btn-primary" onclick="abrirChat('+user.id+')">💬 CONVERSAR</button>';
+    if(usuarioLogado.tipo==='empreiteiro'){html+='<button class="btn btn-success" onclick="contratarProfissional('+user.id+')">🤝 CONTRATAR</button>';}
+    }
+    html+='<button class="btn btn-outline" onclick="mostrarTela(\'homeScreen\')">← Voltar</button>';
+    document.getElementById('perfilPublicoConteudo').innerHTML=html;
+    mostrarTela('perfilPublicoScreen');
+    }
+    
+    // CHAT
+    function abrirChat(userId){
+    var usuarios=carregarDados('usuarios')||[];
+    var user=usuarios.find(function(u){return u.id===userId});
+    if(!user)return;
+    perfilSelecionado=user;
+    document.getElementById('modalChatInfo').innerHTML='<div style="display:flex;align-items:center;margin-bottom:15px;"><div class="lista-avatar">👷</div><div style="margin-left:10px;"><strong>'+user.nome+'</strong><br>'+user.profissao+' • '+user.experiencia+' anos<br>📱 '+user.celular+'</div></div>';
+    document.getElementById('chatMensagem').value='Olá '+user.nome.split(' ')[0]+'! Tenho interesse no seu trabalho.';
+    document.getElementById('modalChat').classList.add('active');
+    }
+    
+    function enviarMensagem(){
+    if(!perfilSelecionado||!usuarioLogado)return;
+    var msg=document.getElementById('chatMensagem').value.trim();
+    if(!msg){mostrarToast('Digite uma mensagem!','erro');return;}
+    mostrarToast('✅ Mensagem enviada para '+perfilSelecionado.nome+'!','sucesso');
+    fecharModal('modalChat');
+    }
+    
+    function contratarProfissional(profId){
+    if(!usuarioLogado||usuarioLogado.tipo!=='empreiteiro')return;
+    var usuarios=carregarDados('usuarios')||[];
+    var prof=usuarios.find(function(u){return u.id===profId});
+    if(!prof)return;
+    var obra=prompt('Nome da obra:','Obra');
+    var valor=prompt('Valor por hora (R$):','25');
+    if(!obra||!valor)return;
+    var conexoes=carregarDados('conexoes')||[];
+    conexoes.push({id:Date.now(),profissionalId:prof.id,empreiteiroId:usuarioLogado.id,obra:obra,valorHora:parseFloat(valor),dataInicio:new Date().toISOString(),ativa:true});
+    salvarDados('conexoes',conexoes);
+    mostrarToast('🤝 '+prof.nome+' contratado!','sucesso');
+    }
+    
+    // BUSCA
+    function buscarProfissionais(){
+    var termo=(document.getElementById('buscaInput')?.value||'').toLowerCase();
+    var profissionais=(carregarDados('usuarios')||[]).filter(function(u){return u.tipo==='profissional'&&(!termo||u.nome.toLowerCase().includes(termo)||u.profissao.toLowerCase().includes(termo))});
+    var c=document.getElementById('buscaResultados');
+    if(!c)return;
+    if(profissionais.length===0){c.innerHTML='<p style="text-align:center;color:#999;">Nenhum encontrado.</p>';return;}
+    c.innerHTML=profissionais.map(function(p){
+    return'<div class="card" style="cursor:pointer;" onclick="verPerfilPublico('+p.id+')"><div style="display:flex;align-items:center;"><div class="lista-avatar">👷</div><div style="margin-left:14px;flex:1;"><div class="lista-nome">'+p.nome+'</div><div class="lista-detalhe">'+p.profissao+' • '+p.experiencia+' anos</div></div></div><p style="font-size:11px;color:#999;margin-top:8px;">👆 Clique para ver perfil</p></div>';
+    }).join('');
+    }
+    
+    function carregarRede(){
+    var c=document.getElementById('redeContainer');
+    if(c)c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>🔗 Nenhuma conexão</h3></div>';
+    }
+    
+    function publicarObra(){
+    if(!usuarioLogado||usuarioLogado.tipo!=='empreiteiro'){mostrarToast('Apenas empreiteiros!','erro');return;}
+    var n=document.getElementById('obraNome').value.trim();
+    var e=document.getElementById('obraEndereco').value.trim();
+    if(!n||!e){mostrarToast('Nome e endereço obrigatórios!','erro');return;}
+    var obras=carregarDados('obras')||[];
+    obras.unshift({id:Date.now(),usuarioId:usuarioLogado.id,nome:n,endereco:e,descricao:document.getElementById('obraDescricao').value,profissoes:document.getElementById('obraProfissoes').value,valorHora:parseFloat(document.getElementById('obraValorHora').value)||25,data:new Date().toISOString(),interessados:[]});
+    salvarDados('obras',obras);
+    mostrarToast('✅ Obra publicada!','sucesso');mostrarTela('homeScreen');
+    }
+    
+    function sair(){usuarioLogado=null;salvarDados('usuarioLogado',null);mostrarTela('loginScreen');}
+    
+    if(usuarioLogado)mostrarTela('homeScreen');
+    console.log('✅ PRONTO! Clique nas obras e perfis!');
+    </script>
+
 </body>
 </html>
