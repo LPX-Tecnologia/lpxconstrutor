@@ -15,9 +15,33 @@
     <div class="header-subtitle">Rede Profissional da Construção</div>
 </div>
 
+<!-- ============================================ -->
+<!-- VÍDEO DE APRESENTAÇÃO NO TOPO                 -->
+<!-- ============================================ -->
+<div style="max-width:500px; margin:20px auto; padding:0 16px;">
+    <div style="background:white; border-radius:20px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+        <div style="position:relative; padding-bottom:56.25%; height:0;">
+            <iframe 
+                src="https://www.youtube.com/embed/eCy8nhTkaTw" 
+                style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;"
+                allowfullscreen
+                loading="lazy"
+                title="LPXConstrutor - Vídeo de Apresentação">
+            </iframe>
+        </div>
+        <div style="padding:15px; text-align:center; background:linear-gradient(135deg,#1A3A5C,#2C5F8A);">
+            <p style="font-weight:700; color:white; margin:0; font-size:14px;">🎬 Assista e descubra como encontrar as melhores oportunidades!</p>
+        </div>
+    </div>
+</div>
+
 <!-- LOGIN -->
 <div class="screen active" id="loginScreen">
-    <div style="text-align:center;margin:30px 0;"><div style="font-size:80px;">🏗️</div><h2 style="color:#1A3A5C;">LPXCONSTRUTOR</h2><p style="color:#F47920;">Rede Profissional da Construção</p></div>
+    <div style="text-align:center;margin:20px 0 30px 0;">
+        <div style="font-size:60px;">🏗️</div>
+        <h2 style="color:#1A3A5C;margin-top:5px;">LPXCONSTRUTOR</h2>
+        <p style="color:#F47920;font-weight:600;">Rede Profissional da Construção</p>
+    </div>
     <div class="card">
         <div class="input-group"><div class="input-label">📧 E-mail ou CPF</div><input type="text" class="input-field" id="loginEmail" placeholder="Digite seu e-mail ou CPF"></div>
         <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="loginSenha" placeholder="Digite sua senha"></div>
@@ -154,9 +178,6 @@
 <div class="toast" id="toast" style="display:none;"></div>
 
 <script>
-// ============================================
-// BANCO DE DADOS
-// ============================================
 function salvarDados(c,d){localStorage.setItem(c,JSON.stringify(d))}
 function carregarDados(c){var d=localStorage.getItem(c);return d?JSON.parse(d):null}
 
@@ -179,9 +200,6 @@ salvarDados('obras',[
 ])}
 if(!carregarDados('conexoes'))salvarDados('conexoes',[])
 
-// ============================================
-// NAVEGAÇÃO
-// ============================================
 function mostrarTela(id){
 document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
 document.getElementById(id).classList.add('active');
@@ -216,7 +234,6 @@ var t=document.getElementById('cadTipo');
 if(g&&t)g.style.display=t.value==='profissional'?'block':'none';
 }
 
-// LOGIN
 function fazerLogin(){
 var e=document.getElementById('loginEmail').value.trim();
 var s=document.getElementById('loginSenha').value;
@@ -226,7 +243,6 @@ if(u){usuarioLogado=u;salvarDados('usuarioLogado',u);mostrarToast('Bem-vindo, '+
 else{mostrarToast('E-mail/CPF ou senha inválidos!','erro')}
 }
 
-// CADASTRO
 function cadastrar(){
 var t=document.getElementById('cadTipo').value;
 var n=document.getElementById('cadNome').value.trim();
@@ -246,7 +262,6 @@ usuarioLogado=novo;salvarDados('usuarioLogado',novo);
 mostrarToast('Cadastro realizado!','sucesso');setTimeout(function(){mostrarTela('homeScreen')},500);
 }
 
-// RECUPERAÇÃO DE SENHA
 function recuperarSenha(){
 document.getElementById('recuperarPasso1').style.display='block';
 document.getElementById('recuperarPasso2').style.display='none';
@@ -280,7 +295,6 @@ if(i!==-1){usuarios[i].senha=n;salvarDados('usuarios',usuarios);}
 mostrarToast('Senha alterada!','sucesso');setTimeout(function(){mostrarTela('loginScreen')},1000);
 }
 
-// PERFIL
 function carregarMeuPerfil(){
 if(!usuarioLogado)return;
 document.getElementById('perfilNome').textContent=usuarioLogado.nome;
@@ -309,9 +323,6 @@ usuarioLogado.fotoPerfil=ev.target.result;salvarDados('usuarioLogado',usuarioLog
 };r.readAsDataURL(f);
 }
 
-// ============================================
-// FEED DE OBRAS (CLICÁVEL)
-// ============================================
 function carregarFeed(){
 var obras=carregarDados('obras')||[];
 var container=document.getElementById('feedContainer');
@@ -330,7 +341,6 @@ return '<div class="feed-card" style="cursor:pointer;" onclick="verDetalheObra('
 }).join('');
 }
 
-// DETALHE DA OBRA
 function verDetalheObra(obraId){
 var obras=carregarDados('obras')||[];
 var obra=obras.find(function(o){return o.id===obraId});
@@ -401,9 +411,6 @@ var modal=document.getElementById('modalCandidatos');if(modal)modal.remove();
 mostrarToast('✅ Candidato aceito!','sucesso');
 }
 
-// ============================================
-// PERFIL PÚBLICO (COM WHATSAPP)
-// ============================================
 function verPerfilPublico(userId){
 var usuarios=carregarDados('usuarios')||[];
 var user=usuarios.find(function(u){return u.id===userId});
@@ -426,7 +433,6 @@ document.getElementById('perfilPublicoConteudo').innerHTML=html;
 mostrarTela('perfilPublicoScreen');
 }
 
-// CHAT
 function abrirChat(userId){
 var usuarios=carregarDados('usuarios')||[];
 var user=usuarios.find(function(u){return u.id===userId});
@@ -457,9 +463,6 @@ salvarDados('conexoes',conexoes);
 mostrarToast('🤝 '+prof.nome+' contratado!','sucesso');
 }
 
-// ============================================
-// BUSCA (COM WHATSAPP)
-// ============================================
 function buscarProfissionais(){
 var termo=(document.getElementById('buscaInput')?.value||'').toLowerCase();
 var profissionais=(carregarDados('usuarios')||[]).filter(function(u){return u.tipo==='profissional'&&(!termo||u.nome.toLowerCase().includes(termo)||u.profissao.toLowerCase().includes(termo))});
@@ -505,7 +508,7 @@ mostrarToast('✅ Obra publicada!','sucesso');mostrarTela('homeScreen');
 function sair(){usuarioLogado=null;salvarDados('usuarioLogado',null);mostrarTela('loginScreen');mostrarToast('👋 Até logo!');}
 
 if(usuarioLogado)mostrarTela('homeScreen');
-console.log('✅ LPXCONSTRUTOR COMPLETO!');
+console.log('✅ LPXCONSTRUTOR COMPLETO COM VÍDEO!');
 </script>
 
 </body>
