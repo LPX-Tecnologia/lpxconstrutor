@@ -7,6 +7,10 @@
     <title>LPXConstrutor</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- ===== GOOGLE MAPS API COM SUA CHAVE ===== -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places"></script>
+    
     <style>
         /* ===== ESTILOS DA GALERIA DE VÍDEOS ===== */
         .video-gallery-wrapper {
@@ -137,8 +141,7 @@
         /* ===== BOTÃO DE NAVEGAÇÃO ===== */
         .video-nav-buttons {
             display: flex;
-            justify-content: center;
-            gap: 12px;
+            gap: 10px;
             padding: 0 16px 16px;
             background: #f8fafc;
         }
@@ -153,6 +156,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
+            flex: 1;
         }
 
         .video-nav-buttons button:hover {
@@ -164,8 +168,105 @@
             cursor: not-allowed;
         }
 
+        /* ===== ESTILOS DO MAPA ===== */
+        #map {
+            width: 100%;
+            height: 300px;
+            background: #e5e7eb;
+        }
+
+        .thumbnail-item-map {
+            flex: 0 0 180px;
+            scroll-snap-align: start;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .thumbnail-item-map:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .thumbnail-item-map .thumb-icon {
+            font-size: 30px;
+        }
+
+        .thumbnail-item-map .thumb-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #1A3A5C;
+            margin-top: 4px;
+        }
+
+        .thumbnail-item-map .thumb-detail {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+        .thumbnail-item-map .thumb-status {
+            font-size: 11px;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .thumbnail-item-map .thumb-status.disponivel {
+            color: #10B981;
+        }
+
+        .thumbnail-item-map .thumb-status.preenchida {
+            color: #EF4444;
+        }
+
+        .thumbnail-item-map .thumb-price {
+            font-size: 12px;
+            font-weight: 600;
+            color: #F47920;
+            margin-top: 4px;
+        }
+
+        .btn-map {
+            background: #F47920;
+            color: white;
+        }
+
+        .btn-map:hover {
+            background: #d96a1a;
+        }
+
+        .btn-publish {
+            background: #1A3A5C;
+            color: white;
+        }
+
+        .btn-publish:hover {
+            background: #2C5F8A;
+        }
+
+        /* ===== CONTROLE DE VISIBILIDADE ===== */
+        #blocoVideos {
+            display: block;
+        }
+
+        #blocoMapa {
+            display: none;
+        }
+
+        .loading-message {
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
         /* ===== DEMAIS ESTILOS DO APP ===== */
-        /* (mantidos os mesmos de antes) */
         * {
             margin: 0;
             padding: 0;
@@ -532,9 +633,9 @@
 </div>
 
 <!-- ========================================================== -->
-<!-- ===== GALERIA DE VÍDEOS NO TOPO (ROLÁVEL) ===== -->
+<!-- ===== BLOCO 1: GALERIA DE VÍDEOS (ANTES DO LOGIN) ===== -->
 <!-- ========================================================== -->
-<div class="video-gallery-wrapper">
+<div id="blocoVideos" class="video-gallery-wrapper">
     <div class="video-gallery-card">
 
         <!-- PLAYER PRINCIPAL -->
@@ -586,15 +687,6 @@
                 <div class="thumb-title">💡 Dicas</div>
             </div>
 
-            <!-- ===== ADICIONE MAIS VÍDEOS AQUI ===== -->
-            <!-- Copie o bloco abaixo e cole para adicionar mais -->
-            <!--
-            <div class="thumbnail-item" data-video-id="ID_DO_VIDEO" onclick="trocarVideo('ID_DO_VIDEO', this)">
-                <img src="https://img.youtube.com/vi/ID_DO_VIDEO/mqdefault.jpg" alt="Título do Vídeo" loading="lazy">
-                <div class="thumb-title">📌 Título</div>
-            </div>
-            -->
-
         </div>
 
         <!-- INDICADORES DE PÁGINA -->
@@ -604,6 +696,34 @@
         <div class="video-nav-buttons">
             <button onclick="navegarThumbnails(-1)" id="btnPrevVideo">◀ Anterior</button>
             <button onclick="navegarThumbnails(1)" id="btnNextVideo">Próximo ▶</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================================== -->
+<!-- ===== BLOCO 2: MAPA (DEPOIS DO LOGIN) ===== -->
+<!-- ========================================================== -->
+<div id="blocoMapa" class="video-gallery-wrapper" style="display:none;">
+    <div class="video-gallery-card">
+
+        <!-- HEADER DO MAPA -->
+        <div class="video-gallery-header">
+            <p>📍 Obras próximas a você</p>
+        </div>
+
+        <!-- MAPA -->
+        <div id="map"></div>
+
+        <!-- LISTA DE OBRAS PRÓXIMAS -->
+        <div class="thumbnail-scroll" id="obrasProximas">
+            <div class="loading-message">🔄 Carregando obras próximas...</div>
+        </div>
+
+        <!-- BOTÕES -->
+        <div class="video-nav-buttons">
+            <button class="btn-map" onclick="atualizarMapa()">🔄 Atualizar</button>
+            <button class="btn-publish" onclick="mostrarTela('publicarObraScreen')">📸 Publicar Obra</button>
         </div>
 
     </div>
@@ -676,7 +796,7 @@
         <button class="tab active" onclick="mudarTab('feed',this)">📱 Feed</button>
         <button class="tab" onclick="mudarTab('rede',this)">🔗 Minha Rede</button>
     </div>
-    <div id="feedTab"><div id="feedContainer"></div><button class="btn btn-primary" onclick="mostrarTela('publicarObraScreen')">📸 PUBLICAR OBRA</button></div>
+    <div id="feedTab"><div id="feedContainer"></div></div>
     <div id="redeTab" style="display:none;"><div id="redeContainer"></div></div>
 </div>
 
@@ -774,7 +894,7 @@
     }
 
     function trocarVideo(videoId, element) {
-        if (!videoId || videoId === 'SEU_ID_VIDEO_2' || videoId === 'SEU_ID_VIDEO_3' || videoId === 'SEU_ID_VIDEO_4' || videoId === 'SEU_ID_VIDEO_5') {
+        if (!videoId || videoId === 'SEU_ID_VIDEO_3' || videoId === 'SEU_ID_VIDEO_4' || videoId === 'SEU_ID_VIDEO_5') {
             mostrarToast('🎬 Substitua "SEU_ID_VIDEO_X" pelo ID real do seu vídeo no YouTube!', 'erro');
             return;
         }
@@ -784,17 +904,14 @@
             player.src = 'https://www.youtube.com/embed/' + videoId;
         }
 
-        // Atualiza o thumbnail ativo
         document.querySelectorAll('.thumbnail-item').forEach(el => el.classList.remove('active'));
         if (element) {
             element.classList.add('active');
-            // Atualiza o índice atual
             const index = videoThumbnails.indexOf(element);
             if (index !== -1) {
                 currentVideoIndex = index;
                 updateDots();
                 updateNavButtons();
-                // Rola o thumbnail para a visão
                 element.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             }
         }
@@ -807,7 +924,7 @@
         const targetItem = videoThumbnails[currentVideoIndex];
         if (targetItem) {
             const videoId = targetItem.dataset.videoId;
-            if (videoId && videoId !== 'SEU_ID_VIDEO_2' && videoId !== 'SEU_ID_VIDEO_3' && videoId !== 'SEU_ID_VIDEO_4' && videoId !== 'SEU_ID_VIDEO_5') {
+            if (videoId && videoId !== 'SEU_ID_VIDEO_3' && videoId !== 'SEU_ID_VIDEO_4' && videoId !== 'SEU_ID_VIDEO_5') {
                 trocarVideo(videoId, targetItem);
             } else {
                 mostrarToast('🎬 Substitua "SEU_ID_VIDEO_X" pelo ID real do seu vídeo no YouTube!', 'erro');
@@ -845,7 +962,218 @@
     }
 
     // ==========================================================
-    // ===== FUNÇÕES DO APP (mantidas) =====
+    // ===== FUNÇÕES PARA ALTERNAR ENTRE VÍDEOS E MAPA =====
+    // ==========================================================
+
+    function mostrarVideos() {
+        document.getElementById('blocoVideos').style.display = 'block';
+        document.getElementById('blocoMapa').style.display = 'none';
+        setTimeout(function() {
+            initVideoGallery();
+        }, 100);
+    }
+
+    function mostrarMapa() {
+        document.getElementById('blocoVideos').style.display = 'none';
+        document.getElementById('blocoMapa').style.display = 'block';
+        setTimeout(function() {
+            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                if (typeof initMap === 'function') {
+                    initMap();
+                }
+            } else {
+                console.log('Google Maps não carregou');
+                var container = document.getElementById('obrasProximas');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="flex:1; text-align:center; padding:20px; color:#6B7280; min-width:250px;">
+                            <div style="font-size:40px;">📍</div>
+                            <p style="margin-top:8px; font-weight:600;">Carregando mapa...</p>
+                            <p style="font-size:12px;">Ative sua localização para ver obras próximas</p>
+                        </div>
+                    `;
+                }
+            }
+        }, 500);
+    }
+
+    // ==========================================================
+    // ===== FUNÇÕES DO MAPA =====
+    // ==========================================================
+
+    var map;
+    var markers = [];
+    var userPosition = null;
+
+    function initMap() {
+        var mapElement = document.getElementById('map');
+        if (!mapElement) {
+            console.log('Mapa não encontrado');
+            return;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                userPosition = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                carregarMapa(userPosition);
+            }, function() {
+                userPosition = { lat: -23.5505, lng: -46.6333 };
+                carregarMapa(userPosition);
+                mostrarToast('📍 Ative sua localização para ver obras próximas!', 'erro');
+            });
+        } else {
+            userPosition = { lat: -23.5505, lng: -46.6333 };
+            carregarMapa(userPosition);
+        }
+    }
+
+    function carregarMapa(posicao) {
+        var mapElement = document.getElementById('map');
+        if (!mapElement) return;
+
+        map = new google.maps.Map(mapElement, {
+            center: posicao,
+            zoom: 13,
+            styles: [
+                { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }
+            ]
+        });
+
+        new google.maps.Marker({
+            position: posicao,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#F47920',
+                fillOpacity: 1,
+                strokeColor: '#FFFFFF',
+                strokeWeight: 2
+            },
+            title: 'Você está aqui'
+        });
+
+        carregarObrasNoMapa(posicao);
+    }
+
+    function carregarObrasNoMapa(posicao) {
+        var obras = carregarDados('obras') || [];
+        var container = document.getElementById('obrasProximas');
+        if (!container) return;
+
+        markers.forEach(function(m) { m.setMap(null); });
+        markers = [];
+
+        var obrasComLocalizacao = obras.filter(function(obra) {
+            return obra.lat && obra.lng;
+        });
+
+        if (obrasComLocalizacao.length === 0) {
+            container.innerHTML = `
+                <div style="flex:1; text-align:center; padding:20px; color:#6B7280; min-width:250px;">
+                    <div style="font-size:40px;">🏗️</div>
+                    <p style="margin-top:8px; font-weight:600;">Nenhuma obra próxima</p>
+                    <p style="font-size:12px;">Publique uma obra para aparecer aqui!</p>
+                </div>
+            `;
+            return;
+        }
+
+        var obrasComDistancia = obrasComLocalizacao.map(function(obra) {
+            var distancia = calcularDistancia(
+                posicao.lat, posicao.lng,
+                obra.lat, obra.lng
+            );
+            return { ...obra, distancia: distancia };
+        });
+
+        obrasComDistancia.sort(function(a, b) { return a.distancia - b.distancia; });
+
+        var obrasProximas = obrasComDistancia.slice(0, 5);
+
+        container.innerHTML = obrasProximas.map(function(obra) {
+            var temVaga = obra.interessados ? obra.interessados.length < 3 : true;
+            var statusVaga = temVaga ? '🟢 Vaga disponível' : '🔴 Vaga preenchida';
+            var statusClass = temVaga ? 'disponivel' : 'preenchida';
+
+            var marker = new google.maps.Marker({
+                position: { lat: obra.lat, lng: obra.lng },
+                map: map,
+                title: obra.nome,
+                label: {
+                    text: '🏗️',
+                    fontSize: '20px'
+                }
+            });
+
+            var infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="padding:10px; max-width:200px; font-family:Inter, sans-serif;">
+                        <strong style="color:#1A3A5C;">${obra.nome}</strong><br>
+                        📍 ${obra.endereco || 'Endereço não informado'}<br>
+                        💰 R$ ${obra.valorHora}/h<br>
+                        <span style="color:${temVaga ? '#10B981' : '#EF4444'}; font-weight:600;">${statusVaga}</span>
+                        <br><br>
+                        <button onclick="verDetalheObra(${obra.id})" 
+                                style="background:#F47920; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600; width:100%;">
+                            Ver Vaga
+                        </button>
+                    </div>
+                `
+            });
+
+            marker.addListener('click', function() {
+                infoWindow.open(map, marker);
+            });
+
+            markers.push(marker);
+
+            var distanciaKm = (obra.distancia / 1000).toFixed(1);
+            return `
+                <div class="thumbnail-item-map" onclick="verDetalheObra(${obra.id})">
+                    <div class="thumb-icon">🏗️</div>
+                    <div class="thumb-title">${obra.nome}</div>
+                    <div class="thumb-detail">📍 ${distanciaKm} km</div>
+                    <div class="thumb-status ${statusClass}">${statusVaga}</div>
+                    <div class="thumb-price">R$ ${obra.valorHora}/h</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function calcularDistancia(lat1, lon1, lat2, lon2) {
+        var R = 6371000;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    function atualizarMapa() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                userPosition = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                carregarMapa(userPosition);
+                mostrarToast('📍 Mapa atualizado!', 'sucesso');
+            }, function() {
+                mostrarToast('❌ Não foi possível obter sua localização', 'erro');
+            });
+        } else {
+            mostrarToast('❌ Seu navegador não suporta geolocalização', 'erro');
+        }
+    }
+
+    // ==========================================================
+    // ===== FUNÇÕES DO APP =====
     // ==========================================================
 
     function salvarDados(c, d) { localStorage.setItem(c, JSON.stringify(d)) }
@@ -866,9 +1194,33 @@
     }
     if (!carregarDados('obras')) {
         salvarDados('obras', [
-            { id: 1, usuarioId: 2001, nome: 'Residencial Parque Verde', endereco: 'Rua das Flores, 123', descricao: 'Construção de sobrado com 3 quartos.', profissoes: 'Pedreiro, Eletricista, Pintor', valorHora: 25, data: new Date().toISOString(), interessados: [] },
-            { id: 2, usuarioId: 2001, nome: 'Reforma Edifício Central', endereco: 'Av. Principal, 500', descricao: 'Reforma completa do hall.', profissoes: 'Pedreiro, Gesseiro', valorHora: 30, data: new Date().toISOString(), interessados: [] }
-        ])
+            {
+                id: 1,
+                usuarioId: 2001,
+                nome: 'Residencial Parque Verde',
+                endereco: 'Rua das Flores, 123 - São Paulo',
+                descricao: 'Construção de sobrado com 3 quartos.',
+                profissoes: 'Pedreiro, Eletricista, Pintor',
+                valorHora: 25,
+                lat: -23.5505,
+                lng: -46.6333,
+                data: new Date().toISOString(),
+                interessados: []
+            },
+            {
+                id: 2,
+                usuarioId: 2001,
+                nome: 'Reforma Edifício Central',
+                endereco: 'Av. Principal, 500 - São Paulo',
+                descricao: 'Reforma completa do hall.',
+                profissoes: 'Pedreiro, Gesseiro',
+                valorHora: 30,
+                lat: -23.5600,
+                lng: -46.6400,
+                data: new Date().toISOString(),
+                interessados: []
+            }
+        ]);
     }
     if (!carregarDados('conexoes')) salvarDados('conexoes', [])
 
@@ -877,7 +1229,20 @@
         document.getElementById(id).classList.add('active');
         var nav = document.getElementById('bottomNav');
         if (nav) nav.style.display = ['homeScreen', 'buscaScreen', 'publicarObraScreen', 'perfilScreen'].includes(id) ? 'flex' : 'none';
-        if (id === 'homeScreen') carregarFeed();
+        if (id === 'homeScreen') {
+            carregarFeed();
+            if (usuarioLogado) {
+                if (typeof map !== 'undefined' && map && userPosition) {
+                    carregarObrasNoMapa(userPosition);
+                } else {
+                    setTimeout(function() {
+                        if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                            initMap();
+                        }
+                    }, 500);
+                }
+            }
+        }
         if (id === 'perfilScreen') carregarMeuPerfil();
         if (id === 'buscaScreen') buscarProfissionais();
     }
@@ -912,10 +1277,15 @@
         var s = document.getElementById('loginSenha').value;
         if (!e || !s) { mostrarToast('Preencha todos os campos!', 'erro'); return; }
         var u = (carregarDados('usuarios') || []).find(function(u) { return (u.email === e || u.cpf === e) && u.senha === s });
-        if (u) { usuarioLogado = u;
+        if (u) {
+            usuarioLogado = u;
             salvarDados('usuarioLogado', u);
             mostrarToast('Bem-vindo, ' + u.nome + '!', 'sucesso');
-            setTimeout(function() { mostrarTela('homeScreen') }, 500) } else { mostrarToast('E-mail/CPF ou senha inválidos!', 'erro') }
+            mostrarMapa();
+            setTimeout(function() { mostrarTela('homeScreen') }, 500);
+        } else {
+            mostrarToast('E-mail/CPF ou senha inválidos!', 'erro');
+        }
     }
 
     function cadastrar() {
@@ -937,6 +1307,7 @@
         usuarioLogado = novo;
         salvarDados('usuarioLogado', novo);
         mostrarToast('Cadastro realizado!', 'sucesso');
+        mostrarMapa();
         setTimeout(function() { mostrarTela('homeScreen') }, 500);
     }
 
@@ -1023,8 +1394,13 @@
         var usuarios = carregarDados('usuarios') || [];
         container.innerHTML = obras.map(function(obra) {
             var autor = usuarios.find(function(u) { return u.id === obra.usuarioId });
+            var distancia = '';
+            if (userPosition && obra.lat && obra.lng) {
+                var dist = calcularDistancia(userPosition.lat, userPosition.lng, obra.lat, obra.lng);
+                distancia = `📍 ${(dist/1000).toFixed(1)} km - `;
+            }
             return '<div class="feed-card" style="cursor:pointer;" onclick="verDetalheObra(' + obra.id + ')">' +
-                '<div class="feed-card-header"><div class="feed-avatar">🏢</div><div class="feed-user-info"><div class="feed-user-name">' + (autor ? autor.nome : 'Empreiteiro') + '</div><div class="feed-time">' + new Date(obra.data).toLocaleDateString('pt-BR') + '</div></div></div>' +
+                '<div class="feed-card-header"><div class="feed-avatar">🏢</div><div class="feed-user-info"><div class="feed-user-name">' + (autor ? autor.nome : 'Empreiteiro') + '</div><div class="feed-time">' + distancia + new Date(obra.data).toLocaleDateString('pt-BR') + '</div></div></div>' +
                 '<div class="feed-card-image">🏗️</div>' +
                 '<div class="feed-card-body"><div class="feed-card-title">' + obra.nome + '</div><p>📍 ' + obra.endereco + '</p><p>💰 R$ ' + obra.valorHora + '/h</p><p style="font-size:11px;color:#F47920;">👆 Clique para ver detalhes e se candidatar</p></div></div>';
         }).join('');
@@ -1039,7 +1415,14 @@
         var jaCandidatou = obra.interessados && obra.interessados.some(function(i) { return i.profissionalId === usuarioLogado?.id });
 
         var html = '<div style="text-align:center;margin-bottom:20px;"><div style="font-size:60px;">🏗️</div><h2 style="color:#1A3A5C;">' + obra.nome + '</h2></div>' +
-            '<div class="card"><p><strong>📍 Endereço:</strong> ' + obra.endereco + '</p><p><strong>📝 Descrição:</strong> ' + (obra.descricao || 'Não informado') + '</p><p><strong>💰 Valor:</strong> R$ ' + obra.valorHora + '/h</p><p><strong>👷 Profissões:</strong> ' + (obra.profissoes || 'Não informado') + '</p><p><strong>🏢 Empreiteiro:</strong> ' + (autor ? autor.nome : 'Não informado') + '</p></div>';
+            '<div class="card"><p><strong>📍 Endereço:</strong> ' + obra.endereco + '</p><p><strong>📝 Descrição:</strong> ' + (obra.descricao || 'Não informado') + '</p><p><strong>💰 Valor:</strong> R$ ' + obra.valorHora + '/h</p><p><strong>👷 Profissões:</strong> ' + (obra.profissoes || 'Não informado') + '</p><p><strong>🏢 Empreiteiro:</strong> ' + (autor ? autor.nome : 'Não informado') + '</p>';
+
+        if (obra.lat && obra.lng && userPosition) {
+            var dist = calcularDistancia(userPosition.lat, userPosition.lng, obra.lat, obra.lng);
+            html += '<p><strong>📍 Distância:</strong> ' + (dist/1000).toFixed(1) + ' km</p>';
+        }
+
+        html += '</div>';
 
         if (usuarioLogado && usuarioLogado.tipo === 'profissional') {
             if (jaCandidatou) { html += '<div class="alert-card" style="text-align:center;">✅ Você já se candidatou a esta vaga!</div>'; } else { html += '<button class="btn btn-primary" onclick="candidatarObra(' + obra.id + ')">✋ TENHO INTERESSE NESTA VAGA</button>'; }
@@ -1188,33 +1571,96 @@
     }
 
     function publicarObra() {
-        if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') { mostrarToast('Apenas empreiteiros!', 'erro'); return; }
+        if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') {
+            mostrarToast('Apenas empreiteiros!', 'erro');
+            return;
+        }
+
         var n = document.getElementById('obraNome').value.trim();
         var e = document.getElementById('obraEndereco').value.trim();
-        if (!n || !e) { mostrarToast('Nome e endereço obrigatórios!', 'erro'); return; }
-        var obras = carregarDados('obras') || [];
-        obras.unshift({ id: Date.now(), usuarioId: usuarioLogado.id, nome: n, endereco: e, descricao: document.getElementById('obraDescricao').value, profissoes: document.getElementById('obraProfissoes').value, valorHora: parseFloat(document.getElementById('obraValorHora').value) || 25, data: new Date().toISOString(), interessados: [] });
-        salvarDados('obras', obras);
-        mostrarToast('✅ Obra publicada!', 'sucesso');
-        mostrarTela('homeScreen');
+        if (!n || !e) {
+            mostrarToast('Nome e endereço obrigatórios!', 'erro');
+            return;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                salvarObra(n, e, lat, lng);
+            }, function() {
+                var latInput = prompt('Digite a latitude (ex: -23.5505):');
+                var lngInput = prompt('Digite a longitude (ex: -46.6333):');
+                if (latInput && lngInput) {
+                    var lat = parseFloat(latInput.replace(',', '.'));
+                    var lng = parseFloat(lngInput.replace(',', '.'));
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        salvarObra(n, e, lat, lng);
+                    } else {
+                        mostrarToast('📍 Lat/Long inválidos! Use números.', 'erro');
+                    }
+                } else {
+                    mostrarToast('📍 Localização necessária para publicar a obra!', 'erro');
+                }
+            });
+        } else {
+            mostrarToast('📍 Ative a localização para publicar uma obra!', 'erro');
+        }
     }
 
-    function sair() { usuarioLogado = null;
+    function salvarObra(nome, endereco, lat, lng) {
+        var obras = carregarDados('obras') || [];
+        obras.unshift({
+            id: Date.now(),
+            usuarioId: usuarioLogado.id,
+            nome: nome,
+            endereco: endereco,
+            descricao: document.getElementById('obraDescricao').value,
+            profissoes: document.getElementById('obraProfissoes').value,
+            valorHora: parseFloat(document.getElementById('obraValorHora').value) || 25,
+            lat: lat,
+            lng: lng,
+            data: new Date().toISOString(),
+            interessados: []
+        });
+        salvarDados('obras', obras);
+        mostrarToast('✅ Obra publicada com localização!', 'sucesso');
+        mostrarTela('homeScreen');
+        document.getElementById('obraNome').value = '';
+        document.getElementById('obraEndereco').value = '';
+        document.getElementById('obraDescricao').value = '';
+        document.getElementById('obraProfissoes').value = '';
+        document.getElementById('obraValorHora').value = '';
+        setTimeout(function() {
+            if (typeof map !== 'undefined' && map && userPosition) {
+                carregarObrasNoMapa(userPosition);
+            }
+        }, 500);
+    }
+
+    function sair() {
+        usuarioLogado = null;
         salvarDados('usuarioLogado', null);
+        mostrarVideos();
         mostrarTela('loginScreen');
-        mostrarToast('👋 Até logo!'); }
+        mostrarToast('👋 Até logo!');
+    }
 
     // ==========================================================
     // ===== INICIALIZAÇÃO =====
     // ==========================================================
 
-    // Inicializa a galeria de vídeos
-    initVideoGallery();
+    // Mostra os vídeos por padrão (antes do login)
+    mostrarVideos();
 
     // Verifica se o usuário já está logado
-    if (usuarioLogado) mostrarTela('homeScreen');
+    if (usuarioLogado) {
+        mostrarMapa();
+        mostrarTela('homeScreen');
+    }
 
-    console.log('✅ LPXCONSTRUTOR COM GALERIA DE VÍDEOS!');
+    console.log('✅ LPXCONSTRUTOR COM VÍDEOS E MAPA!');
+    console.log('🔑 Chave API: AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM');
 </script>
 
 </body>
