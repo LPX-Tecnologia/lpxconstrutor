@@ -702,34 +702,6 @@
 </div>
 
 <!-- ========================================================== -->
-<!-- ===== BLOCO 2: MAPA (DEPOIS DO LOGIN) ===== -->
-<!-- ========================================================== -->
-<div id="blocoMapa" class="video-gallery-wrapper" style="display:none;">
-    <div class="video-gallery-card">
-
-        <!-- HEADER DO MAPA -->
-        <div class="video-gallery-header">
-            <p>📍 Obras próximas a você</p>
-        </div>
-
-        <!-- MAPA -->
-        <div id="map"></div>
-
-        <!-- LISTA DE OBRAS PRÓXIMAS -->
-        <div class="thumbnail-scroll" id="obrasProximas">
-            <div class="loading-message">🔄 Carregando obras próximas...</div>
-        </div>
-
-        <!-- BOTÕES -->
-        <div class="video-nav-buttons">
-            <button class="btn-map" onclick="atualizarMapa()">🔄 Atualizar</button>
-            <button class="btn-publish" onclick="mostrarTela('publicarObraScreen')">📸 Publicar Obra</button>
-        </div>
-
-    </div>
-</div>
-
-<!-- ========================================================== -->
 <!-- ===== TELAS DO APP ===== -->
 <!-- ========================================================== -->
 
@@ -789,8 +761,36 @@
     </div>
 </div>
 
-<!-- HOME -->
+<!-- ===== HOME (COM O MAPA DENTRO) ===== -->
 <div class="screen" id="homeScreen">
+
+    <!-- ===== MAPA (SÓ APARECE DENTRO DA HOME) ===== -->
+    <div id="blocoMapa" class="video-gallery-wrapper" style="display:none;">
+        <div class="video-gallery-card">
+
+            <!-- HEADER DO MAPA -->
+            <div class="video-gallery-header">
+                <p>📍 Obras próximas a você</p>
+            </div>
+
+            <!-- MAPA -->
+            <div id="map"></div>
+
+            <!-- LISTA DE OBRAS PRÓXIMAS -->
+            <div class="thumbnail-scroll" id="obrasProximas">
+                <div class="loading-message">🔄 Carregando obras próximas...</div>
+            </div>
+
+            <!-- BOTÕES -->
+            <div class="video-nav-buttons">
+                <button class="btn-map" onclick="atualizarMapa()">🔄 Atualizar</button>
+                <button class="btn-publish" onclick="mostrarTela('publicarObraScreen')">📸 Publicar Obra</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== ABAS ===== -->
     <div id="alertasContainer"></div>
     <div class="tabs">
         <button class="tab active" onclick="mudarTab('feed',this)">📱 Feed</button>
@@ -967,7 +967,8 @@
 
     function mostrarVideos() {
         document.getElementById('blocoVideos').style.display = 'block';
-        document.getElementById('blocoMapa').style.display = 'none';
+        var blocoMapa = document.getElementById('blocoMapa');
+        if (blocoMapa) blocoMapa.style.display = 'none';
         setTimeout(function() {
             initVideoGallery();
         }, 100);
@@ -975,7 +976,8 @@
 
     function mostrarMapa() {
         document.getElementById('blocoVideos').style.display = 'none';
-        document.getElementById('blocoMapa').style.display = 'block';
+        var blocoMapa = document.getElementById('blocoMapa');
+        if (blocoMapa) blocoMapa.style.display = 'block';
         setTimeout(function() {
             if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
                 if (typeof initMap === 'function') {
@@ -1231,6 +1233,7 @@
         if (nav) nav.style.display = ['homeScreen', 'buscaScreen', 'publicarObraScreen', 'perfilScreen'].includes(id) ? 'flex' : 'none';
         if (id === 'homeScreen') {
             carregarFeed();
+            // Só carrega o mapa se estiver logado
             if (usuarioLogado) {
                 if (typeof map !== 'undefined' && map && userPosition) {
                     carregarObrasNoMapa(userPosition);
