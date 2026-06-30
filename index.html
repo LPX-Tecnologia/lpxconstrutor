@@ -8,2257 +8,13 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- ===== GOOGLE MAPS API ===== -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places"></script>
-    
-    <!-- ===== FIREBASE SDK ===== -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    
-    <style>
-        /* =============================================================
-           TEMA LPXCONSTRUTOR - MODERNO E PROFISSIONAL
-           ============================================================= */
-
-        :root {
-            --primary: #F47920;
-            --primary-dark: #E06B1A;
-            --primary-light: #FF8A3C;
-            --secondary: #1A3A5C;
-            --secondary-dark: #0F2A44;
-            --secondary-light: #2C5F8A;
-            --bg-body: #F0F4F8;
-            --bg-card: #FFFFFF;
-            --bg-input: #F7FAFC;
-            --bg-nav: #FFFFFF;
-            --text-primary: #1A2B4C;
-            --text-secondary: #4A5B6E;
-            --text-light: #FFFFFF;
-            --text-muted: #8A9BB0;
-            --border-color: #E2E8F0;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
-            --neon-glow: rgba(244, 121, 32, 0.25);
-            --neon-glow-strong: rgba(244, 121, 32, 0.5);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-body);
-            color: var(--text-primary);
-            padding-bottom: 80px;
-            -webkit-tap-highlight-color: transparent;
-            min-height: 100vh;
-        }
-
-        /* ===== HEADER ===== */
-        .header {
-            background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--secondary) 50%, var(--secondary-light) 100%);
-            padding: 24px 16px 20px;
-            text-align: center;
-            border-bottom: 4px solid var(--primary);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '🏗️';
-            position: absolute;
-            font-size: 140px;
-            right: -30px;
-            top: -40px;
-            opacity: 0.06;
-            transform: rotate(-15deg);
-            pointer-events: none;
-        }
-
-        .header-title {
-            font-size: 26px;
-            font-weight: 900;
-            color: white;
-            letter-spacing: 2px;
-            position: relative;
-            z-index: 1;
-            text-shadow: 0 2px 30px rgba(244, 121, 32, 0.15);
-        }
-
-        .header-subtitle {
-            font-size: 13px;
-            color: #f0c27f;
-            font-weight: 500;
-            margin-top: 2px;
-            position: relative;
-            z-index: 1;
-            letter-spacing: 3px;
-        }
-
-        /* ===== CARDS ===== */
-        .card {
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '🏗️';
-            position: absolute;
-            font-size: 140px;
-            right: -20px;
-            bottom: -30px;
-            opacity: 0.04;
-            transform: rotate(-10deg);
-            pointer-events: none;
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        /* ===== INPUTS ===== */
-        .input-group {
-            margin-bottom: 14px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .input-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-size: 15px;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 4px var(--neon-glow);
-        }
-
-        .input-field::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* ===== BOTÕES ===== */
-        .btn {
-            width: 100%;
-            padding: 14px 20px;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 8px;
-            font-family: inherit;
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            box-shadow: 0 4px 20px var(--neon-glow);
-            border: 2px solid transparent;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 40px var(--neon-glow-strong);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 14px;
-            background: linear-gradient(45deg, var(--primary), #FFD700, var(--primary), #FF6B00);
-            background-size: 400% 400%;
-            z-index: -1;
-            opacity: 0;
-            transition: 0.6s;
-            animation: neonBorder 3s ease infinite;
-        }
-
-        .btn-primary:hover::before { opacity: 1; }
-
-        @keyframes neonBorder {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
-            color: white;
-            box-shadow: 0 4px 20px rgba(26, 58, 92, 0.25);
-            border: 2px solid transparent;
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 40px rgba(26, 58, 92, 0.35);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #10B981, #059669);
-            color: white;
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
-            border: 2px solid transparent;
-        }
-
-        .btn-success:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 40px rgba(16, 185, 129, 0.35);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-            color: white;
-            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
-            border: 2px solid transparent;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 40px rgba(239, 68, 68, 0.35);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--text-primary);
-            border: 2px solid var(--border-color);
-        }
-
-        .btn-outline:hover {
-            background: rgba(244, 121, 32, 0.05);
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px var(--neon-glow);
-        }
-
-        .btn-small {
-            padding: 8px 14px;
-            font-size: 12px;
-            margin-bottom: 0;
-            border-radius: var(--radius-sm);
-            width: auto;
-        }
-
-        /* ===== BOTTOM NAV ===== */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--bg-nav);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: space-around;
-            padding: 8px 0 14px;
-            border-top: 3px solid var(--primary);
-            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.08);
-            z-index: 100;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            text-align: center;
-            font-size: 10px;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px 12px;
-            transition: all 0.3s ease;
-            font-family: inherit;
-            position: relative;
-        }
-
-        .nav-item.active {
-            color: var(--primary);
-        }
-
-        .nav-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -14px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 2px;
-            box-shadow: 0 0 20px var(--neon-glow);
-        }
-
-        .nav-item .nav-icon {
-            font-size: 22px;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .nav-item:hover { color: var(--primary); }
-
-        /* ===== TABS ===== */
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 10px 14px;
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            background: var(--bg-input);
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .tab.active {
-            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
-            color: white;
-            box-shadow: 0 4px 20px rgba(26, 58, 92, 0.2);
-        }
-
-        .tab:hover { transform: translateY(-1px); }
-
-        /* ===== FEED ===== */
-        .feed-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 1px solid var(--border-color);
-        }
-
-        .feed-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary);
-        }
-
-        .feed-card-header {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-        }
-
-        .feed-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: white;
-        }
-
-        .feed-user-info {
-            margin-left: 12px;
-            flex: 1;
-        }
-
-        .feed-user-name {
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .feed-time {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .feed-card-image {
-            background: linear-gradient(135deg, #dbeafe, #e0e7ff);
-            height: 160px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-        }
-
-        .feed-card-body {
-            padding: 14px 16px;
-        }
-
-        .feed-card-title {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--text-primary);
-        }
-
-        /* ===== PERFIL ===== */
-        .profile-header {
-            text-align: center;
-            padding: 30px 20px 24px;
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            margin-bottom: 16px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .profile-header::before {
-            content: '🏗️';
-            position: absolute;
-            font-size: 140px;
-            right: -20px;
-            top: -30px;
-            opacity: 0.04;
-            transform: rotate(-10deg);
-            pointer-events: none;
-        }
-
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--bg-input);
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            position: relative;
-            cursor: pointer;
-            border: 3px solid var(--primary);
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .profile-avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px var(--neon-glow);
-        }
-
-        .profile-avatar img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .camera-icon {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background: var(--primary);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: white;
-            border: 2px solid white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .profile-header h2 {
-            color: var(--text-primary);
-            font-size: 20px;
-        }
-
-        .profile-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* ===== MAPA ===== */
-        #map {
-            width: 100%;
-            height: 300px;
-            background: var(--bg-input);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-
-        .thumbnail-item-map {
-            flex: 0 0 180px;
-            scroll-snap-align: start;
-            cursor: pointer;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            background: var(--bg-card);
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .thumbnail-item-map:hover {
-            transform: scale(1.03);
-            box-shadow: var(--shadow-md);
-        }
-
-        .thumbnail-item-map .thumb-icon { font-size: 30px; }
-        .thumbnail-item-map .thumb-title { font-weight: 700; font-size: 14px; color: var(--text-primary); margin-top: 4px; }
-        .thumbnail-item-map .thumb-detail { font-size: 12px; color: var(--text-muted); }
-        .thumbnail-item-map .thumb-status { font-size: 11px; margin-top: 4px; font-weight: 600; }
-        .thumbnail-item-map .thumb-status.disponivel { color: #10B981; }
-        .thumbnail-item-map .thumb-status.preenchida { color: #EF4444; }
-        .thumbnail-item-map .thumb-price { font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 4px; }
-
-        .btn-map {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            flex: 1;
-        }
-
-        .btn-map:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 25px var(--neon-glow);
-        }
-
-        .btn-publish {
-            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            flex: 1;
-        }
-
-        .btn-publish:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 25px rgba(26, 58, 92, 0.3);
-        }
-
-        /* ===== MODAL ===== */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(8px);
-        }
-
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: var(--radius-xl);
-            padding: 24px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: fadeIn 0.25s ease;
-            border: 1px solid var(--border-color);
-        }
-
-        .modal-content h3 {
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        /* ===== TOAST ===== */
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 14px 24px;
-            border-radius: var(--radius-md);
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-            z-index: 300;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-            max-width: 90%;
-            text-align: center;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        /* ===== VÍDEOS ===== */
-        .video-gallery-wrapper {
-            max-width: 500px;
-            margin: 16px auto 0;
-            padding: 0 16px;
-        }
-
-        .video-gallery-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-        }
-
-        .video-gallery-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .video-player-wrapper {
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            background: #000;
-        }
-
-        .video-player-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .video-gallery-header {
-            padding: 12px 16px 8px;
-            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
-            text-align: center;
-        }
-
-        .video-gallery-header p {
-            font-weight: 700;
-            color: white;
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .thumbnail-scroll {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 12px 16px 16px;
-            scroll-snap-type: x mandatory;
-            background: var(--bg-input);
-            border-top: 1px solid var(--border-color);
-        }
-
-        .thumbnail-scroll::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .thumbnail-scroll::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
-        }
-
-        .thumbnail-item {
-            flex: 0 0 140px;
-            scroll-snap-align: start;
-            cursor: pointer;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            background: var(--bg-card);
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            border: 3px solid transparent;
-        }
-
-        .thumbnail-item:hover {
-            transform: scale(1.05);
-            box-shadow: var(--shadow-md);
-        }
-
-        .thumbnail-item.active {
-            border-color: var(--primary);
-            box-shadow: 0 0 30px var(--neon-glow);
-        }
-
-        .thumbnail-item img {
-            width: 100%;
-            display: block;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-        }
-
-        .thumbnail-item .thumb-title {
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding: 6px 8px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            background: var(--bg-card);
-        }
-
-        .video-dots {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 0 12px;
-            background: var(--bg-input);
-        }
-
-        .video-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--border-color);
-            transition: all 0.3s ease;
-        }
-
-        .video-dots span.active {
-            background: var(--primary);
-            width: 24px;
-            border-radius: 4px;
-            box-shadow: 0 0 20px var(--neon-glow);
-        }
-
-        .video-nav-buttons {
-            display: flex;
-            gap: 10px;
-            padding: 0 16px 16px;
-            background: var(--bg-input);
-        }
-
-        .video-nav-buttons button {
-            padding: 8px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            flex: 1;
-        }
-
-        .video-nav-buttons button:hover {
-            background: var(--primary-dark);
-            transform: scale(1.02);
-        }
-
-        .video-nav-buttons button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* ===== MISC ===== */
-        .screen {
-            display: none;
-            padding: 16px;
-            max-width: 500px;
-            margin: 0 auto;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .screen.active { display: block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .lista-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--bg-input);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .lista-nome { font-weight: 600; color: var(--text-primary); }
-        .lista-detalhe { font-size: 13px; color: var(--text-secondary); }
-
-        .conexao-card {
-            border-left: 4px solid var(--primary);
-            padding: 12px 16px;
-            background: var(--bg-card);
-            border-radius: var(--radius-md);
-            margin-bottom: 10px;
-            box-shadow: var(--shadow-sm);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-            border-left-width: 4px;
-        }
-
-        .conexao-card:hover {
-            transform: translateX(4px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .conexao-card.desconectado {
-            border-left-color: var(--text-muted);
-            opacity: 0.7;
-        }
-
-        .agenda-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .agenda-item:last-child { border-bottom: none; }
-
-        .agenda-item .agenda-cliente { font-weight: 600; color: var(--text-primary); }
-        .agenda-item .agenda-data { font-size: 12px; color: var(--text-muted); }
-
-        .agenda-status {
-            font-size: 11px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .agenda-status.confirmado { background: #d1fae5; color: #065f46; }
-        .agenda-status.pendente { background: #fef3c7; color: #92400e; }
-        .agenda-status.cancelado { background: #fee2e2; color: #991b1b; }
-
-        .badge {
-            font-size: 11px;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-danger { background: #fee2e2; color: #991b1b; }
-
-        .financeiro-resumo {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .financeiro-item {
-            background: var(--bg-input);
-            border-radius: var(--radius-md);
-            padding: 14px 10px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
-
-        .financeiro-item:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .financeiro-item span { font-size: 12px; color: var(--text-muted); display: block; }
-        .financeiro-item strong { font-size: 20px; color: var(--primary); display: block; margin-top: 4px; }
-
-        .plano-card {
-            background: var(--bg-input);
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .plano-card:hover {
-            background: var(--bg-card);
-            transform: translateX(4px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .plano-card .plano-nome { font-weight: 700; color: var(--text-primary); }
-        .plano-card .plano-periodo { font-size: 12px; color: var(--text-muted); }
-        .plano-card .plano-preco { font-weight: 700; color: var(--primary); font-size: 18px; }
-
-        .alert-card {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 10px 14px;
-            border-radius: var(--radius-sm);
-            margin-bottom: 10px;
-        }
-
-        .loading-message {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-muted);
-            font-size: 14px;
-            min-width: 200px;
-        }
-
-        #blocoVideos { display: block; }
-        #blocoMapa { display: none; }
-
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg-input); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
-
-        @media (max-width: 500px) {
-            .header-title { font-size: 20px; }
-            .screen { padding: 12px; }
-            .card { padding: 16px; }
-            .thumbnail-item { flex: 0 0 120px; }
-            .financeiro-resumo { grid-template-columns: 1fr 1fr; }
-            .btn-group { flex-direction: column; }
-            .card::before { font-size: 100px; right: -15px; bottom: -20px; }
-        }
-    </style>
-</head>
-<body>
-
-<!-- ===== HEADER ===== -->
-<div class="header">
-    <div class="header-title">🏗️ LPXCONSTRUTOR</div>
-    <div class="header-subtitle">Rede Profissional da Construção</div>
-</div>
-
-<!-- ========================================================== -->
-<!-- ===== BLOCO 1: GALERIA DE VÍDEOS (ANTES DO LOGIN) ===== -->
-<!-- ========================================================== -->
-<div id="blocoVideos" class="video-gallery-wrapper">
-    <div class="video-gallery-card">
-        <div class="video-player-wrapper">
-            <iframe id="mainVideoPlayer" src="https://www.youtube.com/embed/gmiYAhNOq1o" allowfullscreen loading="lazy" title="LPXConstrutor - Vídeo de Apresentação"></iframe>
-        </div>
-        <div class="video-gallery-header">
-            <p>🎬 Assista e descubra como encontrar as melhores oportunidades!</p>
-        </div>
-        <div class="thumbnail-scroll" id="thumbnailScroll">
-            <div class="thumbnail-item active" data-video-id="gmiYAhNOq1o" onclick="trocarVideo('gmiYAhNOq1o', this)">
-                <img src="https://img.youtube.com/vi/gmiYAhNOq1o/mqdefault.jpg" alt="Apresentação LPXConstrutor" loading="lazy">
-                <div class="thumb-title">🎬 Apresentação</div>
-            </div>
-            <div class="thumbnail-item" data-video-id="eCy8nhTkaTw" onclick="trocarVideo('eCy8nhTkaTw', this)">
-                <img src="https://img.youtube.com/vi/eCy8nhTkaTw/mqdefault.jpg" alt="Como Cadastrar" loading="lazy">
-                <div class="thumb-title">📝 Como Cadastrar</div>
-            </div>
-            <div class="thumbnail-item" data-video-id="WuTtnsmk3Qg" onclick="trocarVideo('WuTtnsmk3Qg', this)">
-                <img src="https://img.youtube.com/vi/WuTtnsmk3Qg/mqdefault.jpg" alt="Para Empreiteiros" loading="lazy">
-                <div class="thumb-title">🏢 Para Empreiteiros</div>
-            </div>
-            <div class="thumbnail-item" data-video-id="WuTtnsmk3Qg" onclick="trocarVideo('WuTtnsmk3Qg', this)">
-                <img src="https://img.youtube.com/vi/WuTtnsmk3Qg/mqdefault.jpg" alt="Depoimentos" loading="lazy">
-                <div class="thumb-title">⭐ Depoimentos</div>
-            </div>
-            <div class="thumbnail-item" data-video-id="WuTtnsmk3Qg" onclick="trocarVideo('WuTtnsmk3Qg', this)">
-                <img src="https://img.youtube.com/vi/WuTtnsmk3Qg/mqdefault.jpg" alt="Dicas" loading="lazy">
-                <div class="thumb-title">💡 Dicas</div>
-            </div>
-        </div>
-        <div class="video-dots" id="videoDots"></div>
-        <div class="video-nav-buttons">
-            <button onclick="navegarThumbnails(-1)" id="btnPrevVideo">◀ Anterior</button>
-            <button onclick="navegarThumbnails(1)" id="btnNextVideo">Próximo ▶</button>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================== -->
-<!-- ===== TELAS DO APP ===== -->
-<!-- ========================================================== -->
-
-<!-- LOGIN -->
-<div class="screen active" id="loginScreen">
-    <div style="text-align:center;margin:20px 0 30px 0;">
-        <div style="font-size:60px;">🏗️</div>
-        <h2 style="color:var(--text-primary);margin-top:5px;">LPXCONSTRUTOR</h2>
-        <p style="color:var(--primary);font-weight:600;">Rede Profissional da Construção</p>
-    </div>
-    <div class="card">
-        <div class="input-group"><div class="input-label">📧 E-mail ou CPF</div><input type="text" class="input-field" id="loginEmail" placeholder="Digite seu e-mail ou CPF"></div>
-        <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="loginSenha" placeholder="Digite sua senha"></div>
-        <button class="btn btn-primary" onclick="fazerLogin()">🔑 ENTRAR</button>
-        <button class="btn btn-outline" onclick="recuperarSenha()">🔐 Esqueceu a senha?</button>
-        <button class="btn btn-primary" onclick="mostrarTela('cadastroScreen')">📝 Criar Conta</button>
-    </div>
-</div>
-
-<!-- CADASTRO -->
-<div class="screen" id="cadastroScreen">
-    <h2 style="text-align:center;color:var(--text-primary);">CRIAR CONTA</h2>
-    <div class="card">
-        <div class="input-group"><div class="input-label">👤 Nome</div><input type="text" class="input-field" id="cadNome"></div>
-        <div class="input-group"><div class="input-label">🏢 Tipo</div><select class="input-field" id="cadTipo" onchange="toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
-        <div class="input-group"><div class="input-label">📧 E-mail</div><input type="email" class="input-field" id="cadEmail"></div>
-        <div class="input-group"><div class="input-label">📱 Celular</div><input type="tel" class="input-field" id="cadCelular" placeholder="(11)99999-9999"></div>
-        <div class="input-group"><div class="input-label">🔢 CPF</div><input type="text" class="input-field" id="cadCPF"></div>
-        <div class="input-group" id="grupoProfissao"><div class="input-label">🛠️ Profissão</div><select class="input-field" id="cadProfissao"><option value="">Selecione</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div>
-        <div class="input-group"><div class="input-label">📅 Experiência</div><input type="number" class="input-field" id="cadExperiencia" placeholder="Ex:5"></div>
-        <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6"></div>
-        <button class="btn btn-success" onclick="cadastrar()">✅ FINALIZAR</button>
-        <button class="btn btn-outline" onclick="mostrarTela('loginScreen')">← Voltar</button>
-    </div>
-</div>
-
-<!-- RECUPERAR SENHA -->
-<div class="screen" id="recuperarSenhaScreen">
-    <div style="text-align:center;margin:30px 0;"><div style="font-size:60px;">🔐</div><h2 style="color:var(--text-primary);">Recuperar Senha</h2></div>
-    <div class="card">
-        <div id="recuperarPasso1">
-            <div class="input-group"><div class="input-label">📧 E-mail ou CPF</div><input type="text" class="input-field" id="recEmail"></div>
-            <button class="btn btn-primary" onclick="enviarCodigoRecuperacao()">📤 ENVIAR CÓDIGO</button>
-        </div>
-        <div id="recuperarPasso2" style="display:none;">
-            <p style="color:#10B981;text-align:center;font-weight:bold;">Código enviado!</p>
-            <div class="input-group"><div class="input-label">🔢 Código</div><input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6"></div>
-            <button class="btn btn-success" onclick="verificarCodigo()">✅ VERIFICAR</button>
-        </div>
-        <div id="recuperarPasso3" style="display:none;">
-            <p style="color:#10B981;text-align:center;font-weight:bold;">Código verificado!</p>
-            <div class="input-group"><div class="input-label">🔒 Nova Senha</div><input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6"></div>
-            <div class="input-group"><div class="input-label">🔒 Confirmar</div><input type="password" class="input-field" id="recConfirmarSenha"></div>
-            <button class="btn btn-success" onclick="criarNovaSenha()">💾 SALVAR</button>
-        </div>
-        <button class="btn btn-outline" onclick="mostrarTela('loginScreen')" style="margin-top:10px;">← Voltar</button>
-    </div>
-</div>
-
-<!-- HOME -->
-<div class="screen" id="homeScreen">
-    <div id="blocoMapa" class="video-gallery-wrapper" style="display:none;">
-        <div class="video-gallery-card">
-            <div class="video-gallery-header"><p>📍 Obras próximas a você</p></div>
-            <div id="map"></div>
-            <div class="thumbnail-scroll" id="obrasProximas"><div class="loading-message">🔄 Carregando obras próximas...</div></div>
-            <div class="video-nav-buttons">
-                <button class="btn-map" onclick="atualizarMapa()">🔄 Atualizar</button>
-                <button class="btn-publish" onclick="mostrarTela('publicarObraScreen')">📸 Publicar Obra</button>
-            </div>
-        </div>
-    </div>
-    <div id="alertasContainer"></div>
-    <div class="tabs">
-        <button class="tab active" onclick="mudarTab('feed',this)">📱 Feed</button>
-        <button class="tab" onclick="mudarTab('rede',this)">🔗 Minha Rede</button>
-    </div>
-    <div id="feedTab"><div id="feedContainer"></div></div>
-    <div id="redeTab" style="display:none;"><div id="redeContainer"></div></div>
-</div>
-
-<!-- PUBLICAR OBRA -->
-<div class="screen" id="publicarObraScreen">
-    <h2 style="text-align:center;color:var(--text-primary);">PUBLICAR OBRA</h2>
-    <div class="card">
-        <div class="input-group"><div class="input-label">🏗️ Nome</div><input type="text" class="input-field" id="obraNome"></div>
-        <div class="input-group"><div class="input-label">📍 Endereço</div><input type="text" class="input-field" id="obraEndereco"></div>
-        <div class="input-group"><div class="input-label">📝 Descrição</div><textarea class="input-field" id="obraDescricao" rows="2"></textarea></div>
-        <div class="input-group"><div class="input-label">👷 Profissões</div><input type="text" class="input-field" id="obraProfissoes"></div>
-        <div class="input-group"><div class="input-label">💰 Valor/hora</div><input type="number" class="input-field" id="obraValorHora" step="0.01"></div>
-        <button class="btn btn-success" onclick="publicarObra()">📢 PUBLICAR</button>
-        <button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Cancelar</button>
-    </div>
-</div>
-
-<!-- BUSCA -->
-<div class="screen" id="buscaScreen">
-    <h2 style="text-align:center;color:var(--text-primary);">🔍 BUSCAR</h2>
-    <div class="card">
-        <div class="input-group"><input type="text" class="input-field" id="buscaInput" placeholder="Nome ou profissão..." oninput="buscarProfissionais()"></div>
-        <div id="buscaResultados"></div>
-    </div>
-</div>
-
-<!-- PERFIL -->
-<div class="screen" id="perfilScreen">
-    <div class="profile-header">
-        <div class="profile-avatar" onclick="document.getElementById('perfilFoto').click()"><span id="perfilAvatarDefault">👷</span><div class="camera-icon">📷</div></div>
-        <input type="file" id="perfilFoto" accept="image/*" style="display:none" onchange="mudarFotoPerfil(event)">
-        <h2 id="perfilNome" style="color:var(--text-primary);">Seu Nome</h2>
-        <p id="perfilProfissao" style="color:var(--primary);">Sua Profissão</p>
-    </div>
-    <div class="card">
-        <h3>✏️ EDITAR</h3>
-        <div class="input-group"><div class="input-label">👤 Nome</div><input type="text" class="input-field" id="editNome"></div>
-        <div class="input-group"><div class="input-label">📱 Celular</div><input type="tel" class="input-field" id="editCelular"></div>
-        <div class="input-group"><div class="input-label">📧 E-mail</div><input type="email" class="input-field" id="editEmail"></div>
-        <button class="btn btn-primary" onclick="salvarPerfil()">💾 SALVAR</button>
-    </div>
-    <button class="btn btn-danger" onclick="sair()">🚪 SAIR</button>
-</div>
-
-<!-- DETALHE OBRA -->
-<div class="screen" id="detalheObraScreen"><div id="detalheObraConteudo"></div></div>
-
-<!-- PERFIL PÚBLICO -->
-<div class="screen" id="perfilPublicoScreen"><div id="perfilPublicoConteudo"></div></div>
-
-<!-- MODAL CHAT -->
-<div class="modal" id="modalChat">
-    <div class="modal-content">
-        <h3 style="color:var(--text-primary);">💬 CONTATO</h3>
-        <div id="modalChatInfo"></div>
-        <div class="input-group"><div class="input-label">📝 Mensagem</div><textarea class="input-field" id="chatMensagem" rows="3"></textarea></div>
-        <button class="btn btn-primary" onclick="enviarMensagem()">📤 ENVIAR</button>
-        <button class="btn btn-outline" onclick="fecharModal('modalChat')">Fechar</button>
-    </div>
-</div>
-
-<!-- MODAL SUCESSO -->
-<div class="modal" id="modalSucesso">
-    <div class="modal-content" style="text-align:center;">
-        <div style="font-size:70px;">✅</div><h2 style="color:#10B981;">Senha Alterada!</h2>
-        <button class="btn btn-success" onclick="fecharModal('modalSucesso');mostrarTela('loginScreen');">🔑 LOGIN</button>
-    </div>
-</div>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottomNav" style="display:none;">
-    <button class="nav-item active" onclick="mostrarTela('homeScreen')"><div class="nav-icon">🏠</div>Início</button>
-    <button class="nav-item" onclick="mostrarTela('buscaScreen')"><div class="nav-icon">🔍</div>Buscar</button>
-    <button class="nav-item" onclick="mostrarTela('publicarObraScreen')"><div class="nav-icon">📸</div>Publicar</button>
-    <button class="nav-item" onclick="mostrarTela('perfilScreen')"><div class="nav-icon">👤</div>Perfil</button>
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast" style="display:none;"></div>
-
-<!-- ===== JAVASCRIPT ===== -->
-<script>
-    // ==========================================================
-    // ===== CONFIGURAÇÃO DO FIREBASE =====
-    // ==========================================================
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyAqN0DZ3fyV-Ns2kXNdwBMAXQgWLy1_jE0",
-        authDomain: "barbearia-rm.firebaseapp.com",
-        projectId: "barbearia-rm",
-        storageBucket: "barbearia-rm.firebasestorage.app",
-        messagingSenderId: "512819922057",
-        appId: "1:512819922057:web:6a913791cb6435e4f63258",
-        measurementId: "G-TKVLVLPBJH"
-    };
-
-    // ===== INICIALIZA FIREBASE =====
-    if (typeof firebase !== 'undefined') {
-        try {
-            if (!firebase.apps || firebase.apps.length === 0) {
-                firebase.initializeApp(firebaseConfig);
-                console.log('✅ Firebase inicializado!');
-            }
-        } catch (e) {
-            console.error('❌ Erro Firebase:', e);
-        }
-    }
-
-    const db = firebase.firestore ? firebase.firestore() : null;
-    const auth = firebase.auth ? firebase.auth() : null;
-
-    console.log('🔥 Firestore:', db ? '✅ Conectado' : '❌ Offline');
-    console.log('🔐 Auth:', auth ? '✅ Disponível' : '❌ Offline');
-
-    // ==========================================================
-    // ===== FUNÇÕES AUXILIARES =====
-    // ==========================================================
-
-    function salvarDados(chave, dados) {
-        try { localStorage.setItem(chave, JSON.stringify(dados)); } catch (e) { console.error('Erro ao salvar:', e); }
-    }
-
-    function carregarDados(chave) {
-        try { const dados = localStorage.getItem(chave); return dados ? JSON.parse(dados) : null; } catch (e) { console.error('Erro ao carregar:', e); return null; }
-    }
-
-    function gerarId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
-
-    function mostrarToast(mensagem, tipo) {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        toast.textContent = mensagem;
-        toast.style.background = tipo === 'erro' ? '#EF4444' : tipo === 'sucesso' ? '#10B981' : '#1F2937';
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3000);
-    }
-
-    function fecharModal(id) { const modal = document.getElementById(id); if (modal) modal.classList.remove('active'); }
-
-    // ==========================================================
-    // ===== VARIÁVEIS GLOBAIS =====
-    // ==========================================================
-
-    let usuarioLogado = null;
-    let tipoUsuario = null;
-    let obraSelecionada = null;
-    let perfilSelecionado = null;
-    let codigoRecuperacao = null;
-    let usuarioRecuperando = null;
-    let videoThumbnails = [];
-    let currentVideoIndex = 0;
-    let map, markers = [], userPosition = null;
-
-    // ==========================================================
-    // ===== DADOS INICIAIS (LOCALSTORAGE - FALLBACK) =====
-    // ==========================================================
-
-    if (!carregarDados('usuarios')) {
-        salvarDados('usuarios', [
-            { id: 1001, tipo: 'profissional', nome: 'João Silva', email: 'joao@email.com', celular: '11999990001', profissao: 'pedreiro', experiencia: 8, habilidades: 'Alvenaria, Revestimento, Concreto', senha: '123456', fotoPerfil: '', avaliacoes: [] },
-            { id: 1002, tipo: 'profissional', nome: 'Maria Santos', email: 'maria@email.com', celular: '11999990002', profissao: 'pintor', experiencia: 5, habilidades: 'Pintura, Textura, Grafiato', senha: '123456', fotoPerfil: '', avaliacoes: [] },
-            { id: 2001, tipo: 'empreiteiro', nome: 'Carlos Obras', email: 'carlos@email.com', celular: '11999990003', profissao: '', experiencia: 15, senha: '123456', fotoPerfil: '' }
-        ]);
-    }
-
-    if (!carregarDados('obras')) {
-        salvarDados('obras', [
-            { id: 1, usuarioId: 2001, nome: 'Residencial Parque Verde', endereco: 'Rua das Flores, 123 - São Paulo', descricao: 'Construção de sobrado com 3 quartos.', profissoes: 'Pedreiro, Eletricista, Pintor', valorHora: 25, lat: -23.5505, lng: -46.6333, data: new Date().toISOString(), interessados: [] },
-            { id: 2, usuarioId: 2001, nome: 'Reforma Edifício Central', endereco: 'Av. Principal, 500 - São Paulo', descricao: 'Reforma completa do hall.', profissoes: 'Pedreiro, Gesseiro', valorHora: 30, lat: -23.5600, lng: -46.6400, data: new Date().toISOString(), interessados: [] }
-        ]);
-    }
-
-    if (!carregarDados('conexoes')) salvarDados('conexoes', []);
-
-    // ==========================================================
-    // ===== VÍDEOS =====
-    // ==========================================================
-
-    function initVideoGallery() {
-        const items = document.querySelectorAll('.thumbnail-item');
-        videoThumbnails = Array.from(items);
-        currentVideoIndex = 0;
-        updateDots();
-        updateNavButtons();
-        highlightActiveThumbnail();
-    }
-
-    function trocarVideo(videoId, element) {
-        if (!videoId || videoId === 'SEU_ID_VIDEO_3' || videoId === 'SEU_ID_VIDEO_4' || videoId === 'SEU_ID_VIDEO_5') {
-            mostrarToast('🎬 Substitua "SEU_ID_VIDEO_X" pelo ID real do seu vídeo no YouTube!', 'erro');
-            return;
-        }
-
-        const player = document.getElementById('mainVideoPlayer');
-        if (player) player.src = 'https://www.youtube.com/embed/' + videoId;
-
-        document.querySelectorAll('.thumbnail-item').forEach(el => el.classList.remove('active'));
-        if (element) {
-            element.classList.add('active');
-            const index = videoThumbnails.indexOf(element);
-            if (index !== -1) {
-                currentVideoIndex = index;
-                updateDots();
-                updateNavButtons();
-                element.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            }
-        }
-    }
-
-    function navegarThumbnails(direcao) {
-        if (videoThumbnails.length === 0) return;
-        const total = videoThumbnails.length;
-        currentVideoIndex = (currentVideoIndex + direcao + total) % total;
-        const targetItem = videoThumbnails[currentVideoIndex];
-        if (targetItem) {
-            const videoId = targetItem.dataset.videoId;
-            if (videoId && videoId !== 'SEU_ID_VIDEO_3' && videoId !== 'SEU_ID_VIDEO_4' && videoId !== 'SEU_ID_VIDEO_5') {
-                trocarVideo(videoId, targetItem);
-            } else {
-                mostrarToast('🎬 Substitua "SEU_ID_VIDEO_X" pelo ID real do seu vídeo no YouTube!', 'erro');
-            }
-        }
-    }
-
-    function updateDots() {
-        const container = document.getElementById('videoDots');
-        if (!container) return;
-        const total = videoThumbnails.length;
-        if (total <= 1) { container.innerHTML = ''; return; }
-        let html = '';
-        for (let i = 0; i < total; i++) {
-            html += `<span class="${i === currentVideoIndex ? 'active' : ''}"></span>`;
-        }
-        container.innerHTML = html;
-    }
-
-    function updateNavButtons() {
-        const prevBtn = document.getElementById('btnPrevVideo');
-        const nextBtn = document.getElementById('btnNextVideo');
-        if (prevBtn) prevBtn.disabled = videoThumbnails.length <= 1;
-        if (nextBtn) nextBtn.disabled = videoThumbnails.length <= 1;
-    }
-
-    function highlightActiveThumbnail() {
-        document.querySelectorAll('.thumbnail-item').forEach(el => el.classList.remove('active'));
-        if (videoThumbnails.length > 0 && videoThumbnails[currentVideoIndex]) {
-            videoThumbnails[currentVideoIndex].classList.add('active');
-        }
-    }
-
-    function mostrarVideos() {
-        document.getElementById('blocoVideos').style.display = 'block';
-        const blocoMapa = document.getElementById('blocoMapa');
-        if (blocoMapa) blocoMapa.style.display = 'none';
-        setTimeout(() => initVideoGallery(), 100);
-    }
-
-    function mostrarMapa() {
-        document.getElementById('blocoVideos').style.display = 'none';
-        const blocoMapa = document.getElementById('blocoMapa');
-        if (blocoMapa) blocoMapa.style.display = 'block';
-        setTimeout(() => {
-            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
-                if (typeof initMap === 'function') initMap();
-            }
-        }, 500);
-    }
-
-    // ==========================================================
-    // ===== MAPA =====
-    // ==========================================================
-
-    function initMap() {
-        const mapElement = document.getElementById('map');
-        if (!mapElement) return;
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    userPosition = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    carregarMapa(userPosition);
-                },
-                () => {
-                    userPosition = { lat: -23.5505, lng: -46.6333 };
-                    carregarMapa(userPosition);
-                    mostrarToast('📍 Ative sua localização para ver obras próximas!', 'erro');
-                }
-            );
-        } else {
-            userPosition = { lat: -23.5505, lng: -46.6333 };
-            carregarMapa(userPosition);
-        }
-    }
-
-    function carregarMapa(posicao) {
-        const mapElement = document.getElementById('map');
-        if (!mapElement) return;
-
-        map = new google.maps.Map(mapElement, {
-            center: posicao,
-            zoom: 13,
-            styles: [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }]
-        });
-
-        new google.maps.Marker({
-            position: posicao,
-            map: map,
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#F47920', fillOpacity: 1, strokeColor: '#FFFFFF', strokeWeight: 2 },
-            title: 'Você está aqui'
-        });
-
-        carregarObrasNoMapa(posicao);
-    }
-
-    function carregarObrasNoMapa(posicao) {
-        const obras = carregarDados('obras') || [];
-        const container = document.getElementById('obrasProximas');
-        if (!container) return;
-
-        markers.forEach(m => m.setMap(null));
-        markers = [];
-
-        const obrasComLocalizacao = obras.filter(obra => obra.lat && obra.lng);
-
-        if (obrasComLocalizacao.length === 0) {
-            container.innerHTML = `<div style="flex:1; text-align:center; padding:20px; color:#6B7280; min-width:250px;"><div style="font-size:40px;">🏗️</div><p style="margin-top:8px; font-weight:600;">Nenhuma obra próxima</p><p style="font-size:12px;">Publique uma obra para aparecer aqui!</p></div>`;
-            return;
-        }
-
-        const obrasComDistancia = obrasComLocalizacao.map(obra => {
-            const distancia = calcularDistancia(posicao.lat, posicao.lng, obra.lat, obra.lng);
-            return { ...obra, distancia };
-        });
-
-        obrasComDistancia.sort((a, b) => a.distancia - b.distancia);
-        const obrasProximas = obrasComDistancia.slice(0, 5);
-
-        container.innerHTML = obrasProximas.map(obra => {
-            const temVaga = obra.interessados ? obra.interessados.length < 3 : true;
-            const statusVaga = temVaga ? '🟢 Vaga disponível' : '🔴 Vaga preenchida';
-            const statusClass = temVaga ? 'disponivel' : 'preenchida';
-
-            const marker = new google.maps.Marker({
-                position: { lat: obra.lat, lng: obra.lng },
-                map: map,
-                title: obra.nome,
-                label: { text: '🏗️', fontSize: '20px' }
-            });
-
-            const infoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div style="padding:10px; max-width:200px; font-family:Inter, sans-serif;">
-                        <strong style="color:#1A3A5C;">${obra.nome}</strong><br>
-                        📍 ${obra.endereco || 'Endereço não informado'}<br>
-                        💰 R$ ${obra.valorHora}/h<br>
-                        <span style="color:${temVaga ? '#10B981' : '#EF4444'}; font-weight:600;">${statusVaga}</span>
-                        <br><br>
-                        <button onclick="verDetalheObra(${obra.id})" style="background:#F47920; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600; width:100%;">Ver Vaga</button>
-                    </div>
-                `
-            });
-
-            marker.addListener('click', () => infoWindow.open(map, marker));
-            markers.push(marker);
-
-            const distanciaKm = (obra.distancia / 1000).toFixed(1);
-            return `
-                <div class="thumbnail-item-map" onclick="verDetalheObra(${obra.id})">
-                    <div class="thumb-icon">🏗️</div>
-                    <div class="thumb-title">${obra.nome}</div>
-                    <div class="thumb-detail">📍 ${distanciaKm} km</div>
-                    <div class="thumb-status ${statusClass}">${statusVaga}</div>
-                    <div class="thumb-price">R$ ${obra.valorHora}/h</div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function calcularDistancia(lat1, lon1, lat2, lon2) {
-        const R = 6371000;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
-
-    function atualizarMapa() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    userPosition = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    carregarMapa(userPosition);
-                    mostrarToast('📍 Mapa atualizado!', 'sucesso');
-                },
-                () => mostrarToast('❌ Não foi possível obter sua localização', 'erro')
-            );
-        } else {
-            mostrarToast('❌ Seu navegador não suporta geolocalização', 'erro');
-        }
-    }
-
-    // ==========================================================
-    // ===== CONTROLE DE TELAS =====
-    // ==========================================================
-
-    function mostrarTela(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        const nav = document.getElementById('bottomNav');
-        if (nav) nav.style.display = ['homeScreen', 'buscaScreen', 'publicarObraScreen', 'perfilScreen'].includes(id) ? 'flex' : 'none';
-        if (id === 'homeScreen') {
-            carregarFeed();
-            if (usuarioLogado) {
-                if (typeof map !== 'undefined' && map && userPosition) {
-                    carregarObrasNoMapa(userPosition);
-                } else {
-                    setTimeout(() => { if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') initMap(); }, 500);
-                }
-            }
-        }
-        if (id === 'perfilScreen') carregarMeuPerfil();
-        if (id === 'buscaScreen') buscarProfissionais();
-    }
-
-    function mudarTab(tab, btn) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('feedTab').style.display = tab === 'feed' ? 'block' : 'none';
-        document.getElementById('redeTab').style.display = tab === 'rede' ? 'block' : 'none';
-        if (tab === 'rede') carregarRede();
-    }
-
-    function toggleProfissao() {
-        const g = document.getElementById('grupoProfissao');
-        const t = document.getElementById('cadTipo');
-        if (g && t) g.style.display = t.value === 'profissional' ? 'block' : 'none';
-    }
-
-    // ==========================================================
-    // ===== FIREBASE - FUNÇÕES DE LOGIN =====
-    // ==========================================================
-
-    async function fazerLogin() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const senha = document.getElementById('loginSenha').value;
-
-        if (!email || !senha) {
-            mostrarToast('Preencha todos os campos!', 'erro');
-            return;
-        }
-
-        if (auth) {
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, senha);
-                const user = userCredential.user;
-                console.log('✅ Usuário logado no Auth:', user.email);
-
-                // Busca no Firestore
-                const doc = await db.collection('usuarios').doc(user.uid).get();
-                if (doc.exists) {
-                    usuarioLogado = { id: user.uid, ...doc.data() };
-                    tipoUsuario = usuarioLogado.tipo;
-                    salvarDados('usuarioLogado', usuarioLogado);
-                    mostrarToast('Bem-vindo, ' + usuarioLogado.nome + '!', 'sucesso');
-                    mostrarMapa();
-                    setTimeout(() => mostrarTela('homeScreen'), 500);
-                } else {
-                    mostrarToast('❌ Dados do usuário não encontrados!', 'erro');
-                }
-                return;
-            } catch (authError) {
-                console.log('⚠️ Auth falhou, tentando LocalStorage:', authError.message);
-            }
-        }
-
-        // Fallback: LocalStorage
-        const usuarios = carregarDados('usuarios') || [];
-        const user = usuarios.find(u => (u.email === email || u.cpf === email) && u.senha === senha);
-
-        if (user) {
-            usuarioLogado = user;
-            tipoUsuario = user.tipo;
-            salvarDados('usuarioLogado', user);
-            mostrarToast('Bem-vindo, ' + user.nome + '!', 'sucesso');
-            mostrarMapa();
-            setTimeout(() => mostrarTela('homeScreen'), 500);
-        } else {
-            mostrarToast('E-mail/CPF ou senha inválidos!', 'erro');
-        }
-    }
-
-    async function cadastrar() {
-        const tipo = document.getElementById('cadTipo').value;
-        const nome = document.getElementById('cadNome').value.trim();
-        const email = document.getElementById('cadEmail').value.trim();
-        const celular = document.getElementById('cadCelular').value.trim();
-        const cpf = document.getElementById('cadCPF').value.trim();
-        const profissao = tipo === 'profissional' ? document.getElementById('cadProfissao').value : '';
-        const experiencia = parseInt(document.getElementById('cadExperiencia').value) || 0;
-        const senha = document.getElementById('cadSenha').value;
-
-        if (!nome || !email || !celular || !cpf || !senha) {
-            mostrarToast('Preencha todos os campos!', 'erro');
-            return;
-        }
-
-        if (senha.length < 6) {
-            mostrarToast('Senha mínima de 6 caracteres!', 'erro');
-            return;
-        }
-
-        try {
-            let userId = gerarId();
-
-            // Tenta criar no Firebase Auth
-            if (auth) {
-                try {
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
-                    const user = userCredential.user;
-                    userId = user.uid;
-                    console.log('✅ Usuário criado no Auth:', user.email);
-                } catch (authError) {
-                    console.log('⚠️ Auth falhou, usando ID local:', authError.message);
-                }
-            }
-
-            // Cria objeto do usuário
-            const novoUsuario = {
-                id: userId,
-                tipo,
-                nome,
-                email,
-                celular,
-                cpf,
-                profissao,
-                experiencia,
-                habilidades: '',
-                senha,
-                fotoPerfil: '',
-                avaliacoes: [],
-                dataCadastro: new Date().toISOString()
-            };
-
-            // Salva no Firestore
-            if (db) {
-                try {
-                    await db.collection('usuarios').doc(userId).set(novoUsuario);
-                    console.log('✅ Dados salvos no Firestore!');
-                } catch (firestoreError) {
-                    console.log('⚠️ Firestore falhou, salvando no LocalStorage:', firestoreError.message);
-                }
-            }
-
-            // Salva no LocalStorage (fallback)
-            const usuarios = carregarDados('usuarios') || [];
-            usuarios.push(novoUsuario);
-            salvarDados('usuarios', usuarios);
-
-            usuarioLogado = novoUsuario;
-            tipoUsuario = novoUsuario.tipo;
-            salvarDados('usuarioLogado', novoUsuario);
-
-            mostrarToast('Cadastro realizado com sucesso!', 'sucesso');
-            mostrarMapa();
-            setTimeout(() => mostrarTela('homeScreen'), 500);
-
-        } catch (error) {
-            console.error('❌ Erro no cadastro:', error);
-            mostrarToast('❌ Erro ao cadastrar: ' + error.message, 'erro');
-        }
-    }
-
-    function recuperarSenha() {
-        document.getElementById('recuperarPasso1').style.display = 'block';
-        document.getElementById('recuperarPasso2').style.display = 'none';
-        document.getElementById('recuperarPasso3').style.display = 'none';
-        mostrarTela('recuperarSenhaScreen');
-    }
-
-    function enviarCodigoRecuperacao() {
-        const email = document.getElementById('recEmail').value.trim();
-        if (!email) return;
-
-        const usuarios = carregarDados('usuarios') || [];
-        const user = usuarios.find(u => u.email === email || u.cpf.replace(/\D/g, '') === email.replace(/\D/g, ''));
-
-        if (!user) {
-            mostrarToast('E-mail/CPF não encontrado!', 'erro');
-            return;
-        }
-
-        codigoRecuperacao = Math.floor(100000 + Math.random() * 900000).toString();
-        usuarioRecuperando = user;
-        alert('Seu código é: ' + codigoRecuperacao);
-        document.getElementById('recuperarPasso1').style.display = 'none';
-        document.getElementById('recuperarPasso2').style.display = 'block';
-    }
-
-    function verificarCodigo() {
-        if (document.getElementById('recCodigo').value.trim() !== codigoRecuperacao) {
-            mostrarToast('Código inválido!', 'erro');
-            return;
-        }
-        document.getElementById('recuperarPasso2').style.display = 'none';
-        document.getElementById('recuperarPasso3').style.display = 'block';
-    }
-
-    function criarNovaSenha() {
-        const novaSenha = document.getElementById('recNovaSenha').value;
-        const confirmar = document.getElementById('recConfirmarSenha').value;
-
-        if (!novaSenha || novaSenha.length < 6) return;
-        if (novaSenha !== confirmar) {
-            mostrarToast('Senhas não coincidem!', 'erro');
-            return;
-        }
-
-        const usuarios = carregarDados('usuarios') || [];
-        const idx = usuarios.findIndex(u => u.id === usuarioRecuperando.id);
-        if (idx !== -1) {
-            usuarios[idx].senha = novaSenha;
-            salvarDados('usuarios', usuarios);
-        }
-
-        mostrarToast('Senha alterada!', 'sucesso');
-        setTimeout(() => mostrarTela('loginScreen'), 1000);
-    }
-
-    // ==========================================================
-    // ===== PERFIL =====
-    // ==========================================================
-
-    function carregarMeuPerfil() {
-        if (!usuarioLogado) return;
-        document.getElementById('perfilNome').textContent = usuarioLogado.nome;
-        document.getElementById('perfilProfissao').textContent = usuarioLogado.tipo === 'profissional' ? usuarioLogado.profissao + ' • ' + usuarioLogado.experiencia + ' anos' : 'EMPREITEIRO';
-        document.getElementById('editNome').value = usuarioLogado.nome || '';
-        document.getElementById('editCelular').value = usuarioLogado.celular || '';
-        document.getElementById('editEmail').value = usuarioLogado.email || '';
-    }
-
-    function salvarPerfil() {
-        if (!usuarioLogado) return;
-        usuarioLogado.nome = document.getElementById('editNome').value.trim();
-        usuarioLogado.celular = document.getElementById('editCelular').value.trim();
-        usuarioLogado.email = document.getElementById('editEmail').value.trim();
-
-        const usuarios = carregarDados('usuarios') || [];
-        const idx = usuarios.findIndex(u => u.id === usuarioLogado.id);
-        if (idx !== -1) {
-            usuarios[idx] = usuarioLogado;
-            salvarDados('usuarios', usuarios);
-        }
-        salvarDados('usuarioLogado', usuarioLogado);
-        mostrarToast('Perfil atualizado!', 'sucesso');
-    }
-
-    function mudarFotoPerfil(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            document.getElementById('perfilAvatarDefault').innerHTML = '<img src="' + ev.target.result + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-            usuarioLogado.fotoPerfil = ev.target.result;
-            salvarDados('usuarioLogado', usuarioLogado);
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function sair() {
-        usuarioLogado = null;
-        salvarDados('usuarioLogado', null);
-        mostrarVideos();
-        mostrarTela('loginScreen');
-        mostrarToast('👋 Até logo!');
-    }
-
-    // ==========================================================
-    // ===== FEED =====
-    // ==========================================================
-
-    function carregarFeed() {
-        const obras = carregarDados('obras') || [];
-        const container = document.getElementById('feedContainer');
-        if (!container) return;
-
-        if (obras.length === 0) {
-            container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:60px;">🏗️</div><h3>Nenhuma obra publicada!</h3></div>';
-            return;
-        }
-
-        const usuarios = carregarDados('usuarios') || [];
-        container.innerHTML = obras.map(obra => {
-            const autor = usuarios.find(u => u.id === obra.usuarioId);
-            let distancia = '';
-            if (userPosition && obra.lat && obra.lng) {
-                const dist = calcularDistancia(userPosition.lat, userPosition.lng, obra.lat, obra.lng);
-                distancia = `📍 ${(dist/1000).toFixed(1)} km - `;
-            }
-            return `
-                <div class="feed-card" onclick="verDetalheObra(${obra.id})">
-                    <div class="feed-card-header">
-                        <div class="feed-avatar">🏢</div>
-                        <div class="feed-user-info">
-                            <div class="feed-user-name">${autor ? autor.nome : 'Empreiteiro'}</div>
-                            <div class="feed-time">${distancia} ${new Date(obra.data).toLocaleDateString('pt-BR')}</div>
-                        </div>
-                    </div>
-                    <div class="feed-card-image">🏗️</div>
-                    <div class="feed-card-body">
-                        <div class="feed-card-title">${obra.nome}</div>
-                        <p>📍 ${obra.endereco}</p>
-                        <p>💰 R$ ${obra.valorHora}/h</p>
-                        <p style="font-size:11px;color:#F47920;">👆 Clique para ver detalhes</p>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // ==========================================================
-    // ===== DETALHE OBRA =====
-    // ==========================================================
-
-    function verDetalheObra(obraId) {
-        const obras = carregarDados('obras') || [];
-        const obra = obras.find(o => o.id === obraId);
-        if (!obra) return;
-
-        const usuarios = carregarDados('usuarios') || [];
-        const autor = usuarios.find(u => u.id === obra.usuarioId);
-        const jaCandidatou = obra.interessados && obra.interessados.some(i => i.profissionalId === usuarioLogado?.id);
-
-        let html = `
-            <div style="text-align:center;margin-bottom:20px;">
-                <div style="font-size:60px;">🏗️</div>
-                <h2 style="color:var(--text-primary);">${obra.nome}</h2>
-            </div>
-            <div class="card">
-                <p><strong>📍 Endereço:</strong> ${obra.endereco}</p>
-                <p><strong>📝 Descrição:</strong> ${obra.descricao || 'Não informado'}</p>
-                <p><strong>💰 Valor:</strong> R$ ${obra.valorHora}/h</p>
-                <p><strong>👷 Profissões:</strong> ${obra.profissoes || 'Não informado'}</p>
-                <p><strong>🏢 Empreiteiro:</strong> ${autor ? autor.nome : 'Não informado'}</p>
-        `;
-
-        if (obra.lat && obra.lng && userPosition) {
-            const dist = calcularDistancia(userPosition.lat, userPosition.lng, obra.lat, obra.lng);
-            html += `<p><strong>📍 Distância:</strong> ${(dist/1000).toFixed(1)} km</p>`;
-        }
-
-        html += `</div>`;
-
-        if (usuarioLogado && usuarioLogado.tipo === 'profissional') {
-            if (jaCandidatou) {
-                html += `<div class="alert-card" style="text-align:center;">✅ Você já se candidatou a esta vaga!</div>`;
-            } else {
-                html += `<button class="btn btn-primary" onclick="candidatarObra(${obra.id})">✋ TENHO INTERESSE NESTA VAGA</button>`;
-            }
-        }
-
-        if (usuarioLogado && usuarioLogado.tipo === 'empreiteiro' && autor && usuarioLogado.id === autor.id) {
-            html += `<button class="btn btn-outline" onclick="verCandidatosObra(${obra.id})">👥 Ver Candidatos (${obra.interessados ? obra.interessados.length : 0})</button>`;
-        }
-
-        html += `<button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Voltar</button>`;
-
-        document.getElementById('detalheObraConteudo').innerHTML = html;
-        mostrarTela('detalheObraScreen');
-    }
-
-    function candidatarObra(obraId) {
-        if (!usuarioLogado || usuarioLogado.tipo !== 'profissional') {
-            mostrarToast('Apenas profissionais podem se candidatar!', 'erro');
-            return;
-        }
-
-        const obras = carregarDados('obras') || [];
-        const idx = obras.findIndex(o => o.id === obraId);
-        if (idx === -1) return;
-
-        if (!obras[idx].interessados) obras[idx].interessados = [];
-        if (obras[idx].interessados.find(i => i.profissionalId === usuarioLogado.id)) {
-            mostrarToast('Você já se candidatou!', 'erro');
-            return;
-        }
-
-        obras[idx].interessados.push({ profissionalId: usuarioLogado.id, data: new Date().toISOString(), status: 'pendente' });
-        salvarDados('obras', obras);
-        mostrarToast('✅ Candidatura enviada com sucesso!', 'sucesso');
-        verDetalheObra(obraId);
-    }
-
-    function verCandidatosObra(obraId) {
-        const obra = (carregarDados('obras') || []).find(o => o.id === obraId);
-        if (!obra || !obra.interessados || obra.interessados.length === 0) {
-            mostrarToast('Nenhum candidato ainda!');
-            return;
-        }
-
-        const usuarios = carregarDados('usuarios') || [];
-        let html = '<h3>👥 Candidatos</h3>';
-
-        obra.interessados.forEach(i => {
-            const p = usuarios.find(u => u.id === i.profissionalId);
-            if (p) {
-                html += `
-                    <div class="card" style="cursor:pointer;" onclick="verPerfilPublico(${p.id})">
-                        <div style="display:flex;align-items:center;">
-                            <div class="lista-avatar">👷</div>
-                            <div style="margin-left:10px;flex:1;">
-                                <strong>${p.nome}</strong><br>
-                                ${p.profissao} • ${p.experiencia} anos
-                            </div>
-                        </div>
-                        <div style="margin-top:10px;display:flex;gap:8px;">
-                            <a href="https://wa.me/55${p.celular.replace(/\D/g, '')}?text=${encodeURIComponent('Olá ' + p.nome + '! Vi sua candidatura no LPXConstrutor.')}" target="_blank" style="flex:1;text-decoration:none;" onclick="event.stopPropagation();">
-                                <button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button>
-                            </a>
-                            <button class="btn btn-small btn-success" onclick="event.stopPropagation();aceitarCandidato(${obraId},${p.id})">✅ Aceitar</button>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-
-        const modal = document.createElement('div');
-        modal.className = 'modal active';
-        modal.id = 'modalCandidatos';
-        modal.innerHTML = `<div class="modal-content">${html}<button class="btn btn-outline" onclick="document.getElementById('modalCandidatos').remove()">Fechar</button></div>`;
-        document.body.appendChild(modal);
-    }
-
-    function aceitarCandidato(obraId, profId) {
-        const obras = carregarDados('obras') || [];
-        const obra = obras.find(o => o.id === obraId);
-        if (!obra) return;
-
-        const interessado = obra.interessados.find(i => i.profissionalId === profId);
-        if (interessado) interessado.status = 'aceito';
-
-        salvarDados('obras', obras);
-        document.getElementById('modalCandidatos')?.remove();
-        mostrarToast('✅ Candidato aceito!', 'sucesso');
-    }
-
-    // ==========================================================
-    // ===== PERFIL PÚBLICO =====
-    // ==========================================================
-
-    function verPerfilPublico(userId) {
-        const usuarios = carregarDados('usuarios') || [];
-        const user = usuarios.find(u => u.id === userId);
-        if (!user) return;
-
-        perfilSelecionado = user;
-
-        let html = `
-            <div class="profile-header">
-                <div class="profile-avatar"><span>👷</span></div>
-                <h2 style="color:var(--text-primary);">${user.nome}</h2>
-                <p style="color:var(--primary);">${user.profissao} • ${user.experiencia} anos</p>
-            </div>
-            <div class="card"><h3>📞 Contato</h3><p>📱 ${user.celular}</p><p>📧 ${user.email}</p></div>
-            <div class="card"><h3>🛠️ Habilidades</h3><p>${user.habilidades || 'Não informado'}</p></div>
-        `;
-
-        if (usuarioLogado && usuarioLogado.id !== user.id) {
-            const numeroWhats = '55' + user.celular.replace(/\D/g, '');
-            const mensagemWhats = 'Olá ' + user.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor e tenho interesse no seu trabalho como ' + user.profissao + '.';
-            html += `
-                <a href="https://wa.me/${numeroWhats}?text=${encodeURIComponent(mensagemWhats)}" target="_blank" style="text-decoration:none;">
-                    <button class="btn" style="background:#25D366;color:white;width:100%;margin-bottom:10px;">💬 WHATSAPP</button>
-                </a>
-                <button class="btn btn-primary" onclick="abrirChat(${user.id})">💬 CONVERSAR NO APP</button>
-            `;
-            if (usuarioLogado.tipo === 'empreiteiro') {
-                html += `<button class="btn btn-success" onclick="contratarProfissional(${user.id})">🤝 CONTRATAR</button>`;
-            }
-        }
-
-        html += `<button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Voltar</button>`;
-
-        document.getElementById('perfilPublicoConteudo').innerHTML = html;
-        mostrarTela('perfilPublicoScreen');
-    }
-
-    // ==========================================================
-    // ===== CHAT =====
-    // ==========================================================
-
-    function abrirChat(userId) {
-        const usuarios = carregarDados('usuarios') || [];
-        const user = usuarios.find(u => u.id === userId);
-        if (!user) return;
-
-        perfilSelecionado = user;
-        document.getElementById('modalChatInfo').innerHTML = `
-            <div style="display:flex;align-items:center;margin-bottom:15px;">
-                <div class="lista-avatar">👷</div>
-                <div style="margin-left:10px;">
-                    <strong>${user.nome}</strong><br>
-                    ${user.profissao} • ${user.experiencia} anos<br>
-                    📱 ${user.celular}
-                </div>
-            </div>
-        `;
-
-        document.getElementById('chatMensagem').value = 'Olá ' + user.nome.split(' ')[0] + '! Tenho interesse no seu trabalho.';
-        document.getElementById('modalChat').classList.add('active');
-    }
-
-    function enviarMensagem() {
-        if (!perfilSelecionado || !usuarioLogado) return;
-        const msg = document.getElementById('chatMensagem').value.trim();
-        if (!msg) { mostrarToast('Digite uma mensagem!', 'erro'); return; }
-        mostrarToast('✅ Mensagem enviada para ' + perfilSelecionado.nome + '!', 'sucesso');
-        fecharModal('modalChat');
-    }
-
-    // ==========================================================
-    // ===== CONTRATAR =====
-    // ==========================================================
-
-    function contratarProfissional(profId) {
-        if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') return;
-
-        const usuarios = carregarDados('usuarios') || [];
-        const prof = usuarios.find(u => u.id === profId);
-        if (!prof) return;
-
-        const obra = prompt('Nome da obra:', 'Obra');
-        const valor = prompt('Valor por hora (R$):', '25');
-
-        if (!obra || !valor) return;
-
-        const conexoes = carregarDados('conexoes') || [];
-        conexoes.push({
-            id: Date.now(),
-            profissionalId: prof.id,
-            empreiteiroId: usuarioLogado.id,
-            obra: obra,
-            valorHora: parseFloat(valor),
-            dataInicio: new Date().toISOString(),
-            ativa: true
-        });
-
-        salvarDados('conexoes', conexoes);
-        mostrarToast('🤝 ' + prof.nome + ' contratado!', 'sucesso');
-    }
-
-    // ==========================================================
-    // ===== REDE =====
-    // ==========================================================
-
-    function carregarRede() {
-        const container = document.getElementById('redeContainer');
-        if (!container) return;
-
-        const conexoes = carregarDados('conexoes') || [];
-        const usuarios = carregarDados('usuarios') || [];
-
-        const minhas = conexoes.filter(con => con.profissionalId === usuarioLogado?.id || con.empreiteiroId === usuarioLogado?.id);
-
-        if (minhas.length === 0) {
-            container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>🔗 Nenhuma conexão</h3><p style="color:#666;">Contrate profissionais ou candidate-se a vagas!</p></div>';
-            return;
-        }
-
-        container.innerHTML = minhas.map(con => {
-            const outroId = usuarioLogado.id === con.profissionalId ? con.empreiteiroId : con.profissionalId;
-            const outro = usuarios.find(u => u.id === outroId);
-            return `
-                <div class="conexao-card ${con.ativa ? '' : 'desconectado'}" onclick="verPerfilPublico(${outroId})">
-                    <strong>${outro ? outro.nome : 'Usuário'}</strong>
-                    <span class="badge ${con.ativa ? 'badge-success' : 'badge-danger'}">${con.ativa ? '🟢 Ativo' : '🔴 Encerrado'}</span>
-                    <br>🏗️ ${con.obra} • 💰 R$ ${con.valorHora}/h
-                </div>
-            `;
-        }).join('');
-    }
-
-    // ==========================================================
-    // ===== BUSCA =====
-    // ==========================================================
-
-    function buscarProfissionais() {
-        const termo = (document.getElementById('buscaInput')?.value || '').toLowerCase();
-        const profissionais = (carregarDados('usuarios') || []).filter(u =>
-            u.tipo === 'profissional' &&
-            (!termo || u.nome.toLowerCase().includes(termo) || u.profissao.toLowerCase().includes(termo))
-        );
-
-        const container = document.getElementById('buscaResultados');
-        if (!container) return;
-
-        if (profissionais.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#999;">Nenhum profissional encontrado.</p>';
-            return;
-        }
-
-        container.innerHTML = profissionais.map(p => {
-            const numeroWhats = '55' + p.celular.replace(/\D/g, '');
-            return `
-                <div class="card" style="cursor:pointer;" onclick="verPerfilPublico(${p.id})">
-                    <div style="display:flex;align-items:center;">
-                        <div class="lista-avatar">👷</div>
-                        <div style="margin-left:14px;flex:1;">
-                            <div class="lista-nome">${p.nome}</div>
-                            <div class="lista-detalhe">${p.profissao} • ${p.experiencia} anos</div>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:10px;">
-                        <a href="https://wa.me/${numeroWhats}?text=${encodeURIComponent('Olá ' + p.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor.')}" target="_blank" style="flex:1;text-decoration:none;" onclick="event.stopPropagation();">
-                            <button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button>
-                        </a>
-                        <button class="btn btn-small btn-outline" onclick="event.stopPropagation();verPerfilPublico(${p.id})" style="flex:1;">👁️ Perfil</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // ==========================================================
-    // ===== PUBLICAR OBRA =====
-    // ==========================================================
-
-    function publicarObra() {
-        if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') {
-            mostrarToast('Apenas empreiteiros!', 'erro');
-            return;
-        }
-
-        const nome = document.getElementById('obraNome').value.trim();
-        const endereco = document.getElementById('obraEndereco').value.trim();
-
-        if (!nome || !endereco) {
-            mostrarToast('Nome e endereço obrigatórios!', 'erro');
-            return;
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    salvarObra(nome, endereco, position.coords.latitude, position.coords.longitude);
-                },
-                () => {
-                    const latInput = prompt('Digite a latitude (ex: -23.5505):');
-                    const lngInput = prompt('Digite a longitude (ex: -46.6333):');
-                    if (latInput && lngInput) {
-                        const lat = parseFloat(latInput.replace(',', '.'));
-                        const lng = parseFloat(lngInput.replace(',', '.'));
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            salvarObra(nome, endereco, lat, lng);
-                        } else {
-                            mostrarToast('📍 Lat/Long inválidos! Use números.', 'erro');
-                        }
-                    } else {
-                        mostrarToast('📍 Localização necessária para publicar a obra!', 'erro');
-                    }
-                }
-            );
-        } else {
-            mostrarToast('📍 Ative a localização para publicar uma obra!', 'erro');
-        }
-    }
-
-    function salvarObra(nome, endereco, lat, lng) {
-        const obras = carregarDados('obras') || [];
-        const novaObra = {
-            id: Date.now(),
-            usuarioId: usuarioLogado.id,
-            nome: nome,
-            endereco: endereco,
-            descricao: document.getElementById('obraDescricao').value,
-            profissoes: document.getElementById('obraProfissoes').value,
-            valorHora: parseFloat(document.getElementById('obraValorHora').value) || 25,
-            lat: lat,
-            lng: lng,
-            data: new Date().toISOString(),
-            interessados: []
-        };
-
-        obras.unshift(novaObra);
-        salvarDados('obras', obras);
-
-        // Salva no Firestore se disponível
-        if (db) {
-            try {
-                db.collection('obras').add(novaObra)
-                    .then(() => console.log('✅ Obra salva no Firestore'))
-                    .catch(err => console.warn('⚠️ Firestore não salvou:', err));
-            } catch (e) {
-                console.warn('⚠️ Erro ao salvar no Firestore:', e);
-            }
-        }
-
-        mostrarToast('✅ Obra publicada com localização!', 'sucesso');
-        mostrarTela('homeScreen');
-
-        document.getElementById('obraNome').value = '';
-        document.getElementById('obraEndereco').value = '';
-        document.getElementById('obraDescricao').value = '';
-        document.getElementById('obraProfissoes').value = '';
-        document.getElementById('obraValorHora').value = '';
-
-        setTimeout(() => {
-            if (typeof map !== 'undefined' && map && userPosition) {
-                carregarObrasNoMapa(userPosition);
-            }
-        }, 500);
-    }
-
-    // ==========================================================
-    // ===== INICIALIZAÇÃO =====
-    // ==========================================================
-
-    // Mostra os vídeos por padrão (antes do login)
-    mostrarVideos();
-
-    // Verifica se o usuário já está logado
-    const usuarioSalvo = carregarDados('usuarioLogado');
-    if (usuarioSalvo) {
-        const usuarios = carregarDados('usuarios') || [];
-        const user = usuarios.find(u => u.id === usuarioSalvo.id);
-        if (user) {
-            usuarioLogado = user;
-            tipoUsuario = user.tipo;
-            mostrarMapa();
-            mostrarTela('homeScreen');
-        }
-    }
-
-    console.log('✅ LPXCONSTRUTOR COM FIREBASE!');
-</script>
-
-</body>
-</html><!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1A3A5C">
-    <title>LPXConstrutor</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
     <!-- ===== GOOGLE MAPS API COM SUA CHAVE ===== -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places"></script>
+    
+    <!-- ===== FIREBASE SDKs ===== -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
         /* ===== RESET E BASE ===== */
@@ -3140,7 +896,7 @@
     <div class="card">
         <div class="input-group"><div class="input-label">📧 E-mail ou CPF</div><input type="text" class="input-field" id="loginEmail" placeholder="Digite seu e-mail ou CPF"></div>
         <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="loginSenha" placeholder="Digite sua senha"></div>
-        <button class="btn btn-primary" onclick="fazerLogin()">🔑 ENTRAR</button>
+        <button class="btn btn-primary" onclick="fazerLoginFirebase()">🔑 ENTRAR</button>
         <button class="btn btn-outline" onclick="recuperarSenha()">🔐 Esqueceu a senha?</button>
         <button class="btn btn-outline" onclick="mostrarTela('cadastroScreen')">📝 Criar Conta</button>
     </div>
@@ -3158,7 +914,7 @@
         <div class="input-group" id="grupoProfissao"><div class="input-label">🛠️ Profissão</div><select class="input-field" id="cadProfissao"><option value="">Selecione</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div>
         <div class="input-group"><div class="input-label">📅 Experiência</div><input type="number" class="input-field" id="cadExperiencia" placeholder="Ex:5"></div>
         <div class="input-group"><div class="input-label">🔒 Senha</div><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6"></div>
-        <button class="btn btn-primary" onclick="cadastrar()">✅ FINALIZAR</button>
+        <button class="btn btn-primary" onclick="cadastrarFirebase()">✅ FINALIZAR</button>
         <button class="btn btn-outline" onclick="mostrarTela('loginScreen')">← Voltar</button>
     </div>
 </div>
@@ -3234,7 +990,7 @@
         <div class="input-group"><div class="input-label">📝 Descrição</div><textarea class="input-field" id="obraDescricao" rows="2"></textarea></div>
         <div class="input-group"><div class="input-label">👷 Profissões</div><input type="text" class="input-field" id="obraProfissoes"></div>
         <div class="input-group"><div class="input-label">💰 Valor/hora</div><input type="number" class="input-field" id="obraValorHora" step="0.01"></div>
-        <button class="btn btn-primary" onclick="publicarObra()">📢 PUBLICAR</button>
+        <button class="btn btn-primary" onclick="publicarObraFirebase()">📢 PUBLICAR</button>
         <button class="btn btn-outline" onclick="mostrarTela('homeScreen')">← Cancelar</button>
     </div>
 </div>
@@ -3259,7 +1015,7 @@
         <div class="input-group"><div class="input-label">👤 Nome</div><input type="text" class="input-field" id="editNome"></div>
         <div class="input-group"><div class="input-label">📱 Celular</div><input type="tel" class="input-field" id="editCelular"></div>
         <div class="input-group"><div class="input-label">📧 E-mail</div><input type="email" class="input-field" id="editEmail"></div>
-        <button class="btn btn-primary" onclick="salvarPerfil()">💾 SALVAR</button>
+        <button class="btn btn-primary" onclick="salvarPerfilFirebase()">💾 SALVAR</button>
     </div>
     <button class="btn btn-danger" onclick="sair()">🚪 SAIR</button>
 </div>
@@ -3300,8 +1056,210 @@
 <!-- TOAST -->
 <div class="toast" id="toast" style="display:none;"></div>
 
-<!-- ===== JAVASCRIPT ===== -->
+<!-- ========================================================== -->
+<!-- ===== JAVASCRIPT COMPLETO COM FIREBASE ===== -->
+<!-- ========================================================== -->
 <script>
+    // ==========================================================
+    // ===== CONFIGURAÇÃO DO FIREBASE =====
+    // ==========================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyB_HKuYMVnBn_rhKfvazjs-7SCmb9NOrDQ",
+        authDomain: "construtorlpx.firebaseapp.com",
+        projectId: "construtorlpx",
+        storageBucket: "construtorlpx.firebasestorage.app",
+        messagingSenderId: "247671839031",
+        appId: "1:247671839031:web:1a4ecfdd28c02b802fa2b2",
+        measurementId: "G-3J4XN3K2PG"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Habilitar cache offline
+    db.enablePersistence()
+        .then(() => console.log('🔥 Firestore cache ativado!'))
+        .catch(err => console.warn('⚠️ Erro ao ativar cache:', err));
+
+    console.log('🔥 Firebase conectado com sucesso!');
+
+    // ==========================================================
+    // ===== FUNÇÕES FIREBASE =====
+    // ==========================================================
+
+    // --- SALVAR USUÁRIO ---
+    async function salvarUsuarioFirebase(usuario) {
+        try {
+            await db.collection('usuarios').doc(usuario.id.toString()).set(usuario);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao salvar usuário:', error);
+            mostrarToast('Erro ao salvar usuário!', 'erro');
+            return false;
+        }
+    }
+
+    // --- BUSCAR USUÁRIO POR EMAIL/CPF ---
+    async function buscarUsuarioPorEmailOuCPF(emailOuCPF) {
+        try {
+            const snapshot = await db.collection('usuarios')
+                .where('email', '==', emailOuCPF.trim())
+                .get();
+            
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                return { id: parseInt(doc.id), ...doc.data() };
+            }
+            
+            const cpfLimpo = emailOuCPF.replace(/\D/g, '');
+            const cpfSnapshot = await db.collection('usuarios')
+                .where('cpf', '==', cpfLimpo)
+                .get();
+            
+            if (!cpfSnapshot.empty) {
+                const doc = cpfSnapshot.docs[0];
+                return { id: parseInt(doc.id), ...doc.data() };
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('❌ Erro ao buscar usuário:', error);
+            return null;
+        }
+    }
+
+    // --- BUSCAR TODOS OS USUÁRIOS ---
+    async function buscarTodosUsuarios() {
+        try {
+            const snapshot = await db.collection('usuarios').get();
+            return snapshot.docs.map(doc => ({ 
+                id: parseInt(doc.id), 
+                ...doc.data() 
+            }));
+        } catch (error) {
+            console.error('❌ Erro ao buscar usuários:', error);
+            return [];
+        }
+    }
+
+    // --- BUSCAR USUÁRIO POR ID ---
+    async function buscarUsuarioPorId(id) {
+        try {
+            const doc = await db.collection('usuarios').doc(id.toString()).get();
+            if (doc.exists) {
+                return { id: parseInt(doc.id), ...doc.data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('❌ Erro ao buscar usuário:', error);
+            return null;
+        }
+    }
+
+    // --- ATUALIZAR USUÁRIO ---
+    async function atualizarUsuarioFirebase(id, dados) {
+        try {
+            await db.collection('usuarios').doc(id.toString()).update(dados);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao atualizar usuário:', error);
+            return false;
+        }
+    }
+
+    // --- SALVAR OBRA ---
+    async function salvarObraFirebase(obra) {
+        try {
+            await db.collection('obras').doc(obra.id.toString()).set(obra);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao salvar obra:', error);
+            mostrarToast('Erro ao publicar obra!', 'erro');
+            return false;
+        }
+    }
+
+    // --- BUSCAR TODAS AS OBRAS ---
+    async function buscarTodasObras() {
+        try {
+            const snapshot = await db.collection('obras')
+                .orderBy('data', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ 
+                id: parseInt(doc.id), 
+                ...doc.data() 
+            }));
+        } catch (error) {
+            console.error('❌ Erro ao buscar obras:', error);
+            return [];
+        }
+    }
+
+    // --- BUSCAR OBRA POR ID ---
+    async function buscarObraPorId(id) {
+        try {
+            const doc = await db.collection('obras').doc(id.toString()).get();
+            if (doc.exists) {
+                return { id: parseInt(doc.id), ...doc.data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('❌ Erro ao buscar obra:', error);
+            return null;
+        }
+    }
+
+    // --- ATUALIZAR OBRA ---
+    async function atualizarObraFirebase(id, dados) {
+        try {
+            await db.collection('obras').doc(id.toString()).update(dados);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao atualizar obra:', error);
+            return false;
+        }
+    }
+
+    // --- SALVAR CONEXÃO ---
+    async function salvarConexaoFirebase(conexao) {
+        try {
+            await db.collection('conexoes').doc(conexao.id.toString()).set(conexao);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao salvar conexão:', error);
+            return false;
+        }
+    }
+
+    // --- BUSCAR CONEXÕES DO USUÁRIO ---
+    async function buscarConexoesDoUsuario(usuarioId) {
+        try {
+            const snapshot = await db.collection('conexoes')
+                .where('profissionalId', '==', usuarioId)
+                .get();
+            
+            const comoProfissional = snapshot.docs.map(doc => ({ 
+                id: parseInt(doc.id), 
+                ...doc.data() 
+            }));
+            
+            const snapshot2 = await db.collection('conexoes')
+                .where('empreiteiroId', '==', usuarioId)
+                .get();
+            
+            const comoEmpreiteiro = snapshot2.docs.map(doc => ({ 
+                id: parseInt(doc.id), 
+                ...doc.data() 
+            }));
+            
+            return [...comoProfissional, ...comoEmpreiteiro];
+        } catch (error) {
+            console.error('❌ Erro ao buscar conexões:', error);
+            return [];
+        }
+    }
+
     // ==========================================================
     // ===== FUNÇÕES DA GALERIA DE VÍDEOS =====
     // ==========================================================
@@ -3486,8 +1444,8 @@
         carregarObrasNoMapa(posicao);
     }
 
-    function carregarObrasNoMapa(posicao) {
-        var obras = carregarDados('obras') || [];
+    async function carregarObrasNoMapa(posicao) {
+        var obras = await buscarTodasObras();
         var container = document.getElementById('obrasProximas');
         if (!container) return;
 
@@ -3600,64 +1558,23 @@
     }
 
     // ==========================================================
-    // ===== FUNÇÕES DO APP =====
+    // ===== FUNÇÕES DO APP COM FIREBASE =====
     // ==========================================================
 
-    function salvarDados(c, d) { localStorage.setItem(c, JSON.stringify(d)) }
-    function carregarDados(c) { var d = localStorage.getItem(c); return d ? JSON.parse(d) : null }
-
-    var usuarioLogado = carregarDados('usuarioLogado');
+    var usuarioLogado = null;
     var obraSelecionada = null;
     var perfilSelecionado = null;
     var codigoRecuperacao = null;
     var usuarioRecuperando = null;
 
-    if (!carregarDados('usuarios')) {
-        salvarDados('usuarios', [
-            { id: 1001, tipo: 'profissional', nome: 'João Silva', email: 'joao@email.com', celular: '11999990001', profissao: 'pedreiro', experiencia: 8, habilidades: 'Alvenaria, Revestimento, Concreto', senha: '123456', fotoPerfil: '', avaliacoes: [] },
-            { id: 1002, tipo: 'profissional', nome: 'Maria Santos', email: 'maria@email.com', celular: '11999990002', profissao: 'pintor', experiencia: 5, habilidades: 'Pintura, Textura, Grafiato', senha: '123456', fotoPerfil: '', avaliacoes: [] },
-            { id: 2001, tipo: 'empreiteiro', nome: 'Carlos Obras', email: 'carlos@email.com', celular: '11999990003', profissao: '', experiencia: 15, senha: '123456', fotoPerfil: '' }
-        ])
-    }
-    if (!carregarDados('obras')) {
-        salvarDados('obras', [
-            {
-                id: 1,
-                usuarioId: 2001,
-                nome: 'Residencial Parque Verde',
-                endereco: 'Rua das Flores, 123 - São Paulo',
-                descricao: 'Construção de sobrado com 3 quartos.',
-                profissoes: 'Pedreiro, Eletricista, Pintor',
-                valorHora: 25,
-                lat: -23.5505,
-                lng: -46.6333,
-                data: new Date().toISOString(),
-                interessados: []
-            },
-            {
-                id: 2,
-                usuarioId: 2001,
-                nome: 'Reforma Edifício Central',
-                endereco: 'Av. Principal, 500 - São Paulo',
-                descricao: 'Reforma completa do hall.',
-                profissoes: 'Pedreiro, Gesseiro',
-                valorHora: 30,
-                lat: -23.5600,
-                lng: -46.6400,
-                data: new Date().toISOString(),
-                interessados: []
-            }
-        ]);
-    }
-    if (!carregarDados('conexoes')) salvarDados('conexoes', [])
-
+    // --- MOSTRAR TELA ---
     function mostrarTela(id) {
         document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active') });
         document.getElementById(id).classList.add('active');
         var nav = document.getElementById('bottomNav');
         if (nav) nav.style.display = ['homeScreen', 'buscaScreen', 'publicarObraScreen', 'perfilScreen'].includes(id) ? 'flex' : 'none';
         if (id === 'homeScreen') {
-            carregarFeed();
+            carregarFeedFirebase();
             if (usuarioLogado) {
                 if (typeof map !== 'undefined' && map && userPosition) {
                     carregarObrasNoMapa(userPosition);
@@ -3674,6 +1591,7 @@
         if (id === 'buscaScreen') buscarProfissionais();
     }
 
+    // --- TOAST ---
     function mostrarToast(m, t) {
         var toast = document.getElementById('toast');
         if (!toast) return;
@@ -3683,60 +1601,108 @@
         setTimeout(function() { toast.style.display = 'none' }, 3000);
     }
 
+    // --- MODAL ---
     function fecharModal(id) { var m = document.getElementById(id); if (m) m.classList.remove('active'); }
 
+    // --- TABS ---
     function mudarTab(tab, btn) {
         document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active') });
         btn.classList.add('active');
         document.getElementById('feedTab').style.display = tab === 'feed' ? 'block' : 'none';
         document.getElementById('redeTab').style.display = tab === 'rede' ? 'block' : 'none';
-        if (tab === 'rede') carregarRede();
+        if (tab === 'rede') carregarRedeFirebase();
     }
 
+    // --- TOGGLE PROFISSÃO ---
     function toggleProfissao() {
         var g = document.getElementById('grupoProfissao');
         var t = document.getElementById('cadTipo');
         if (g && t) g.style.display = t.value === 'profissional' ? 'block' : 'none';
     }
 
-    function fazerLogin() {
-        var e = document.getElementById('loginEmail').value.trim();
-        var s = document.getElementById('loginSenha').value;
-        if (!e || !s) { mostrarToast('Preencha todos os campos!', 'erro'); return; }
-        var u = (carregarDados('usuarios') || []).find(function(u) { return (u.email === e || u.cpf === e) && u.senha === s });
-        if (u) {
-            usuarioLogado = u;
-            salvarDados('usuarioLogado', u);
-            mostrarToast('Bem-vindo, ' + u.nome + '!', 'sucesso');
+    // ==========================================================
+    // ===== LOGIN E CADASTRO =====
+    // ==========================================================
+
+    async function fazerLoginFirebase() {
+        var email = document.getElementById('loginEmail').value.trim();
+        var senha = document.getElementById('loginSenha').value;
+
+        if (!email || !senha) {
+            mostrarToast('Preencha todos os campos!', 'erro');
+            return;
+        }
+
+        var usuario = await buscarUsuarioPorEmailOuCPF(email);
+        
+        if (usuario && usuario.senha === senha) {
+            usuarioLogado = usuario;
+            mostrarToast('Bem-vindo, ' + usuario.nome + '!', 'sucesso');
             mostrarMapa();
-            setTimeout(function() { mostrarTela('homeScreen') }, 500);
+            setTimeout(function() { mostrarTela('homeScreen'); }, 500);
         } else {
             mostrarToast('E-mail/CPF ou senha inválidos!', 'erro');
         }
     }
 
-    function cadastrar() {
-        var t = document.getElementById('cadTipo').value;
-        var n = document.getElementById('cadNome').value.trim();
-        var e = document.getElementById('cadEmail').value.trim();
-        var c = document.getElementById('cadCelular').value.trim();
-        var p = document.getElementById('cadCPF').value.trim();
-        var pr = t === 'profissional' ? document.getElementById('cadProfissao').value : '';
-        var ex = document.getElementById('cadExperiencia').value;
-        var s = document.getElementById('cadSenha').value;
-        if (!n || !e || !c || !p || !s) { mostrarToast('Preencha todos os campos!', 'erro'); return; }
-        if (s.length < 6) { mostrarToast('Senha mínima de 6 caracteres!', 'erro'); return; }
-        var usuarios = carregarDados('usuarios') || [];
-        if (usuarios.find(function(u) { return u.email === e || u.cpf === p })) { mostrarToast('E-mail/CPF já cadastrado!', 'erro'); return; }
-        var novo = { id: Date.now(), tipo: t, nome: n, email: e, celular: c, cpf: p, profissao: pr, experiencia: parseInt(ex) || 0, habilidades: '', senha: s, fotoPerfil: '', avaliacoes: [] };
-        usuarios.push(novo);
-        salvarDados('usuarios', usuarios);
-        usuarioLogado = novo;
-        salvarDados('usuarioLogado', novo);
+    async function cadastrarFirebase() {
+        var tipo = document.getElementById('cadTipo').value;
+        var nome = document.getElementById('cadNome').value.trim();
+        var email = document.getElementById('cadEmail').value.trim();
+        var celular = document.getElementById('cadCelular').value.trim();
+        var cpf = document.getElementById('cadCPF').value.replace(/\D/g, '');
+        var profissao = tipo === 'profissional' ? document.getElementById('cadProfissao').value : '';
+        var experiencia = document.getElementById('cadExperiencia').value;
+        var senha = document.getElementById('cadSenha').value;
+
+        if (!nome || !email || !celular || !cpf || !senha) {
+            mostrarToast('Preencha todos os campos!', 'erro');
+            return;
+        }
+
+        if (senha.length < 6) {
+            mostrarToast('Senha mínima de 6 caracteres!', 'erro');
+            return;
+        }
+
+        // Verificar se usuário já existe
+        var existe = await buscarUsuarioPorEmailOuCPF(email);
+        if (existe) {
+            mostrarToast('E-mail/CPF já cadastrado!', 'erro');
+            return;
+        }
+
+        var novoUsuario = {
+            id: Date.now(),
+            tipo: tipo,
+            nome: nome,
+            email: email,
+            celular: celular,
+            cpf: cpf,
+            profissao: profissao,
+            experiencia: parseInt(experiencia) || 0,
+            habilidades: '',
+            senha: senha,
+            fotoPerfil: '',
+            avaliacoes: [],
+            dataCriacao: new Date().toISOString()
+        };
+
+        var salvou = await salvarUsuarioFirebase(novoUsuario);
+        if (!salvou) {
+            mostrarToast('Erro ao salvar!', 'erro');
+            return;
+        }
+
+        usuarioLogado = novoUsuario;
         mostrarToast('Cadastro realizado!', 'sucesso');
         mostrarMapa();
-        setTimeout(function() { mostrarTela('homeScreen') }, 500);
+        setTimeout(function() { mostrarTela('homeScreen'); }, 500);
     }
+
+    // ==========================================================
+    // ===== RECUPERAR SENHA =====
+    // ==========================================================
 
     function recuperarSenha() {
         document.getElementById('recuperarPasso1').style.display = 'block';
@@ -3745,104 +1711,187 @@
         mostrarTela('recuperarSenhaScreen');
     }
 
-    function enviarCodigoRecuperacao() {
-        var e = document.getElementById('recEmail').value.trim();
-        if (!e) return;
-        var u = (carregarDados('usuarios') || []).find(function(u) { return u.email === e || u.cpf.replace(/\D/g, '') === e.replace(/\D/g, '') });
-        if (!u) { mostrarToast('E-mail/CPF não encontrado!', 'erro'); return; }
+    async function enviarCodigoRecuperacao() {
+        var email = document.getElementById('recEmail').value.trim();
+        if (!email) {
+            mostrarToast('Digite seu e-mail ou CPF!', 'erro');
+            return;
+        }
+
+        var usuario = await buscarUsuarioPorEmailOuCPF(email);
+        if (!usuario) {
+            mostrarToast('E-mail/CPF não encontrado!', 'erro');
+            return;
+        }
+
         codigoRecuperacao = Math.floor(100000 + Math.random() * 900000).toString();
-        usuarioRecuperando = u;
-        alert('Seu código é: ' + codigoRecuperacao);
+        usuarioRecuperando = usuario;
+        alert('Seu código de recuperação é: ' + codigoRecuperacao);
+        
         document.getElementById('recuperarPasso1').style.display = 'none';
         document.getElementById('recuperarPasso2').style.display = 'block';
     }
 
     function verificarCodigo() {
-        if (document.getElementById('recCodigo').value.trim() !== codigoRecuperacao) { mostrarToast('Código inválido!', 'erro'); return; }
+        var codigo = document.getElementById('recCodigo').value.trim();
+        if (codigo !== codigoRecuperacao) {
+            mostrarToast('Código inválido!', 'erro');
+            return;
+        }
         document.getElementById('recuperarPasso2').style.display = 'none';
         document.getElementById('recuperarPasso3').style.display = 'block';
+        mostrarToast('✅ Código verificado!', 'sucesso');
     }
 
-    function criarNovaSenha() {
-        var n = document.getElementById('recNovaSenha').value;
-        var c = document.getElementById('recConfirmarSenha').value;
-        if (!n || n.length < 6) return;
-        if (n !== c) { mostrarToast('Senhas não coincidem!', 'erro'); return; }
-        var usuarios = carregarDados('usuarios') || [];
-        var i = usuarios.findIndex(function(u) { return u.id === usuarioRecuperando.id });
-        if (i !== -1) { usuarios[i].senha = n;
-            salvarDados('usuarios', usuarios); }
-        mostrarToast('Senha alterada!', 'sucesso');
-        setTimeout(function() { mostrarTela('loginScreen') }, 1000);
+    async function criarNovaSenha() {
+        var novaSenha = document.getElementById('recNovaSenha').value;
+        var confirmar = document.getElementById('recConfirmarSenha').value;
+
+        if (!novaSenha || novaSenha.length < 6) {
+            mostrarToast('Senha mínima de 6 caracteres!', 'erro');
+            return;
+        }
+
+        if (novaSenha !== confirmar) {
+            mostrarToast('Senhas não coincidem!', 'erro');
+            return;
+        }
+
+        var atualizado = await atualizarUsuarioFirebase(usuarioRecuperando.id, { senha: novaSenha });
+        if (atualizado) {
+            mostrarToast('✅ Senha alterada com sucesso!', 'sucesso');
+            setTimeout(function() { 
+                mostrarTela('loginScreen'); 
+                document.getElementById('recuperarPasso1').style.display = 'block';
+                document.getElementById('recuperarPasso2').style.display = 'none';
+                document.getElementById('recuperarPasso3').style.display = 'none';
+            }, 1500);
+        } else {
+            mostrarToast('Erro ao alterar senha!', 'erro');
+        }
     }
+
+    // ==========================================================
+    // ===== PERFIL =====
+    // ==========================================================
 
     function carregarMeuPerfil() {
         if (!usuarioLogado) return;
         document.getElementById('perfilNome').textContent = usuarioLogado.nome;
-        document.getElementById('perfilProfissao').textContent = usuarioLogado.tipo === 'profissional' ? usuarioLogado.profissao + ' • ' + usuarioLogado.experiencia + ' anos' : 'EMPREITEIRO';
+        document.getElementById('perfilProfissao').textContent = usuarioLogado.tipo === 'profissional' ? 
+            usuarioLogado.profissao + ' • ' + usuarioLogado.experiencia + ' anos' : 
+            'EMPREITEIRO';
         document.getElementById('editNome').value = usuarioLogado.nome || '';
         document.getElementById('editCelular').value = usuarioLogado.celular || '';
         document.getElementById('editEmail').value = usuarioLogado.email || '';
+        
+        if (usuarioLogado.fotoPerfil) {
+            document.getElementById('perfilAvatarDefault').innerHTML = 
+                '<img src="' + usuarioLogado.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+        }
     }
 
-    function salvarPerfil() {
+    async function salvarPerfilFirebase() {
         if (!usuarioLogado) return;
+
         usuarioLogado.nome = document.getElementById('editNome').value.trim();
         usuarioLogado.celular = document.getElementById('editCelular').value.trim();
         usuarioLogado.email = document.getElementById('editEmail').value.trim();
-        var usuarios = carregarDados('usuarios') || [];
-        var i = usuarios.findIndex(function(u) { return u.id === usuarioLogado.id });
-        if (i !== -1) { usuarios[i] = usuarioLogado;
-            salvarDados('usuarios', usuarios); }
-        salvarDados('usuarioLogado', usuarioLogado);
-        mostrarToast('Perfil atualizado!', 'sucesso');
+
+        var atualizado = await atualizarUsuarioFirebase(usuarioLogado.id, {
+            nome: usuarioLogado.nome,
+            celular: usuarioLogado.celular,
+            email: usuarioLogado.email
+        });
+
+        if (atualizado) {
+            mostrarToast('✅ Perfil atualizado!', 'sucesso');
+            carregarMeuPerfil();
+        } else {
+            mostrarToast('Erro ao atualizar perfil!', 'erro');
+        }
     }
 
     function mudarFotoPerfil(e) {
-        var f = e.target.files[0];
-        if (!f) return;
-        var r = new FileReader();
-        r.onload = function(ev) {
-            document.getElementById('perfilAvatarDefault').innerHTML = '<img src="' + ev.target.result + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-            usuarioLogado.fotoPerfil = ev.target.result;
-            salvarDados('usuarioLogado', usuarioLogado);
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = async function(ev) {
+            var fotoBase64 = ev.target.result;
+            document.getElementById('perfilAvatarDefault').innerHTML = 
+                '<img src="' + fotoBase64 + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+            
+            usuarioLogado.fotoPerfil = fotoBase64;
+            await atualizarUsuarioFirebase(usuarioLogado.id, { fotoPerfil: fotoBase64 });
+            mostrarToast('✅ Foto atualizada!', 'sucesso');
         };
-        r.readAsDataURL(f);
+        reader.readAsDataURL(file);
     }
 
-    function carregarFeed() {
-        var obras = carregarDados('obras') || [];
+    // ==========================================================
+    // ===== FEED =====
+    // ==========================================================
+
+    async function carregarFeedFirebase() {
+        var obras = await buscarTodasObras();
+        var usuarios = await buscarTodosUsuarios();
         var container = document.getElementById('feedContainer');
-        if (!container) return;
+
         if (obras.length === 0) {
             container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:60px;">🏗️</div><h3>Nenhuma obra publicada!</h3></div>';
             return;
         }
-        var usuarios = carregarDados('usuarios') || [];
+
         container.innerHTML = obras.map(function(obra) {
             var autor = usuarios.find(function(u) { return u.id === obra.usuarioId });
             var distancia = '';
             if (userPosition && obra.lat && obra.lng) {
                 var dist = calcularDistancia(userPosition.lat, userPosition.lng, obra.lat, obra.lng);
-                distancia = `📍 ${(dist/1000).toFixed(1)} km - `;
+                distancia = '📍 ' + (dist/1000).toFixed(1) + ' km - ';
             }
-            return '<div class="feed-card" style="cursor:pointer;" onclick="verDetalheObra(' + obra.id + ')">' +
-                '<div class="feed-card-header"><div class="feed-avatar">🏢</div><div class="feed-user-info"><div class="feed-user-name">' + (autor ? autor.nome : 'Empreiteiro') + '</div><div class="feed-time">' + distancia + new Date(obra.data).toLocaleDateString('pt-BR') + '</div></div></div>' +
+            return '<div class="feed-card" onclick="verDetalheObra(' + obra.id + ')">' +
+                '<div class="feed-card-header">' +
+                    '<div class="feed-avatar">🏢</div>' +
+                    '<div class="feed-user-info">' +
+                        '<div class="feed-user-name">' + (autor ? autor.nome : 'Empreiteiro') + '</div>' +
+                        '<div class="feed-time">' + distancia + new Date(obra.data).toLocaleDateString('pt-BR') + '</div>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="feed-card-image">🏗️</div>' +
-                '<div class="feed-card-body"><div class="feed-card-title">' + obra.nome + '</div><p>📍 ' + obra.endereco + '</p><p>💰 R$ ' + obra.valorHora + '/h</p><p style="font-size:11px;color:#F47920;">👆 Clique para ver detalhes e se candidatar</p></div></div>';
+                '<div class="feed-card-body">' +
+                    '<div class="feed-card-title">' + obra.nome + '</div>' +
+                    '<p>📍 ' + obra.endereco + '</p>' +
+                    '<p>💰 R$ ' + obra.valorHora + '/h</p>' +
+                    '<p style="font-size:11px;color:#F47920;">👆 Clique para ver detalhes</p>' +
+                '</div>' +
+            '</div>';
         }).join('');
     }
 
-    function verDetalheObra(obraId) {
-        var obras = carregarDados('obras') || [];
-        var obra = obras.find(function(o) { return o.id === obraId });
-        if (!obra) return;
-        var usuarios = carregarDados('usuarios') || [];
-        var autor = usuarios.find(function(u) { return u.id === obra.usuarioId });
-        var jaCandidatou = obra.interessados && obra.interessados.some(function(i) { return i.profissionalId === usuarioLogado?.id });
+    // ==========================================================
+    // ===== DETALHE DA OBRA =====
+    // ==========================================================
 
-        var html = '<div style="text-align:center;margin-bottom:20px;"><div style="font-size:60px;">🏗️</div><h2 style="color:#1A3A5C;">' + obra.nome + '</h2></div>' +
-            '<div class="card"><p><strong>📍 Endereço:</strong> ' + obra.endereco + '</p><p><strong>📝 Descrição:</strong> ' + (obra.descricao || 'Não informado') + '</p><p><strong>💰 Valor:</strong> R$ ' + obra.valorHora + '/h</p><p><strong>👷 Profissões:</strong> ' + (obra.profissoes || 'Não informado') + '</p><p><strong>🏢 Empreiteiro:</strong> ' + (autor ? autor.nome : 'Não informado') + '</p>';
+    async function verDetalheObra(obraId) {
+        var obra = await buscarObraPorId(obraId);
+        if (!obra) return;
+
+        var usuarios = await buscarTodosUsuarios();
+        var autor = usuarios.find(function(u) { return u.id === obra.usuarioId });
+        var jaCandidatou = obra.interessados && obra.interessados.some(function(i) { 
+            return i.profissionalId === usuarioLogado?.id; 
+        });
+
+        var html = '<div style="text-align:center;margin-bottom:20px;">' +
+            '<div style="font-size:60px;">🏗️</div>' +
+            '<h2 style="color:#1A3A5C;">' + obra.nome + '</h2>' +
+        '</div>' +
+        '<div class="card">' +
+            '<p><strong>📍 Endereço:</strong> ' + obra.endereco + '</p>' +
+            '<p><strong>📝 Descrição:</strong> ' + (obra.descricao || 'Não informado') + '</p>' +
+            '<p><strong>💰 Valor:</strong> R$ ' + obra.valorHora + '/h</p>' +
+            '<p><strong>👷 Profissões:</strong> ' + (obra.profissoes || 'Não informado') + '</p>' +
+            '<p><strong>🏢 Empreiteiro:</strong> ' + (autor ? autor.nome : 'Não informado') + '</p>';
 
         if (obra.lat && obra.lng && userPosition) {
             var dist = calcularDistancia(userPosition.lat, userPosition.lng, obra.lat, obra.lng);
@@ -3852,7 +1901,11 @@
         html += '</div>';
 
         if (usuarioLogado && usuarioLogado.tipo === 'profissional') {
-            if (jaCandidatou) { html += '<div class="alert-card" style="text-align:center;">✅ Você já se candidatou a esta vaga!</div>'; } else { html += '<button class="btn btn-primary" onclick="candidatarObra(' + obra.id + ')">✋ TENHO INTERESSE NESTA VAGA</button>'; }
+            if (jaCandidatou) {
+                html += '<div class="alert-card" style="text-align:center;">✅ Você já se candidatou a esta vaga!</div>';
+            } else {
+                html += '<button class="btn btn-primary" onclick="candidatarObraFirebase(' + obra.id + ')">✋ TENHO INTERESSE NESTA VAGA</button>';
+            }
         }
 
         if (usuarioLogado && usuarioLogado.tipo === 'empreiteiro' && autor && usuarioLogado.id === autor.id) {
@@ -3860,39 +1913,85 @@
         }
 
         html += '<button class="btn btn-outline" onclick="mostrarTela(\'homeScreen\')">← Voltar</button>';
+        
         document.getElementById('detalheObraConteudo').innerHTML = html;
         mostrarTela('detalheObraScreen');
     }
 
-    function candidatarObra(obraId) {
-        if (!usuarioLogado || usuarioLogado.tipo !== 'profissional') { mostrarToast('Apenas profissionais podem se candidatar!', 'erro'); return; }
-        var obras = carregarDados('obras') || [];
-        var idx = obras.findIndex(function(o) { return o.id === obraId });
-        if (idx === -1) return;
-        if (!obras[idx].interessados) obras[idx].interessados = [];
-        if (obras[idx].interessados.find(function(i) { return i.profissionalId === usuarioLogado.id })) { mostrarToast('Você já se candidatou!', 'erro'); return; }
-        obras[idx].interessados.push({ profissionalId: usuarioLogado.id, data: new Date().toISOString(), status: 'pendente' });
-        salvarDados('obras', obras);
-        mostrarToast('✅ Candidatura enviada com sucesso!', 'sucesso');
-        verDetalheObra(obraId);
+    // ==========================================================
+    // ===== CANDIDATAR A OBRA =====
+    // ==========================================================
+
+    async function candidatarObraFirebase(obraId) {
+        if (!usuarioLogado || usuarioLogado.tipo !== 'profissional') {
+            mostrarToast('Apenas profissionais podem se candidatar!', 'erro');
+            return;
+        }
+
+        var obra = await buscarObraPorId(obraId);
+        if (!obra) {
+            mostrarToast('Obra não encontrada!', 'erro');
+            return;
+        }
+
+        if (!obra.interessados) obra.interessados = [];
+        
+        if (obra.interessados.some(function(i) { return i.profissionalId === usuarioLogado.id })) {
+            mostrarToast('Você já se candidatou!', 'erro');
+            return;
+        }
+
+        obra.interessados.push({
+            profissionalId: usuarioLogado.id,
+            data: new Date().toISOString(),
+            status: 'pendente'
+        });
+
+        var atualizado = await atualizarObraFirebase(obraId, { interessados: obra.interessados });
+        
+        if (atualizado) {
+            mostrarToast('✅ Candidatura enviada com sucesso!', 'sucesso');
+            verDetalheObra(obraId);
+        } else {
+            mostrarToast('Erro ao candidatar!', 'erro');
+        }
     }
 
-    function verCandidatosObra(obraId) {
-        var obra = (carregarDados('obras') || []).find(function(o) { return o.id === obraId });
-        if (!obra || !obra.interessados || obra.interessados.length === 0) { mostrarToast('Nenhum candidato ainda!'); return; }
-        var usuarios = carregarDados('usuarios') || [];
+    // ==========================================================
+    // ===== VER CANDIDATOS =====
+    // ==========================================================
+
+    async function verCandidatosObra(obraId) {
+        var obra = await buscarObraPorId(obraId);
+        if (!obra || !obra.interessados || obra.interessados.length === 0) {
+            mostrarToast('Nenhum candidato ainda!');
+            return;
+        }
+
+        var usuarios = await buscarTodosUsuarios();
         var html = '<h3>👥 Candidatos</h3>';
+        
         obra.interessados.forEach(function(i) {
             var p = usuarios.find(function(u) { return u.id === i.profissionalId });
             if (p) {
-                html += '<div class="card" style="cursor:pointer;" onclick="verPerfilPublico(' + p.id + ')">' +
-                    '<div style="display:flex;align-items:center;"><div class="lista-avatar">👷</div><div style="margin-left:10px;flex:1;"><strong>' + p.nome + '</strong><br>' + p.profissao + ' • ' + p.experiencia + ' anos</div></div>' +
+                html += '<div class="card" onclick="verPerfilPublico(' + p.id + ')">' +
+                    '<div style="display:flex;align-items:center;">' +
+                        '<div class="lista-avatar">👷</div>' +
+                        '<div style="margin-left:10px;flex:1;">' +
+                            '<strong>' + p.nome + '</strong><br>' +
+                            p.profissao + ' • ' + p.experiencia + ' anos' +
+                        '</div>' +
+                    '</div>' +
                     '<div style="margin-top:10px;display:flex;gap:8px;">' +
-                    '<a href="https://wa.me/55' + p.celular.replace(/\D/g, '') + '?text=' + encodeURIComponent('Olá ' + p.nome + '! Vi sua candidatura no LPXConstrutor.') + '" target="_blank" style="flex:1;text-decoration:none;" onclick="event.stopPropagation();"><button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button></a>' +
-                    '<button class="btn btn-small btn-success" onclick="event.stopPropagation();aceitarCandidato(' + obraId + ',' + p.id + ')">✅ Aceitar</button>' +
-                    '</div></div>';
+                        '<a href="https://wa.me/55' + p.celular.replace(/\D/g, '') + '?text=' + encodeURIComponent('Olá ' + p.nome + '! Vi sua candidatura no LPXConstrutor.') + '" target="_blank" style="flex:1;text-decoration:none;" onclick="event.stopPropagation();">' +
+                            '<button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button>' +
+                        '</a>' +
+                        '<button class="btn btn-small btn-success" onclick="event.stopPropagation();aceitarCandidato(' + obraId + ',' + p.id + ')">✅ Aceitar</button>' +
+                    '</div>' +
+                '</div>';
             }
         });
+
         var modal = document.createElement('div');
         modal.className = 'modal active';
         modal.id = 'modalCandidatos';
@@ -3900,121 +1999,246 @@
         document.body.appendChild(modal);
     }
 
-    function aceitarCandidato(obraId, profId) {
-        var obras = carregarDados('obras') || [];
-        var obra = obras.find(function(o) { return o.id === obraId });
+    // ==========================================================
+    // ===== ACEITAR CANDIDATO =====
+    // ==========================================================
+
+    async function aceitarCandidato(obraId, profId) {
+        var obra = await buscarObraPorId(obraId);
         if (!obra) return;
+
         var interessado = obra.interessados.find(function(i) { return i.profissionalId === profId });
         if (interessado) interessado.status = 'aceito';
-        salvarDados('obras', obras);
+
+        await atualizarObraFirebase(obraId, { interessados: obra.interessados });
+        
         var modal = document.getElementById('modalCandidatos');
         if (modal) modal.remove();
+        
         mostrarToast('✅ Candidato aceito!', 'sucesso');
     }
 
-    function verPerfilPublico(userId) {
-        var usuarios = carregarDados('usuarios') || [];
-        var user = usuarios.find(function(u) { return u.id === userId });
+    // ==========================================================
+    // ===== PERFIL PÚBLICO =====
+    // ==========================================================
+
+    async function verPerfilPublico(userId) {
+        var user = await buscarUsuarioPorId(userId);
         if (!user) return;
+
         perfilSelecionado = user;
-        var html = '<div class="profile-header"><div class="profile-avatar"><span>👷</span></div><h2 style="color:#1A3A5C;">' + user.nome + '</h2><p style="color:#F47920;">' + user.profissao + ' • ' + user.experiencia + ' anos</p></div>' +
-            '<div class="card"><h3>📞 Contato</h3><p>📱 ' + user.celular + '</p><p>📧 ' + user.email + '</p></div>' +
-            '<div class="card"><h3>🛠️ Habilidades</h3><p>' + (user.habilidades || 'Não informado') + '</p></div>';
+        
+        var html = '<div class="profile-header">' +
+            '<div class="profile-avatar"><span>👷</span></div>' +
+            '<h2 style="color:#1A3A5C;">' + user.nome + '</h2>' +
+            '<p style="color:#F47920;">' + user.profissao + ' • ' + user.experiencia + ' anos</p>' +
+        '</div>' +
+        '<div class="card">' +
+            '<h3>📞 Contato</h3>' +
+            '<p>📱 ' + user.celular + '</p>' +
+            '<p>📧 ' + user.email + '</p>' +
+        '</div>' +
+        '<div class="card">' +
+            '<h3>🛠️ Habilidades</h3>' +
+            '<p>' + (user.habilidades || 'Não informado') + '</p>' +
+        '</div>';
 
         if (usuarioLogado && usuarioLogado.id !== user.id) {
             var numeroWhats = '55' + user.celular.replace(/\D/g, '');
             var mensagemWhats = 'Olá ' + user.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor e tenho interesse no seu trabalho como ' + user.profissao + '.';
-            html += '<a href="https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent(mensagemWhats) + '" target="_blank" style="text-decoration:none;"><button class="btn" style="background:#25D366;color:white;width:100%;margin-bottom:10px;">💬 WHATSAPP</button></a>';
+            html += '<a href="https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent(mensagemWhats) + '" target="_blank" style="text-decoration:none;">' +
+                '<button class="btn" style="background:#25D366;color:white;width:100%;margin-bottom:10px;">💬 WHATSAPP</button>' +
+            '</a>';
             html += '<button class="btn btn-primary" onclick="abrirChat(' + user.id + ')">💬 CONVERSAR NO APP</button>';
-            if (usuarioLogado.tipo === 'empreiteiro') { html += '<button class="btn btn-success" onclick="contratarProfissional(' + user.id + ')">🤝 CONTRATAR</button>'; }
+            if (usuarioLogado.tipo === 'empreiteiro') {
+                html += '<button class="btn btn-success" onclick="contratarProfissional(' + user.id + ')">🤝 CONTRATAR</button>';
+            }
         }
 
         html += '<button class="btn btn-outline" onclick="mostrarTela(\'homeScreen\')">← Voltar</button>';
+        
         document.getElementById('perfilPublicoConteudo').innerHTML = html;
         mostrarTela('perfilPublicoScreen');
     }
 
+    // ==========================================================
+    // ===== CHAT E CONTRATAÇÃO =====
+    // ==========================================================
+
     function abrirChat(userId) {
-        var usuarios = carregarDados('usuarios') || [];
-        var user = usuarios.find(function(u) { return u.id === userId });
-        if (!user) return;
-        perfilSelecionado = user;
-        document.getElementById('modalChatInfo').innerHTML = '<div style="display:flex;align-items:center;margin-bottom:15px;"><div class="lista-avatar">👷</div><div style="margin-left:10px;"><strong>' + user.nome + '</strong><br>' + user.profissao + ' • ' + user.experiencia + ' anos<br>📱 ' + user.celular + '</div></div>';
-        document.getElementById('chatMensagem').value = 'Olá ' + user.nome.split(' ')[0] + '! Tenho interesse no seu trabalho.';
+        if (!perfilSelecionado) return;
+        document.getElementById('modalChatInfo').innerHTML = 
+            '<div style="display:flex;align-items:center;margin-bottom:15px;">' +
+                '<div class="lista-avatar">👷</div>' +
+                '<div style="margin-left:10px;">' +
+                    '<strong>' + perfilSelecionado.nome + '</strong><br>' +
+                    perfilSelecionado.profissao + ' • ' + perfilSelecionado.experiencia + ' anos<br>' +
+                    '📱 ' + perfilSelecionado.celular +
+                '</div>' +
+            '</div>';
+        document.getElementById('chatMensagem').value = 'Olá ' + perfilSelecionado.nome.split(' ')[0] + '! Tenho interesse no seu trabalho.';
         document.getElementById('modalChat').classList.add('active');
     }
 
     function enviarMensagem() {
         if (!perfilSelecionado || !usuarioLogado) return;
         var msg = document.getElementById('chatMensagem').value.trim();
-        if (!msg) { mostrarToast('Digite uma mensagem!', 'erro'); return; }
+        if (!msg) {
+            mostrarToast('Digite uma mensagem!', 'erro');
+            return;
+        }
         mostrarToast('✅ Mensagem enviada para ' + perfilSelecionado.nome + '!', 'sucesso');
         fecharModal('modalChat');
     }
 
-    function contratarProfissional(profId) {
-        if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') return;
-        var usuarios = carregarDados('usuarios') || [];
-        var prof = usuarios.find(function(u) { return u.id === profId });
+    async function contratarProfissional(profId) {
+        if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') {
+            mostrarToast('Apenas empreiteiros podem contratar!', 'erro');
+            return;
+        }
+
+        var prof = await buscarUsuarioPorId(profId);
         if (!prof) return;
-        var obra = prompt('Nome da obra:', 'Obra');
+
+        var obra = prompt('Nome da obra:', 'Minha Obra');
         var valor = prompt('Valor por hora (R$):', '25');
         if (!obra || !valor) return;
-        var conexoes = carregarDados('conexoes') || [];
-        conexoes.push({ id: Date.now(), profissionalId: prof.id, empreiteiroId: usuarioLogado.id, obra: obra, valorHora: parseFloat(valor), dataInicio: new Date().toISOString(), ativa: true });
-        salvarDados('conexoes', conexoes);
-        mostrarToast('🤝 ' + prof.nome + ' contratado!', 'sucesso');
+
+        var conexao = {
+            id: Date.now(),
+            profissionalId: prof.id,
+            empreiteiroId: usuarioLogado.id,
+            obra: obra,
+            valorHora: parseFloat(valor),
+            dataInicio: new Date().toISOString(),
+            ativa: true
+        };
+
+        var salvou = await salvarConexaoFirebase(conexao);
+        if (salvou) {
+            mostrarToast('🤝 ' + prof.nome + ' contratado!', 'sucesso');
+        } else {
+            mostrarToast('Erro ao contratar!', 'erro');
+        }
     }
 
-    function buscarProfissionais() {
+    // ==========================================================
+    // ===== BUSCAR PROFISSIONAIS =====
+    // ==========================================================
+
+    async function buscarProfissionais() {
         var termo = (document.getElementById('buscaInput')?.value || '').toLowerCase();
-        var profissionais = (carregarDados('usuarios') || []).filter(function(u) { return u.tipo === 'profissional' && (!termo || u.nome.toLowerCase().includes(termo) || u.profissao.toLowerCase().includes(termo)) });
-        var c = document.getElementById('buscaResultados');
-        if (!c) return;
-        if (profissionais.length === 0) { c.innerHTML = '<p style="text-align:center;color:#999;">Nenhum profissional encontrado.</p>'; return; }
-        c.innerHTML = profissionais.map(function(p) {
+        var todos = await buscarTodosUsuarios();
+        var profissionais = todos.filter(function(u) { 
+            return u.tipo === 'profissional' && 
+                (!termo || u.nome.toLowerCase().includes(termo) || u.profissao.toLowerCase().includes(termo)); 
+        });
+        
+        var container = document.getElementById('buscaResultados');
+        if (!container) return;
+
+        if (profissionais.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;">Nenhum profissional encontrado.</p>';
+            return;
+        }
+
+        container.innerHTML = profissionais.map(function(p) {
             var numeroWhats = '55' + p.celular.replace(/\D/g, '');
-            return '<div class="card" style="cursor:pointer;" onclick="verPerfilPublico(' + p.id + ')">' +
-                '<div style="display:flex;align-items:center;"><div class="lista-avatar">👷</div><div style="margin-left:14px;flex:1;"><div class="lista-nome">' + p.nome + '</div><div class="lista-detalhe">' + p.profissao + ' • ' + p.experiencia + ' anos</div></div></div>' +
+            return '<div class="card" onclick="verPerfilPublico(' + p.id + ')">' +
+                '<div style="display:flex;align-items:center;">' +
+                    '<div class="lista-avatar">👷</div>' +
+                    '<div style="margin-left:14px;flex:1;">' +
+                        '<div class="lista-nome">' + p.nome + '</div>' +
+                        '<div class="lista-detalhe">' + p.profissao + ' • ' + p.experiencia + ' anos</div>' +
+                    '</div>' +
+                '</div>' +
                 '<div style="display:flex;gap:8px;margin-top:10px;">' +
-                '<a href="https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent('Olá ' + p.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor.') + '" target="_blank" style="flex:1;text-decoration:none;" onclick="event.stopPropagation();"><button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button></a>' +
-                '<button class="btn btn-small btn-outline" onclick="event.stopPropagation();verPerfilPublico(' + p.id + ')" style="flex:1;">👁️ Perfil</button>' +
-                '</div></div>';
+                    '<a href="https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent('Olá ' + p.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor.') + '" target="_blank" style="flex:1;text-decoration:none;" onclick="event.stopPropagation();">' +
+                        '<button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button>' +
+                    '</a>' +
+                    '<button class="btn btn-small btn-outline" onclick="event.stopPropagation();verPerfilPublico(' + p.id + ')" style="flex:1;">👁️ Perfil</button>' +
+                '</div>' +
+            '</div>';
         }).join('');
     }
 
-    function carregarRede() {
-        var c = document.getElementById('redeContainer');
-        if (!c) return;
-        var conexoes = carregarDados('conexoes') || [];
-        var usuarios = carregarDados('usuarios') || [];
-        var minhas = conexoes.filter(function(con) { return con.profissionalId === usuarioLogado?.id || con.empreiteiroId === usuarioLogado?.id });
-        if (minhas.length === 0) { c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>🔗 Nenhuma conexão</h3><p style="color:#666;">Contrate profissionais ou candidate-se a vagas!</p></div>'; return; }
-        c.innerHTML = minhas.map(function(con) {
-            var outroId = usuarioLogado.id === con.profissionalId ? con.empreiteiroId : con.profissionalId;
+    // ==========================================================
+    // ===== CARREGAR REDE =====
+    // ==========================================================
+
+    async function carregarRedeFirebase() {
+        if (!usuarioLogado) return;
+        
+        var conexoes = await buscarConexoesDoUsuario(usuarioLogado.id);
+        var usuarios = await buscarTodosUsuarios();
+        var container = document.getElementById('redeContainer');
+
+        if (conexoes.length === 0) {
+            container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
+                '<h3>🔗 Nenhuma conexão</h3>' +
+                '<p style="color:#666;">Contrate profissionais ou candidate-se a vagas!</p>' +
+            '</div>';
+            return;
+        }
+
+        container.innerHTML = conexoes.map(function(conexao) {
+            var outroId = usuarioLogado.id === conexao.profissionalId ? conexao.empreiteiroId : conexao.profissionalId;
             var outro = usuarios.find(function(u) { return u.id === outroId });
-            return '<div class="card conexao-card ' + (con.ativa ? '' : 'desconectado') + '" style="cursor:pointer;" onclick="verPerfilPublico(' + outroId + ')"><strong>' + (outro ? outro.nome : 'Usuário') + '</strong> <span class="badge ' + (con.ativa ? 'badge-success' : 'badge-danger') + '">' + (con.ativa ? '🟢 Ativo' : '🔴 Encerrado') + '</span><br>🏗️ ' + con.obra + ' • 💰 R$' + con.valorHora + '/h</div>';
+            return '<div class="card conexao-card ' + (conexao.ativa ? '' : 'desconectado') + '" onclick="verPerfilPublico(' + outroId + ')">' +
+                '<strong>' + (outro ? outro.nome : 'Usuário') + '</strong> ' +
+                '<span class="badge ' + (conexao.ativa ? 'badge-success' : 'badge-danger') + '">' +
+                    (conexao.ativa ? '🟢 Ativo' : '🔴 Encerrado') +
+                '</span><br>' +
+                '🏗️ ' + conexao.obra + ' • 💰 R$' + conexao.valorHora + '/h' +
+            '</div>';
         }).join('');
     }
 
-    function publicarObra() {
+    // ==========================================================
+    // ===== PUBLICAR OBRA =====
+    // ==========================================================
+
+    function publicarObraFirebase() {
         if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') {
             mostrarToast('Apenas empreiteiros!', 'erro');
             return;
         }
 
-        var n = document.getElementById('obraNome').value.trim();
-        var e = document.getElementById('obraEndereco').value.trim();
-        if (!n || !e) {
+        var nome = document.getElementById('obraNome').value.trim();
+        var endereco = document.getElementById('obraEndereco').value.trim();
+        var descricao = document.getElementById('obraDescricao').value;
+        var profissoes = document.getElementById('obraProfissoes').value;
+        var valorHora = parseFloat(document.getElementById('obraValorHora').value) || 25;
+
+        if (!nome || !endereco) {
             mostrarToast('Nome e endereço obrigatórios!', 'erro');
             return;
         }
 
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                var lat = position.coords.latitude;
-                var lng = position.coords.longitude;
-                salvarObra(n, e, lat, lng);
+            navigator.geolocation.getCurrentPosition(async function(position) {
+                var obra = {
+                    id: Date.now(),
+                    usuarioId: usuarioLogado.id,
+                    nome: nome,
+                    endereco: endereco,
+                    descricao: descricao,
+                    profissoes: profissoes,
+                    valorHora: valorHora,
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    data: new Date().toISOString(),
+                    interessados: []
+                };
+
+                var salvou = await salvarObraFirebase(obra);
+                if (salvou) {
+                    mostrarToast('✅ Obra publicada!', 'sucesso');
+                    mostrarTela('homeScreen');
+                    ['obraNome', 'obraEndereco', 'obraDescricao', 'obraProfissoes', 'obraValorHora']
+                        .forEach(function(id) { document.getElementById(id).value = ''; });
+                    setTimeout(function() { carregarObrasNoMapa(userPosition); }, 500);
+                }
             }, function() {
                 var latInput = prompt('Digite a latitude (ex: -23.5505):');
                 var lngInput = prompt('Digite a longitude (ex: -46.6333):');
@@ -4022,12 +2246,10 @@
                     var lat = parseFloat(latInput.replace(',', '.'));
                     var lng = parseFloat(lngInput.replace(',', '.'));
                     if (!isNaN(lat) && !isNaN(lng)) {
-                        salvarObra(n, e, lat, lng);
+                        salvarObraManual(lat, lng);
                     } else {
-                        mostrarToast('📍 Lat/Long inválidos! Use números.', 'erro');
+                        mostrarToast('📍 Lat/Long inválidos!', 'erro');
                     }
-                } else {
-                    mostrarToast('📍 Localização necessária para publicar a obra!', 'erro');
                 }
             });
         } else {
@@ -4035,13 +2257,12 @@
         }
     }
 
-    function salvarObra(nome, endereco, lat, lng) {
-        var obras = carregarDados('obras') || [];
-        obras.unshift({
+    async function salvarObraManual(lat, lng) {
+        var obra = {
             id: Date.now(),
             usuarioId: usuarioLogado.id,
-            nome: nome,
-            endereco: endereco,
+            nome: document.getElementById('obraNome').value.trim(),
+            endereco: document.getElementById('obraEndereco').value.trim(),
             descricao: document.getElementById('obraDescricao').value,
             profissoes: document.getElementById('obraProfissoes').value,
             valorHora: parseFloat(document.getElementById('obraValorHora').value) || 25,
@@ -4049,25 +2270,23 @@
             lng: lng,
             data: new Date().toISOString(),
             interessados: []
-        });
-        salvarDados('obras', obras);
-        mostrarToast('✅ Obra publicada com localização!', 'sucesso');
-        mostrarTela('homeScreen');
-        document.getElementById('obraNome').value = '';
-        document.getElementById('obraEndereco').value = '';
-        document.getElementById('obraDescricao').value = '';
-        document.getElementById('obraProfissoes').value = '';
-        document.getElementById('obraValorHora').value = '';
-        setTimeout(function() {
-            if (typeof map !== 'undefined' && map && userPosition) {
-                carregarObrasNoMapa(userPosition);
-            }
-        }, 500);
+        };
+
+        var salvou = await salvarObraFirebase(obra);
+        if (salvou) {
+            mostrarToast('✅ Obra publicada!', 'sucesso');
+            mostrarTela('homeScreen');
+            ['obraNome', 'obraEndereco', 'obraDescricao', 'obraProfissoes', 'obraValorHora']
+                .forEach(function(id) { document.getElementById(id).value = ''; });
+        }
     }
+
+    // ==========================================================
+    // ===== SAIR =====
+    // ==========================================================
 
     function sair() {
         usuarioLogado = null;
-        salvarDados('usuarioLogado', null);
         mostrarVideos();
         mostrarTela('loginScreen');
         mostrarToast('👋 Até logo!');
@@ -4080,14 +2299,8 @@
     // Mostra os vídeos por padrão (antes do login)
     mostrarVideos();
 
-    // Verifica se o usuário já está logado
-    if (usuarioLogado) {
-        mostrarMapa();
-        mostrarTela('homeScreen');
-    }
-
-    console.log('✅ LPXCONSTRUTOR COM VÍDEOS E MAPA!');
-    console.log('🔑 Chave API: AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM');
+    console.log('✅ LPXCONSTRUTOR COM FIREBASE!');
+    console.log('🔥 Projeto: construtorlpx');
 </script>
 
 </body>
