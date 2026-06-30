@@ -23,13 +23,35 @@ db.enablePersistence()
 console.log('🔥 Firebase conectado com sucesso!');
 
 // ==========================================================
+// ===== VARIÁVEIS GLOBAIS =====
+// ==========================================================
+var usuarioLogado = null;
+var obraSelecionada = null;
+var perfilSelecionado = null;
+var codigoRecuperacao = null;
+var usuarioRecuperando = null;
+var map;
+var markers = [];
+var userPosition = null;
+var videoThumbnails = [];
+var currentVideoIndex = 0;
+
+// ==========================================================
 // ===== FUNÇÕES FIREBASE =====
 // ==========================================================
 
 // --- SALVAR USUÁRIO ---
 async function salvarUsuarioFirebase(usuario) {
     try {
-        await db.collection('usuarios').doc(usuario.id.toString()).set(usuario);
+        // Remove campos undefined
+        const usuarioLimpo = {};
+        for (let key in usuario) {
+            if (usuario[key] !== undefined && usuario[key] !== null) {
+                usuarioLimpo[key] = usuario[key];
+            }
+        }
+        await db.collection('usuarios').doc(usuario.id.toString()).set(usuarioLimpo);
+        console.log('✅ Usuário salvo com sucesso!');
         return true;
     } catch (error) {
         console.error('❌ Erro ao salvar usuário:', error);
@@ -110,6 +132,7 @@ async function atualizarUsuarioFirebase(id, dados) {
 async function salvarObraFirebase(obra) {
     try {
         await db.collection('obras').doc(obra.id.toString()).set(obra);
+        console.log('✅ Obra salva com sucesso!');
         return true;
     } catch (error) {
         console.error('❌ Erro ao salvar obra:', error);
@@ -163,6 +186,7 @@ async function atualizarObraFirebase(id, dados) {
 async function salvarConexaoFirebase(conexao) {
     try {
         await db.collection('conexoes').doc(conexao.id.toString()).set(conexao);
+        console.log('✅ Conexão salva com sucesso!');
         return true;
     } catch (error) {
         console.error('❌ Erro ao salvar conexão:', error);
@@ -199,11 +223,74 @@ async function buscarConexoesDoUsuario(usuarioId) {
 }
 
 // ==========================================================
-// ===== FUNÇÕES DA GALERIA DE VÍDEOS =====
+// ===== FUNÇÕES DE NAVEGAÇÃO E UI =====
 // ==========================================================
 
-let videoThumbnails = [];
-let currentVideoIndex = 0;
+// --- MOSTRAR TELA ---
+function mostrarTela(id) {
+    document.querySelectorAll('.screen').forEach(function(s) { 
+        s.classList.remove('active') 
+    });
+    document.getElementById(id).classList.add('active');
+    var nav = document.getElementById('bottomNav');
+    if (nav) {
+        nav.style.display = ['homeScreen', 'buscaScreen', 'publicarObraScreen', 'perfilScreen'].includes(id) ? 'flex' : 'none';
+    }
+    if (id === 'homeScreen') {
+        carregarFeedFirebase();
+        if (usuarioLogado) {
+            if (typeof map !== 'undefined' && map && userPosition) {
+                carregarObrasNoMapa(userPosition);
+            } else {
+                setTimeout(function() {
+                    if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                        initMap();
+                    }
+                }, 500);
+            }
+        }
+    }
+    if (id === 'perfilScreen') carregarMeuPerfil();
+    if (id === 'buscaScreen') buscarProfissionais();
+}
+
+// --- TOAST (MENSAGENS) ---
+function mostrarToast(m, t) {
+    var toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = m;
+    toast.style.background = t === 'erro' ? '#EF4444' : t === 'sucesso' ? '#10B981' : '#1F2937';
+    toast.style.display = 'block';
+    setTimeout(function() { toast.style.display = 'none' }, 3000);
+}
+
+// --- MODAL ---
+function fecharModal(id) { 
+    var m = document.getElementById(id); 
+    if (m) m.classList.remove('active'); 
+}
+
+// --- TABS ---
+function mudarTab(tab, btn) {
+    document.querySelectorAll('.tab').forEach(function(t) { 
+        t.classList.remove('active') 
+    });
+    btn.classList.add('active');
+    document.getElementById('feedTab').style.display = tab === 'feed' ? 'block' : 'none';
+    document.getElementById('redeTab').style.display = tab === 'rede' ? 'block' : 'none';
+    if (tab === 'rede') carregarRedeFirebase();
+}
+
+// --- TOGGLE PROFISSÃO ---
+function toggleProfissao() {
+    var g = document.getElementById('grupoProfissao');
+    var t = document.getElementById('cadTipo');
+    if (g && t) g.style.display = t.value === 'profissional' ? 'block' : 'none';
+}
+
+// ==========================================================
+// ===== FUNÇÕES DA GALERIA DE VÍDEOS =====
+// ==========================================================
 
 function initVideoGallery() {
     const items = document.querySelectorAll('.thumbnail-item');
@@ -282,10 +369,6 @@ function highlightActiveThumbnail() {
     }
 }
 
-// ==========================================================
-// ===== FUNÇÕES PARA ALTERNAR ENTRE VÍDEOS E MAPA =====
-// ==========================================================
-
 function mostrarVideos() {
     document.getElementById('blocoVideos').style.display = 'block';
     var blocoMapa = document.getElementById('blocoMapa');
@@ -304,18 +387,6 @@ function mostrarMapa() {
             if (typeof initMap === 'function') {
                 initMap();
             }
-        } else {
-            console.log('Google Maps não carregou');
-            var container = document.getElementById('obrasProximas');
-            if (container) {
-                container.innerHTML = `
-                    <div style="flex:1; text-align:center; padding:20px; color:#6B7280; min-width:250px;">
-                        <div style="font-size:40px;">📍</div>
-                        <p style="margin-top:8px; font-weight:600;">Carregando mapa...</p>
-                        <p style="font-size:12px;">Ative sua localização para ver obras próximas</p>
-                    </div>
-                `;
-            }
         }
     }, 500);
 }
@@ -323,10 +394,6 @@ function mostrarMapa() {
 // ==========================================================
 // ===== FUNÇÕES DO MAPA =====
 // ==========================================================
-
-var map;
-var markers = [];
-var userPosition = null;
 
 function initMap() {
     var mapElement = document.getElementById('map');
@@ -496,69 +563,6 @@ function atualizarMapa() {
 }
 
 // ==========================================================
-// ===== FUNÇÕES DO APP COM FIREBASE =====
-// ==========================================================
-
-var usuarioLogado = null;
-var obraSelecionada = null;
-var perfilSelecionado = null;
-var codigoRecuperacao = null;
-var usuarioRecuperando = null;
-
-// --- MOSTRAR TELA ---
-function mostrarTela(id) {
-    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active') });
-    document.getElementById(id).classList.add('active');
-    var nav = document.getElementById('bottomNav');
-    if (nav) nav.style.display = ['homeScreen', 'buscaScreen', 'publicarObraScreen', 'perfilScreen'].includes(id) ? 'flex' : 'none';
-    if (id === 'homeScreen') {
-        carregarFeedFirebase();
-        if (usuarioLogado) {
-            if (typeof map !== 'undefined' && map && userPosition) {
-                carregarObrasNoMapa(userPosition);
-            } else {
-                setTimeout(function() {
-                    if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
-                        initMap();
-                    }
-                }, 500);
-            }
-        }
-    }
-    if (id === 'perfilScreen') carregarMeuPerfil();
-    if (id === 'buscaScreen') buscarProfissionais();
-}
-
-// --- TOAST ---
-function mostrarToast(m, t) {
-    var toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = m;
-    toast.style.background = t === 'erro' ? '#EF4444' : t === 'sucesso' ? '#10B981' : '#1F2937';
-    toast.style.display = 'block';
-    setTimeout(function() { toast.style.display = 'none' }, 3000);
-}
-
-// --- MODAL ---
-function fecharModal(id) { var m = document.getElementById(id); if (m) m.classList.remove('active'); }
-
-// --- TABS ---
-function mudarTab(tab, btn) {
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active') });
-    btn.classList.add('active');
-    document.getElementById('feedTab').style.display = tab === 'feed' ? 'block' : 'none';
-    document.getElementById('redeTab').style.display = tab === 'rede' ? 'block' : 'none';
-    if (tab === 'rede') carregarRedeFirebase();
-}
-
-// --- TOGGLE PROFISSÃO ---
-function toggleProfissao() {
-    var g = document.getElementById('grupoProfissao');
-    var t = document.getElementById('cadTipo');
-    if (g && t) g.style.display = t.value === 'profissional' ? 'block' : 'none';
-}
-
-// ==========================================================
 // ===== LOGIN E CADASTRO =====
 // ==========================================================
 
@@ -603,6 +607,11 @@ async function cadastrarFirebase() {
         return;
     }
 
+    if (!email.includes('@')) {
+        mostrarToast('E-mail inválido!', 'erro');
+        return;
+    }
+
     var existe = await buscarUsuarioPorEmailOuCPF(email);
     if (existe) {
         mostrarToast('E-mail/CPF já cadastrado!', 'erro');
@@ -616,7 +625,7 @@ async function cadastrarFirebase() {
         email: email,
         celular: celular,
         cpf: cpf,
-        profissao: profissao,
+        profissao: profissao || '',
         experiencia: parseInt(experiencia) || 0,
         habilidades: '',
         senha: senha,
@@ -1137,7 +1146,7 @@ async function carregarRedeFirebase() {
 
 function publicarObraFirebase() {
     if (!usuarioLogado || usuarioLogado.tipo !== 'empreiteiro') {
-        mostrarToast('Apenas empreiteiros!', 'erro');
+        mostrarToast('Apenas empreiteiros podem publicar obras!', 'erro');
         return;
     }
 
@@ -1170,11 +1179,13 @@ function publicarObraFirebase() {
 
             var salvou = await salvarObraFirebase(obra);
             if (salvou) {
-                mostrarToast('✅ Obra publicada!', 'sucesso');
+                mostrarToast('✅ Obra publicada com sucesso!', 'sucesso');
                 mostrarTela('homeScreen');
                 ['obraNome', 'obraEndereco', 'obraDescricao', 'obraProfissoes', 'obraValorHora']
                     .forEach(function(id) { document.getElementById(id).value = ''; });
-                setTimeout(function() { carregarObrasNoMapa(userPosition); }, 500);
+                setTimeout(function() { 
+                    if (userPosition) carregarObrasNoMapa(userPosition); 
+                }, 500);
             }
         }, function() {
             var latInput = prompt('Digite a latitude (ex: -23.5505):');
@@ -1211,7 +1222,7 @@ async function salvarObraManual(lat, lng) {
 
     var salvou = await salvarObraFirebase(obra);
     if (salvou) {
-        mostrarToast('✅ Obra publicada!', 'sucesso');
+        mostrarToast('✅ Obra publicada com sucesso!', 'sucesso');
         mostrarTela('homeScreen');
         ['obraNome', 'obraEndereco', 'obraDescricao', 'obraProfissoes', 'obraValorHora']
             .forEach(function(id) { document.getElementById(id).value = ''; });
@@ -1226,7 +1237,7 @@ function sair() {
     usuarioLogado = null;
     mostrarVideos();
     mostrarTela('loginScreen');
-    mostrarToast('👋 Até logo!');
+    mostrarToast('👋 Até logo!', 'sucesso');
 }
 
 // ==========================================================
@@ -1238,3 +1249,5 @@ mostrarVideos();
 
 console.log('✅ LPXCONSTRUTOR COM FIREBASE!');
 console.log('🔥 Projeto: construtorlpx');
+console.log('📁 Coleções: usuarios, obras, conexoes');
+console.log('🔒 Regras de segurança aplicadas!');
