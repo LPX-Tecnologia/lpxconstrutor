@@ -66,6 +66,42 @@ body {
     min-height: 100vh;
 }
 
+/* ESTILO DO PERFIL COM LOGO DE FUNDO */
+.profile-header {
+    text-align: center;
+    padding: 30px 20px 20px;
+    background: #f8fafc;
+    background-image: url('SUA_URL_AQUI');
+    background-size: 300px; /* tamanho da logo */
+    background-position: center 20px;
+    background-repeat: no-repeat;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid rgba(244, 121, 32, 0.05);
+    min-height: 200px; /* espaço para a logo */
+    position: relative;
+}
+
+/* Sobreposição para o conteúdo ficar legível */
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85); /* fundo branco semi-transparente */
+    border-radius: 16px;
+    z-index: 0;
+}
+
+/* Conteúdo do perfil fica acima da sobreposição */
+.profile-header > * {
+    position: relative;
+    z-index: 1;
+}
+
 /* =============================================================
    HEADER
    ============================================================= */
