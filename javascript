@@ -37,6 +37,639 @@ var videoThumbnails = [];
 var currentVideoIndex = 0;
 
 // ==========================================================
+// ===== VALIDAÇÃO DE NOME ÚNICO =====
+// ==========================================================
+
+async function verificarNomeUnico(nome) {
+    try {
+        const snapshot = await db.collection('usuarios')
+            .where('nome', '==', nome)
+            .get();
+        return snapshot.empty; // true se não existe, false se existe
+    } catch (error) {
+        console.error('❌ Erro ao verificar nome:', error);
+        return false;
+    }
+}
+
+// --- CADASTRO COM VALIDAÇÃO DE NOME ---
+async function cadastrarFirebase() {
+    var tipo = document.getElementById('cadTipo').value;
+    var nome = document.getElementById('cadNome').value.trim();
+    var email = document.getElementById('cadEmail').value.trim();
+    var celular = document.getElementById('cadCelular').value.trim();
+    var cpf = document.getElementById('cadCPF').value.replace(/\D/g, '');
+    var profissao = tipo === 'profissional' ? document.getElementById('cadProfissao').value : '';
+    var experiencia = document.getElementById('cadExperiencia').value;
+    var senha = document.getElementById('cadSenha').value;
+
+    if (!nome || !email || !celular || !cpf || !senha) {
+        mostrarToast('Preencha todos os campos!', 'erro');
+        return;
+    }
+
+    if (senha.length < 6) {
+        mostrarToast('Senha mínima de 6 caracteres!', 'erro');
+        return;
+    }
+
+    if (!email.includes('@')) {
+        mostrarToast('E-mail inválido!', 'erro');
+        return;
+    }
+
+    // VERIFICAR SE NOME JÁ EXISTE
+    var nomeUnico = await verificarNomeUnico(nome);
+    if (!nomeUnico) {
+        mostrarToast('❌ Este nome já está em uso! Escolha outro.', 'erro');
+        return;
+    }
+
+    // VERIFICAR SE EMAIL/CPF JÁ EXISTE
+    var existe = await buscarUsuarioPorEmailOuCPF(email);
+    if (existe) {
+        mostrarToast('E-mail/CPF já cadastrado!', 'erro');
+        return;
+    }
+
+    var novoUsuario = {
+        id: Date.now(),
+        tipo: tipo,
+        nome: nome,
+        email: email,
+        celular: celular,
+        cpf: cpf,
+        profissao: profissao || '',
+        experiencia: parseInt(experiencia) || 0,
+        habilidades: '',
+        senha: senha,
+        fotoPerfil: '',
+        avaliacoes: [],
+        score: 0, // SCORE INICIAL
+        avaliacoesRecebidas: 0,
+        dataCriacao: new Date().toISOString()
+    };
+
+    var salvou = await salvarUsuarioFirebase(novoUsuario);
+    if (!salvou) {
+        mostrarToast('Erro ao salvar!', 'erro');
+        return;
+    }
+
+    usuarioLogado = novoUsuario;
+    mostrarToast('Cadastro realizado!', 'sucesso');
+    mostrarMapa();
+    setTimeout(function() { mostrarTela('homeScreen'); }, 500);
+}
+
+// ==========================================================
+// ===== SISTEMA DE AMIGOS (REDE INTERNA) =====
+// ==========================================================
+
+// --- ADICIONAR AMIGO ---
+async function adicionarAmigo(amigoId) {
+    if (!usuarioLogado) {
+        mostrarToast('Faça login primeiro!', 'erro');
+        return;
+    }
+
+    if (usuarioLogado.id === amigoId) {
+        mostrarToast('Você não pode se adicionar!', 'erro');
+        return;
+    }
+
+    // Verificar se já são amigos
+    var conexoes = await buscarConexoesDoUsuario(usuarioLogado.id);
+    var jaAmigos = conexoes.some(function(c) {
+        return (c.usuarioId === usuarioLogado.id && c.amigoId === amigoId) ||
+               (c.usuarioId === amigoId && c.amigoId === usuarioLogado.id);
+    });
+
+    if (jaAmigos) {
+        mostrarToast('Vocês já são amigos!', 'erro');
+        return;
+    }
+
+    var conexao = {
+        id: Date.now(),
+        usuarioId: usuarioLogado.id,
+        amigoId: amigoId,
+        dataCriacao: new Date().toISOString(),
+        status: 'pendente' // pendente, aceito, bloqueado
+    };
+
+    var salvou = await salvarConexaoFirebase(conexao);
+    if (salvou) {
+        mostrarToast('✅ Solicitação de amizade enviada!', 'sucesso');
+        carregarRedeFirebase();
+    }
+}
+
+// --- ACEITAR AMIGO ---
+async function aceitarAmigo(conexaoId) {
+    try {
+        await db.collection('conexoes').doc(conexaoId.toString()).update({
+            status: 'aceito'
+        });
+        mostrarToast('✅ Amigo adicionado!', 'sucesso');
+        carregarRedeFirebase();
+    } catch (error) {
+        console.error('❌ Erro ao aceitar amigo:', error);
+        mostrarToast('Erro ao aceitar!', 'erro');
+    }
+}
+
+// --- REMOVER AMIGO ---
+async function removerAmigo(conexaoId) {
+    if (!confirm('Tem certeza que quer remover este amigo?')) return;
+    
+    try {
+        await db.collection('conexoes').doc(conexaoId.toString()).delete();
+        mostrarToast('✅ Amigo removido!', 'sucesso');
+        carregarRedeFirebase();
+    } catch (error) {
+        console.error('❌ Erro ao remover amigo:', error);
+        mostrarToast('Erro ao remover!', 'erro');
+    }
+}
+
+// ==========================================================
+// ===== CHAT ENTRE USUÁRIOS =====
+// ==========================================================
+
+// --- ENVIAR MENSAGEM ---
+async function enviarMensagemFirebase(destinatarioId, conteudo) {
+    if (!usuarioLogado) {
+        mostrarToast('Faça login primeiro!', 'erro');
+        return;
+    }
+
+    if (!conteudo || conteudo.trim() === '') {
+        mostrarToast('Digite uma mensagem!', 'erro');
+        return;
+    }
+
+    var mensagem = {
+        id: Date.now(),
+        remetenteId: usuarioLogado.id,
+        destinatarioId: destinatarioId,
+        conteudo: conteudo.trim(),
+        data: new Date().toISOString(),
+        lida: false
+    };
+
+    try {
+        await db.collection('mensagens').doc(mensagem.id.toString()).set(mensagem);
+        mostrarToast('✅ Mensagem enviada!', 'sucesso');
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao enviar mensagem:', error);
+        mostrarToast('Erro ao enviar!', 'erro');
+        return false;
+    }
+}
+
+// --- BUSCAR MENSAGENS ---
+async function buscarMensagens(usuarioId) {
+    try {
+        const snapshot = await db.collection('mensagens')
+            .where('remetenteId', 'in', [usuarioLogado.id, usuarioId])
+            .where('destinatarioId', 'in', [usuarioLogado.id, usuarioId])
+            .orderBy('data', 'asc')
+            .get();
+        
+        return snapshot.docs.map(doc => ({ id: parseInt(doc.id), ...doc.data() }));
+    } catch (error) {
+        console.error('❌ Erro ao buscar mensagens:', error);
+        return [];
+    }
+}
+
+// --- ABRIR CHAT ---
+async function abrirChatComUsuario(usuarioId) {
+    var usuario = await buscarUsuarioPorId(usuarioId);
+    if (!usuario) {
+        mostrarToast('Usuário não encontrado!', 'erro');
+        return;
+    }
+
+    perfilSelecionado = usuario;
+    
+    // Criar modal de chat
+    var modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'modalChatPrivado';
+    
+    var mensagens = await buscarMensagens(usuarioId);
+    
+    var html = `
+        <div class="modal-content" style="max-width:500px; height:80vh; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #e5e7eb; padding-bottom:10px; margin-bottom:10px;">
+                <div style="display:flex; align-items:center;">
+                    <div class="lista-avatar" style="width:40px; height:40px; font-size:20px;">👤</div>
+                    <div style="margin-left:10px;">
+                        <strong style="color:#1A3A5C;">${usuario.nome}</strong>
+                        <div style="font-size:12px; color:#6B7280;">${usuario.profissao || 'Usuário'}</div>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('modalChatPrivado').remove()" style="background:none; border:none; font-size:24px; cursor:pointer;">×</button>
+            </div>
+            
+            <div id="chatMensagensContainer" style="flex:1; overflow-y:auto; padding:10px 0; margin-bottom:10px; background:#f8fafc; border-radius:8px;">
+                ${mensagens.length === 0 ? '<p style="text-align:center;color:#999;padding:20px;">Nenhuma mensagem ainda. Comece a conversa!</p>' : ''}
+                ${mensagens.map(function(m) {
+                    var isMine = m.remetenteId === usuarioLogado.id;
+                    return `
+                        <div style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; margin-bottom:8px; padding:0 10px;">
+                            <div style="max-width:80%; background:${isMine ? '#F47920' : 'white'}; color:${isMine ? 'white' : '#1F2937'}; padding:10px 14px; border-radius:${isMine ? '12px 12px 0 12px' : '12px 12px 12px 0'}; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                                ${m.conteudo}
+                                <div style="font-size:10px; color:${isMine ? 'rgba(255,255,255,0.7)' : '#9CA3AF'}; margin-top:4px;">
+                                    ${new Date(m.data).toLocaleTimeString('pt-BR')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            
+            <div style="display:flex; gap:8px; border-top:1px solid #e5e7eb; padding-top:10px;">
+                <input type="text" id="chatInput" class="input-field" placeholder="Digite sua mensagem..." style="flex:1;">
+                <button onclick="enviarMensagemChat('${usuarioId}')" class="btn btn-primary" style="width:auto; padding:12px 20px; margin:0;">📤</button>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+    
+    // Scroll para o final
+    var container = document.getElementById('chatMensagensContainer');
+    if (container) container.scrollTop = container.scrollHeight;
+    
+    // Foco no input
+    document.getElementById('chatInput').focus();
+}
+
+// --- ENVIAR MENSAGEM DO CHAT ---
+async function enviarMensagemChat(destinatarioId) {
+    var input = document.getElementById('chatInput');
+    var mensagem = input.value.trim();
+    
+    if (!mensagem) return;
+    
+    var enviou = await enviarMensagemFirebase(destinatarioId, mensagem);
+    if (enviou) {
+        input.value = '';
+        // Atualizar chat
+        abrirChatComUsuario(destinatarioId);
+    }
+}
+
+// ==========================================================
+// ===== INDICAR USUÁRIO =====
+// ==========================================================
+
+async function indicarUsuario(indicadoId) {
+    if (!usuarioLogado) {
+        mostrarToast('Faça login primeiro!', 'erro');
+        return;
+    }
+
+    if (usuarioLogado.id === indicadoId) {
+        mostrarToast('Você não pode se indicar!', 'erro');
+        return;
+    }
+
+    // Buscar usuário para indicar
+    var indicado = await buscarUsuarioPorId(indicadoId);
+    if (!indicado) {
+        mostrarToast('Usuário não encontrado!', 'erro');
+        return;
+    }
+
+    // Verificar se já indicou
+    var snapshot = await db.collection('indicacoes')
+        .where('indicadorId', '==', usuarioLogado.id)
+        .where('indicadoId', '==', indicadoId)
+        .get();
+
+    if (!snapshot.empty) {
+        mostrarToast('Você já indicou esta pessoa!', 'erro');
+        return;
+    }
+
+    var indicacao = {
+        id: Date.now(),
+        indicadorId: usuarioLogado.id,
+        indicadoId: indicadoId,
+        data: new Date().toISOString(),
+        status: 'pendente'
+    };
+
+    try {
+        await db.collection('indicacoes').doc(indicacao.id.toString()).set(indicacao);
+        mostrarToast(`✅ ${indicado.nome} foi indicado com sucesso!`, 'sucesso');
+    } catch (error) {
+        console.error('❌ Erro ao indicar:', error);
+        mostrarToast('Erro ao indicar!', 'erro');
+    }
+}
+
+// ==========================================================
+// ===== SISTEMA DE AVALIAÇÃO =====
+// ==========================================================
+
+async function avaliarUsuario(avaliadoId, nota, comentario) {
+    if (!usuarioLogado) {
+        mostrarToast('Faça login primeiro!', 'erro');
+        return;
+    }
+
+    if (usuarioLogado.id === avaliadoId) {
+        mostrarToast('Você não pode se avaliar!', 'erro');
+        return;
+    }
+
+    if (nota < 1 || nota > 5) {
+        mostrarToast('Nota deve ser entre 1 e 5!', 'erro');
+        return;
+    }
+
+    // Verificar se já avaliou
+    var snapshot = await db.collection('avaliacoes')
+        .where('avaliadorId', '==', usuarioLogado.id)
+        .where('avaliadoId', '==', avaliadoId)
+        .get();
+
+    if (!snapshot.empty) {
+        mostrarToast('Você já avaliou esta pessoa!', 'erro');
+        return;
+    }
+
+    var avaliacao = {
+        id: Date.now(),
+        avaliadorId: usuarioLogado.id,
+        avaliadoId: avaliadoId,
+        nota: nota,
+        comentario: comentario || '',
+        data: new Date().toISOString()
+    };
+
+    try {
+        await db.collection('avaliacoes').doc(avaliacao.id.toString()).set(avaliacao);
+        
+        // Atualizar score do usuário avaliado
+        await atualizarScoreUsuario(avaliadoId);
+        
+        mostrarToast(`✅ Avaliação enviada! Nota: ${nota}⭐`, 'sucesso');
+    } catch (error) {
+        console.error('❌ Erro ao avaliar:', error);
+        mostrarToast('Erro ao avaliar!', 'erro');
+    }
+}
+
+// --- ATUALIZAR SCORE DO USUÁRIO ---
+async function atualizarScoreUsuario(usuarioId) {
+    try {
+        // Buscar todas as avaliações do usuário
+        var snapshot = await db.collection('avaliacoes')
+            .where('avaliadoId', '==', usuarioId)
+            .get();
+        
+        var avaliacoes = snapshot.docs.map(doc => doc.data());
+        var totalAvaliacoes = avaliacoes.length;
+        
+        if (totalAvaliacoes === 0) return;
+        
+        var somaNotas = avaliacoes.reduce(function(sum, a) { return sum + a.nota; }, 0);
+        var media = somaNotas / totalAvaliacoes;
+        var score = Math.round(media * 10) / 10; // Arredondar para 1 casa decimal
+        
+        // Atualizar usuário
+        await db.collection('usuarios').doc(usuarioId.toString()).update({
+            score: score,
+            avaliacoesRecebidas: totalAvaliacoes
+        });
+        
+        // Se for o usuário logado, atualizar a variável
+        if (usuarioLogado && usuarioLogado.id === usuarioId) {
+            usuarioLogado.score = score;
+            usuarioLogado.avaliacoesRecebidas = totalAvaliacoes;
+        }
+        
+        console.log(`✅ Score atualizado: ${score} (${totalAvaliacoes} avaliações)`);
+    } catch (error) {
+        console.error('❌ Erro ao atualizar score:', error);
+    }
+}
+
+// ==========================================================
+// ===== FUNÇÃO PARA CARREGAR REDE (ATUALIZADA) =====
+// ==========================================================
+
+async function carregarRedeFirebase() {
+    if (!usuarioLogado) return;
+    
+    var conexoes = await buscarConexoesDoUsuario(usuarioLogado.id);
+    var usuarios = await buscarTodosUsuarios();
+    var container = document.getElementById('redeContainer');
+
+    // Filtrar apenas conexões aceitas
+    var conexoesAceitas = conexoes.filter(function(c) { return c.status === 'aceito'; });
+    
+    if (conexoesAceitas.length === 0) {
+        container.innerHTML = `
+            <div class="card" style="text-align:center;padding:40px;">
+                <div style="font-size:60px;">👥</div>
+                <h3>🔗 Nenhuma conexão</h3>
+                <p style="color:#666;">Adicione amigos para começar sua rede!</p>
+                <button class="btn btn-primary" onclick="buscarProfissionais()" style="margin-top:10px;">🔍 Encontrar Amigos</button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = conexoesAceitas.map(function(conexao) {
+        var outroId = usuarioLogado.id === conexao.usuarioId ? conexao.amigoId : conexao.usuarioId;
+        var outro = usuarios.find(function(u) { return u.id === outroId });
+        if (!outro) return '';
+        
+        var score = outro.score || 0;
+        var estrelas = '';
+        for (var i = 1; i <= 5; i++) {
+            estrelas += i <= Math.round(score) ? '⭐' : '☆';
+        }
+        
+        return `
+            <div class="card conexao-card" style="cursor:pointer; border-left: 4px solid #F47920;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <div onclick="verPerfilPublico(${outro.id})">
+                        <div style="display:flex; align-items:center;">
+                            <div class="lista-avatar" style="width:50px; height:50px; font-size:24px;">
+                                ${outro.tipo === 'empreiteiro' ? '🏢' : '👷'}
+                            </div>
+                            <div style="margin-left:12px;">
+                                <strong style="color:#1A3A5C; font-size:16px;">${outro.nome}</strong>
+                                <div style="font-size:12px; color:#6B7280;">${outro.profissao || 'Usuário'}</div>
+                                <div style="font-size:12px; color:#F47920;">${estrelas} ${score > 0 ? score.toFixed(1) : 'Sem avaliações'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                        <button class="btn btn-small btn-primary" onclick="event.stopPropagation();abrirChatComUsuario(${outro.id})" style="padding:4px 10px; font-size:11px;">💬</button>
+                        <button class="btn btn-small btn-success" onclick="event.stopPropagation();avaliarUsuarioPrompt(${outro.id})" style="padding:4px 10px; font-size:11px;">⭐</button>
+                        <button class="btn btn-small btn-outline" onclick="event.stopPropagation();indicarUsuario(${outro.id})" style="padding:4px 10px; font-size:11px;">📤</button>
+                        <button class="btn btn-small btn-danger" onclick="event.stopPropagation();removerAmigo(${conexao.id})" style="padding:4px 10px; font-size:11px;">✕</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==========================================================
+// ===== FUNÇÃO PARA AVALIAR COM PROMPT =====
+// ==========================================================
+
+function avaliarUsuarioPrompt(usuarioId) {
+    var nota = prompt('Digite uma nota de 1 a 5:', '5');
+    if (nota === null) return;
+    
+    nota = parseInt(nota);
+    if (isNaN(nota) || nota < 1 || nota > 5) {
+        mostrarToast('Nota inválida! Digite de 1 a 5.', 'erro');
+        return;
+    }
+    
+    var comentario = prompt('Deixe um comentário (opcional):', '');
+    if (comentario === null) comentario = '';
+    
+    avaliarUsuario(usuarioId, nota, comentario);
+}
+
+// ==========================================================
+// ===== FUNÇÃO PARA BUSCAR PROFISSIONAIS (ATUALIZADA) =====
+// ==========================================================
+
+async function buscarProfissionais() {
+    var termo = (document.getElementById('buscaInput')?.value || '').toLowerCase();
+    var todos = await buscarTodosUsuarios();
+    var profissionais = todos.filter(function(u) { 
+        return u.tipo === 'profissional' && 
+            (!termo || u.nome.toLowerCase().includes(termo) || u.profissao.toLowerCase().includes(termo)); 
+    });
+    
+    var container = document.getElementById('buscaResultados');
+    if (!container) return;
+
+    if (profissionais.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#999;">Nenhum profissional encontrado.</p>';
+        return;
+    }
+
+    container.innerHTML = profissionais.map(function(p) {
+        var numeroWhats = '55' + p.celular.replace(/\D/g, '');
+        var jaAmigo = false;
+        var score = p.score || 0;
+        var estrelas = '';
+        for (var i = 1; i <= 5; i++) {
+            estrelas += i <= Math.round(score) ? '⭐' : '☆';
+        }
+        
+        return `
+            <div class="card" style="border-left: 4px solid ${p.tipo === 'empreiteiro' ? '#1A3A5C' : '#F47920'};">
+                <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="verPerfilPublico(${p.id})">
+                    <div style="display:flex; align-items:center;">
+                        <div class="lista-avatar" style="width:50px; height:50px; font-size:24px;">
+                            ${p.tipo === 'empreiteiro' ? '🏢' : '👷'}
+                        </div>
+                        <div style="margin-left:14px;">
+                            <div class="lista-nome">${p.nome}</div>
+                            <div class="lista-detalhe">${p.profissao || 'Usuário'} • ${p.experiencia || 0} anos</div>
+                            <div style="font-size:12px; color:#F47920;">${estrelas} ${score > 0 ? score.toFixed(1) : 'Sem avaliações'}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:12px; color:#6B7280;">
+                        ${p.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional'}
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                    <a href="https://wa.me/${numeroWhats}?text=${encodeURIComponent('Olá ' + p.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor.')}" target="_blank" style="flex:1; text-decoration:none;" onclick="event.stopPropagation();">
+                        <button class="btn btn-small" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button>
+                    </a>
+                    <button class="btn btn-small btn-outline" onclick="event.stopPropagation();verPerfilPublico(${p.id})" style="flex:1;">👁️ Perfil</button>
+                    <button class="btn btn-small btn-success" onclick="event.stopPropagation();adicionarAmigo(${p.id})" style="flex:1;">➕ Amigo</button>
+                    <button class="btn btn-small btn-primary" onclick="event.stopPropagation();indicarUsuario(${p.id})" style="flex:1;">📤 Indicar</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==========================================================
+// ===== ATUALIZAR PERFIL PÚBLICO COM SCORE =====
+// ==========================================================
+
+async function verPerfilPublico(userId) {
+    var user = await buscarUsuarioPorId(userId);
+    if (!user) return;
+
+    perfilSelecionado = user;
+    
+    var score = user.score || 0;
+    var estrelas = '';
+    for (var i = 1; i <= 5; i++) {
+        estrelas += i <= Math.round(score) ? '⭐' : '☆';
+    }
+    
+    var html = `
+        <div class="profile-header">
+            <div class="profile-avatar"><span>${user.tipo === 'empreiteiro' ? '🏢' : '👷'}</span></div>
+            <h2 style="color:#1A3A5C;">${user.nome}</h2>
+            <p style="color:#F47920;">${user.profissao || 'Usuário'} • ${user.experiencia || 0} anos</p>
+            <div style="margin-top:8px; font-size:18px;">${estrelas}</div>
+            <div style="font-size:14px; color:#6B7280;">${user.avaliacoesRecebidas || 0} avaliações • Score: ${score > 0 ? score.toFixed(1) : 'Não avaliado'}</div>
+            <div style="font-size:12px; color:#1A3A5C; margin-top:4px;">
+                ${user.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional'}
+            </div>
+        </div>
+        <div class="card">
+            <h3>📞 Contato</h3>
+            <p>📱 ${user.celular}</p>
+            <p>📧 ${user.email}</p>
+        </div>
+        <div class="card">
+            <h3>🛠️ Habilidades</h3>
+            <p>${user.habilidades || 'Não informado'}</p>
+        </div>
+    `;
+
+    if (usuarioLogado && usuarioLogado.id !== user.id) {
+        var numeroWhats = '55' + user.celular.replace(/\D/g, '');
+        html += `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <a href="https://wa.me/${numeroWhats}?text=${encodeURIComponent('Olá ' + user.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor.')}" target="_blank" style="text-decoration:none;">
+                    <button class="btn" style="background:#25D366;color:white;width:100%;">💬 WhatsApp</button>
+                </a>
+                <button class="btn btn-primary" onclick="abrirChatComUsuario(${user.id})">💬 Conversar no App</button>
+                <button class="btn btn-success" onclick="adicionarAmigo(${user.id})">➕ Adicionar Amigo</button>
+                <button class="btn btn-outline" onclick="indicarUsuario(${user.id})">📤 Indicar para Outro</button>
+                <button class="btn btn-outline" onclick="avaliarUsuarioPrompt(${user.id})">⭐ Avaliar</button>
+                ${usuarioLogado.tipo === 'empreiteiro' && user.tipo === 'profissional' ? 
+                    `<button class="btn btn-success" onclick="contratarProfissional(${user.id})">🤝 Contratar</button>` : ''
+                }
+            </div>
+        `;
+    }
+
+    html += '<button class="btn btn-outline" onclick="mostrarTela(\'homeScreen\')" style="margin-top:10px;">← Voltar</button>';
+    
+    document.getElementById('perfilPublicoConteudo').innerHTML = html;
+    mostrarTela('perfilPublicoScreen');
+}
+
+
+// ==========================================================
 // ===== FUNÇÕES FIREBASE =====
 // ==========================================================
 
