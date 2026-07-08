@@ -2,50 +2,189 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LPXConstrutor - Rede Profissional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1A3A5C">
+    <meta name="description" content="LPXConstrutor - Rede Profissional da Construção Civil">
+    <title>LPXConstrutor</title>
     
-    <!-- Firebase -->
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
-    <!-- Google Maps (Substitua pela sua chave) -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_AQUI&libraries=places"></script>
+    <!-- Google Maps -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places"></script>
     
-    <!-- Estilos -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Fontes Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-title">🏗️ LPXCONSTRUTOR</div>
-        <div class="header-subtitle">Rede Profissional da Construção</div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏗️ LPXCONSTRUTOR</h1>
+            <p>Rede Profissional da Construção</p>
+        </div>
+
+        <!-- Toast de Notificações -->
+        <div class="toast" id="toast"></div>
+
+        <!-- ===== TELA DE LOGIN ===== -->
+        <div class="screen active" id="loginScreen">
+            <div class="login-header">
+                <div class="login-icon">🏗️</div>
+                <h2>Entrar</h2>
+                <p>Acesse sua conta</p>
+            </div>
+            
+            <div class="card">
+                <div class="input-group">
+                    <label class="input-label">📧 Email</label>
+                    <input type="email" class="input-field" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">🔒 Senha</label>
+                    <input type="password" class="input-field" id="loginSenha" placeholder="Sua senha" autocomplete="current-password">
+                </div>
+                
+                <button class="btn btn-primary" onclick="app.fazerLogin()">
+                    🔑 ENTRAR
+                </button>
+                
+                <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')">
+                    📝 Criar Conta
+                </button>
+                
+                <button class="btn btn-outline" onclick="app.recuperarSenha()">
+                    🔐 Esqueci a Senha
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== TELA DE CADASTRO ===== -->
+        <div class="screen" id="cadastroScreen">
+            <h2 class="screen-title">CRIAR CONTA</h2>
+            
+            <div class="card">
+                <div class="input-group">
+                    <label class="input-label">👤 Nome Completo</label>
+                    <input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">📧 Email</label>
+                    <input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">📱 Celular</label>
+                    <input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">🔢 CPF</label>
+                    <input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00" maxlength="14">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">🏢 Tipo de Conta</label>
+                    <select class="input-field" id="cadTipo" onchange="app.toggleProfissao()">
+                        <option value="profissional">👷 Profissional</option>
+                        <option value="empreiteiro">🏢 Empreiteiro</option>
+                    </select>
+                </div>
+                
+                <div class="input-group" id="grupoProfissao">
+                    <label class="input-label">🛠️ Profissão</label>
+                    <select class="input-field" id="cadProfissao">
+                        <option value="">Selecione sua profissão</option>
+                        <option value="servente">Servente</option>
+                        <option value="pedreiro">Pedreiro</option>
+                        <option value="carpinteiro">Carpinteiro</option>
+                        <option value="armador">Armador</option>
+                        <option value="encanador">Encanador</option>
+                        <option value="eletricista">Eletricista</option>
+                        <option value="pintor">Pintor</option>
+                        <option value="gesseiro">Gesseiro</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">📅 Anos de Experiência</label>
+                    <input type="number" class="input-field" id="cadExperiencia" placeholder="5" min="0" max="50">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">🔒 Senha</label>
+                    <input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <button class="btn btn-primary" onclick="app.cadastrar()">
+                    ✅ CADASTRAR
+                </button>
+                
+                <button class="btn btn-outline" onclick="app.mostrarTela('loginScreen')">
+                    ← Voltar para Login
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== TELA HOME ===== -->
+        <div class="screen" id="homeScreen">
+            <!-- Mapa -->
+            <div id="map"></div>
+            
+            <!-- Resumo -->
+            <div class="card">
+                <div class="saudacao" id="saudacao">👋 Carregando...</div>
+                <p class="info-text" id="resumoTexto"></p>
+            </div>
+            
+            <!-- Lista de Obras -->
+            <div class="obras-list" id="listaObras">
+                <div class="loading">Carregando obras próximas</div>
+            </div>
+        </div>
+
+        <!-- ===== TELA PERFIL ===== -->
+        <div class="screen" id="perfilScreen">
+            <div class="card" style="text-align:center;">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-name" id="perfilNome">Carregando...</div>
+                <div class="profile-info" id="perfilInfo"></div>
+                <div class="profile-score" id="perfilScore"></div>
+            </div>
+            
+            <button class="btn btn-danger" onclick="app.sair()">
+                🚪 SAIR
+            </button>
+        </div>
+
+        <!-- ===== BOTTOM NAV ===== -->
+        <div class="bottom-nav" id="bottomNav">
+            <button class="nav-item active" onclick="app.mostrarTela('homeScreen')">
+                <span class="nav-icon">🏠</span>
+                Início
+            </button>
+            <button class="nav-item" onclick="app.mostrarTela('perfilScreen')">
+                <span class="nav-icon">👤</span>
+                Perfil
+            </button>
+        </div>
     </div>
 
-    <!-- Tela de Login -->
-    <div class="screen active" id="loginScreen">
-        <div style="text-align:center;margin:20px 0;">
-            <div style="font-size:60px;">🏗️</div>
-            <h2>Entrar</h2>
-        </div>
-        <div class="card">
-            <input type="email" id="loginEmail" class="input-field" placeholder="Email">
-            <input type="password" id="loginSenha" class="input-field" placeholder="Senha">
-            <button class="btn btn-primary" onclick="app.fazerLogin()">ENTRAR</button>
-            <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')">CRIAR CONTA</button>
-            <button class="btn btn-outline" onclick="app.mostrarTela('recuperarSenhaScreen')">ESQUECI SENHA</button>
-        </div>
-    </div>
-
-    <!-- Telas adicionais aqui (cadastro, recuperação, home, etc.) -->
-    <!-- [MANTER O RESTANTE DO HTML COMO ESTAVA] -->
-
-    <!-- Scripts -->
+    <!-- Scripts na ordem correta -->
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/database.js"></script>
     <script src="js/mapa.js"></script>
+    <script src="js/videos.js"></script>
     <script src="js/app.js"></script>
+
 </body>
 </html>
