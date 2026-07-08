@@ -263,5 +263,31 @@
 <script src="js/mapa.js"></script>
 <script src="js/app.js"></script>
 
+
+
+    <script>
+    // Garante que o app existe antes dos cliques
+    window.app = window.app || {
+        fazerLogin: function() { console.log('Carregando...'); },
+        mostrarTela: function(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); var t = document.getElementById(id); if(t) t.classList.add('active'); },
+        cadastrar: function() { console.log('Carregando...'); },
+        recuperarSenha: function() { console.log('Carregando...'); },
+        proximaEtapa: function() { console.log('Carregando...'); },
+        toggleProfissao: function() { console.log('Carregando...'); },
+        mudarTab: function() { console.log('Carregando...'); },
+        buscarProfissionais: function() { console.log('Carregando...'); },
+        verPerfil: function() { console.log('Carregando...'); },
+        iniciarChat: function() { console.log('Carregando...'); },
+        enviarMensagem: function() { console.log('Carregando...'); },
+        salvarPerfil: function() { console.log('Carregando...'); },
+        uploadFoto: function() { console.log('Carregando...'); },
+        abrirTelaPublicacao: function() { console.log('Carregando...'); },
+        publicarVagaApp: function() { console.log('Carregando...'); },
+        candidatarVaga: function() { console.log('Carregando...'); },
+        avaliarUsuario: function() { console.log('Carregando...'); },
+        mostrarNotificacoes: function() { console.log('Carregando...'); },
+        sair: function() { console.log('Carregando...'); }
+    };
+</script>
 </body>
 </html>
