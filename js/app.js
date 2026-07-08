@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== APLICAÇÃO PRINCIPAL =====
+// ===== app.js CORRIGIDO =====
 // ==========================================================
 
 class App {
@@ -12,17 +12,18 @@ class App {
     async init() {
         console.log('🚀 Inicializando LPXConstrutor...');
         
-        // Verifica sessão
+        // Verifica sessão existente
         authService.onAuthStateChange((usuario) => {
+            console.log('🔄 Auth state changed:', usuario ? usuario.nome : 'null');
+            
             if (usuario) {
                 this.usuarioLogado = usuario;
-                console.log('✅ Usuário logado:', usuario.nome);
-                if (this.telaAtual === 'loginScreen') {
+                if (this.telaAtual === 'loginScreen' || this.telaAtual === 'cadastroScreen') {
                     this.mostrarTela('homeScreen');
                 }
             } else {
                 this.usuarioLogado = null;
-                console.log('👤 Nenhum usuário logado');
+                this.mostrarTela('loginScreen');
             }
         });
         
@@ -31,6 +32,8 @@ class App {
 
     // ===== NAVEGAÇÃO =====
     mostrarTela(id) {
+        console.log('📱 Mudando para tela:', id);
+        
         // Esconde todas as telas
         document.querySelectorAll('.screen').forEach(s => {
             s.classList.remove('active');
@@ -46,7 +49,11 @@ class App {
             const nav = document.getElementById('bottomNav');
             if (nav) {
                 const telasComNav = ['homeScreen', 'perfilScreen'];
-                nav.classList.toggle('active', telasComNav.includes(id));
+                if (telasComNav.includes(id)) {
+                    nav.classList.add('active');
+                } else {
+                    nav.classList.remove('active');
+                }
             }
             
             // Ações específicas
@@ -71,20 +78,21 @@ class App {
         const senha = document.getElementById('loginSenha')?.value;
 
         if (!email || !senha) {
-            this.mostrarToast('Preencha todos os campos!', 'erro');
+            this.mostrarToast('❌ Preencha todos os campos!', 'erro');
             return;
         }
 
+        console.log('🔑 Tentando login...');
         this.mostrarToast('Entrando...', 'info');
         
         const resultado = await authService.login(email, senha);
         
         if (resultado.sucesso) {
             this.usuarioLogado = resultado.usuario;
-            this.mostrarToast(`Bem-vindo, ${resultado.usuario.nome}!`, 'sucesso');
+            this.mostrarToast(`✅ Bem-vindo, ${resultado.usuario.nome}!`, 'sucesso');
             this.mostrarTela('homeScreen');
         } else {
-            this.mostrarToast(resultado.erro, 'erro');
+            this.mostrarToast(`❌ ${resultado.erro}`, 'erro');
         }
     }
 
@@ -100,16 +108,17 @@ class App {
             experiencia: document.getElementById('cadExperiencia')?.value
         };
 
+        console.log('📝 Iniciando cadastro...');
         this.mostrarToast('Cadastrando...', 'info');
         
         const resultado = await authService.cadastrar(dados);
         
         if (resultado.sucesso) {
             this.usuarioLogado = resultado.usuario;
-            this.mostrarToast('Cadastro realizado! Verifique seu email.', 'sucesso');
+            this.mostrarToast('✅ Cadastro realizado!', 'sucesso');
             this.mostrarTela('homeScreen');
         } else {
-            this.mostrarToast(resultado.erro, 'erro');
+            this.mostrarToast(`❌ ${resultado.erro}`, 'erro');
         }
     }
 
@@ -120,35 +129,41 @@ class App {
         const resultado = await authService.recuperarSenha(email);
         
         if (resultado.sucesso) {
-            this.mostrarToast('Email de recuperação enviado!', 'sucesso');
+            this.mostrarToast('✅ Email enviado!', 'sucesso');
         } else {
-            this.mostrarToast(resultado.erro, 'erro');
+            this.mostrarToast(`❌ ${resultado.erro}`, 'erro');
         }
     }
 
     async sair() {
-        const resultado = await authService.logout();
-        
-        if (resultado.sucesso) {
-            this.usuarioLogado = null;
-            this.mostrarTela('loginScreen');
-            this.mostrarToast('Até logo! 👋', 'sucesso');
-        }
+        await authService.logout();
+        this.usuarioLogado = null;
+        this.mostrarTela('loginScreen');
+        this.mostrarToast('👋 Até logo!', 'sucesso');
     }
 
     // ===== HOME =====
     async carregarHome() {
+        console.log('🏠 Carregando home...');
+        
+        if (!this.usuarioLogado) {
+            console.warn('⚠️ Nenhum usuário logado');
+            return;
+        }
+
         // Saudação
         const hora = new Date().getHours();
         let saudacao = 'Bom dia';
         if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
         if (hora >= 18) saudacao = 'Boa noite';
         
-        const nome = this.usuarioLogado?.nome || 'Usuário';
-        document.getElementById('saudacao').textContent = `👋 ${saudacao}, ${nome}!`;
+        document.getElementById('saudacao').textContent = 
+            `👋 ${saudacao}, ${this.usuarioLogado.nome}!`;
         
         // Inicializa mapa
-        await mapaService.initMap();
+        if (typeof mapaService !== 'undefined') {
+            await mapaService.initMap();
+        }
         
         // Carrega obras
         await this.carregarObras();
@@ -182,9 +197,6 @@ class App {
                 <h3>🏗️ ${obra.nome || 'Obra sem nome'}</h3>
                 <p>📍 ${obra.endereco || 'Endereço não informado'}</p>
                 <p>💰 R$ ${obra.valorHora || '0'}/h</p>
-                <p style="font-size:12px;color:#6B7280;">
-                    👥 ${obra.interessados?.length || 0} interessados
-                </p>
             </div>
         `).join('');
     }
@@ -194,15 +206,12 @@ class App {
         if (!this.usuarioLogado) return;
 
         document.getElementById('perfilNome').textContent = this.usuarioLogado.nome;
-        
-        const tipo = this.usuarioLogado.tipo === 'profissional' ? '👷 Profissional' : '🏢 Empreiteiro';
         document.getElementById('perfilInfo').textContent = 
-            `${tipo} • ${this.usuarioLogado.email}`;
+            `${this.usuarioLogado.tipo === 'profissional' ? '👷 Profissional' : '🏢 Empreiteiro'} • ${this.usuarioLogado.email}`;
         
         const score = this.usuarioLogado.score || 0;
-        const estrelas = '⭐'.repeat(Math.round(score));
         document.getElementById('perfilScore').innerHTML = 
-            `${estrelas} ${score > 0 ? score.toFixed(1) : 'Sem avaliações'}`;
+            `⭐ ${score > 0 ? score.toFixed(1) : 'Sem avaliações'}`;
     }
 
     // ===== UTILITÁRIOS =====
@@ -240,7 +249,8 @@ class App {
     }
 }
 
-// Inicializa a aplicação quando a página carregar
+// Inicializa quando a página carregar
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 Página carregada, iniciando app...');
     window.app = new App();
 });
