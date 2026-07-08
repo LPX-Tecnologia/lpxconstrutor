@@ -1,980 +1,180 @@
-// ==========================================================
-// ===== APLICAÇÃO PRINCIPAL - COMPLETA E CORRIGIDA =====
-// ==========================================================
-
-class App {
-    constructor() {
-        this.usuarioLogado = null;
-        this.usuarioSelecionado = null;
-        this.chatAtivo = null;
-        this.notificacoes = [];
-        this.telaAtual = 'loginScreen';
-        this.init();
-    }
-
-    async init() {
-        console.log('🚀 Inicializando LPXConstrutor...');
-        
-        // Monitora autenticação
-        authService.onAuthStateChange((usuario) => {
-            if (usuario) {
-                this.usuarioLogado = usuario;
-                console.log('✅ Logado:', usuario.nome);
-                
-                // Atualiza botão publicar
-                this.atualizarBotaoPublicar();
-                
-                if (this.telaAtual === 'loginScreen' || this.telaAtual === 'cadastroScreen') {
-                    this.mostrarTela('homeScreen');
-                }
-            } else {
-                this.usuarioLogado = null;
-                this.mostrarTela('loginScreen');
-            }
+class App{
+    constructor(){this.usuarioLogado=null;this.usuarioSelecionado=null;this.telaAtual='loginScreen';this.notificacoes=[];this.init()}
+    async init(){
+        console.log('🚀 Iniciando LPXConstrutor...');
+        authService.onAuthStateChange((usuario)=>{
+            if(usuario){this.usuarioLogado=usuario;this.atualizarBotaoPublicar();if(this.telaAtual==='loginScreen'||this.telaAtual==='cadastroScreen')this.mostrarTela('homeScreen')}
+            else{this.usuarioLogado=null;this.mostrarTela('loginScreen')}
         });
-        
-        console.log('✅ App inicializado');
+        console.log('✅ App inicializado')
     }
-
-    // ===== ATUALIZA BOTÃO PUBLICAR =====
-    atualizarBotaoPublicar() {
-        const btnPublicar = document.getElementById('btnPublicar');
-        if (!btnPublicar) return;
-
-        if (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') {
-            btnPublicar.style.display = 'flex';
-        } else {
-            btnPublicar.style.display = 'none';
-        }
+    atualizarBotaoPublicar(){const btn=document.getElementById('btnPublicar');if(!btn)return;if(this.usuarioLogado&&this.usuarioLogado.tipo==='empreiteiro'){btn.style.display='flex';btn.onclick=()=>this.abrirTelaPublicacao()}else{btn.style.display='none'}}
+    mostrarTela(id){
+        document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+        const tela=document.getElementById(id);
+        if(tela){tela.classList.add('active');this.telaAtual=id;
+            const nav=document.getElementById('bottomNav');
+            if(nav){const tn=['homeScreen','buscaScreen','meuPerfilScreen','chatScreen','publicarVagaScreen'];nav.style.display=tn.includes(id)?'flex':'none';
+                nav.querySelectorAll('.nav-item').forEach(i=>{i.classList.remove('active');if(i.getAttribute('data-screen')===id)i.classList.add('active')})}
+            this.onTelaCarregada(id)}
     }
-
-    // ===== NAVEGAÇÃO =====
-    mostrarTela(id) {
-        console.log('📱 Mostrando tela:', id);
-        
-        // Esconde todas as telas
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        
-        // Mostra tela selecionada
-        const tela = document.getElementById(id);
-        if (tela) {
-            tela.classList.add('active');
-            this.telaAtual = id;
-            
-            // Atualiza bottom nav
-            const nav = document.getElementById('bottomNav');
-            if (nav) {
-                const telasComNav = ['homeScreen', 'buscaScreen', 'meuPerfilScreen', 'chatScreen'];
-                nav.style.display = telasComNav.includes(id) ? 'flex' : 'none';
-                
-                // Destaca item ativo
-                nav.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                    if (item.getAttribute('data-screen') === id) {
-                        item.classList.add('active');
-                    }
-                });
-            }
-            
-            // Ações específicas
-            this.onTelaCarregada(id);
-        }
-    }
-
-    onTelaCarregada(id) {
-        switch(id) {
-            case 'homeScreen':
-                this.carregarHome();
-                break;
-            case 'meuPerfilScreen':
-                this.carregarMeuPerfil();
-                break;
-            case 'buscaScreen':
-                this.buscarProfissionais();
-                break;
-        }
-    }
-
-    mudarTab(tab) {
-        // Atualiza botões
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    onTelaCarregada(id){if(id==='homeScreen')this.carregarHome();if(id==='meuPerfilScreen')this.carregarMeuPerfil();if(id==='buscaScreen')this.buscarProfissionais();if(id==='publicarVagaScreen')setTimeout(()=>document.getElementById('vagaTitulo')?.focus(),300)}
+    mudarTab(tab){
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
         event.target.closest('.tab').classList.add('active');
-        
-        // Mostra/esconde containers
-        document.getElementById('feedContainer').style.display = tab === 'feed' ? 'block' : 'none';
-        document.getElementById('redeContainer').style.display = tab === 'rede' ? 'block' : 'none';
-        
-        // Carrega conteúdo
-        if (tab === 'feed') this.carregarFeed();
-        if (tab === 'rede') this.carregarRede();
+        document.getElementById('feedContainer').style.display=tab==='feed'?'block':'none';
+        document.getElementById('redeContainer').style.display=tab==='rede'?'block':'none';
+        if(tab==='feed')this.carregarFeed();if(tab==='rede')this.carregarRede()
     }
-
-    // ===== AUTENTICAÇÃO =====
-    async fazerLogin() {
-        const email = document.getElementById('loginEmail')?.value?.trim();
-        const senha = document.getElementById('loginSenha')?.value;
-
-        if (!email || !senha) {
-            this.mostrarToast('❌ Preencha todos os campos!', 'erro');
-            return;
-        }
-
-        this.mostrarToast('Entrando...', 'info');
-        
-        try {
-            const resultado = await authService.login(email, senha);
-            
-            if (resultado.sucesso) {
-                this.usuarioLogado = resultado.usuario;
-                this.mostrarToast(`✅ Bem-vindo, ${resultado.usuario.nome}!`, 'sucesso');
-                this.atualizarBotaoPublicar();
-                this.mostrarTela('homeScreen');
-            } else {
-                this.mostrarToast(`❌ ${resultado.erro}`, 'erro');
-            }
-        } catch (error) {
-            console.error('Erro no login:', error);
-            this.mostrarToast('❌ Erro ao fazer login. Tente novamente.', 'erro');
-        }
+    async fazerLogin(){
+        const e=document.getElementById('loginEmail')?.value?.trim();
+        const s=document.getElementById('loginSenha')?.value;
+        if(!e||!s){this.mostrarToast('Preencha todos os campos!','erro');return}
+        this.mostrarToast('Entrando...','info');
+        const r=await authService.login(e,s);
+        if(r.sucesso){this.usuarioLogado=r.usuario;this.mostrarToast('Bem-vindo!','sucesso');this.atualizarBotaoPublicar();this.mostrarTela('homeScreen')}
+        else this.mostrarToast(r.erro,'erro')
     }
-
-    // ===== NAVEGAÇÃO DAS ETAPAS DO CADASTRO =====
-    proximaEtapa(etapa) {
-        console.log('🔄 Indo para etapa:', etapa);
-        
-        const etapa1 = document.getElementById('etapa1');
-        const etapa2 = document.getElementById('etapa2');
-        
-        if (!etapa1 || !etapa2) {
-            console.error('❌ Elementos das etapas não encontrados');
-            return;
+    proximaEtapa(etapa){
+        const e1=document.getElementById('etapa1'),e2=document.getElementById('etapa2');
+        if(!e1||!e2)return;
+        if(etapa===1){e1.style.display='block';e2.style.display='none'}
+        else{
+            const n=document.getElementById('cadNome')?.value?.trim();
+            const em=document.getElementById('cadEmail')?.value?.trim();
+            const se=document.getElementById('cadSenha')?.value;
+            if(!n||n.length<3){this.mostrarToast('Nome inválido','erro');return}
+            if(!em||!em.includes('@')){this.mostrarToast('Email inválido','erro');return}
+            if(!se||se.length<6){this.mostrarToast('Senha mínima 6 caracteres','erro');return}
+            e1.style.display='none';e2.style.display='block'
         }
-        
-        if (etapa === 1) {
-            // Voltar para etapa 1
-            etapa1.style.display = 'block';
-            etapa2.style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-        } else if (etapa === 2) {
-            // Validar campos antes de avançar
-            const nome = document.getElementById('cadNome')?.value?.trim();
-            const email = document.getElementById('cadEmail')?.value?.trim();
-            const celular = document.getElementById('cadCelular')?.value?.trim();
-            const cpf = document.getElementById('cadCPF')?.value?.trim();
-            const senha = document.getElementById('cadSenha')?.value;
-            
-            // Validações
-            if (!nome || nome.length < 3) {
-                this.mostrarToast('❌ Nome deve ter pelo menos 3 caracteres', 'erro');
-                return;
-            }
-            
-            if (!email || !email.includes('@') || !email.includes('.')) {
-                this.mostrarToast('❌ Email inválido', 'erro');
-                return;
-            }
-            
-            if (!celular || celular.length < 10) {
-                this.mostrarToast('❌ Celular inválido', 'erro');
-                return;
-            }
-            
-            if (!senha || senha.length < 6) {
-                this.mostrarToast('❌ Senha deve ter pelo menos 6 caracteres', 'erro');
-                return;
-            }
-            
-            // Avançar para etapa 2
-            etapa1.style.display = 'none';
-            etapa2.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            console.log('✅ Etapa 2 exibida');
-        }
+        window.scrollTo({top:0,behavior:'smooth'})
     }
-
-    toggleProfissao() {
-        const tipo = document.getElementById('cadTipo')?.value;
-        const grupo = document.getElementById('grupoProfissao');
-        if (grupo) {
-            grupo.style.display = tipo === 'profissional' ? 'block' : 'none';
-        }
+    toggleProfissao(){const g=document.getElementById('grupoProfissao');if(g)g.style.display=document.getElementById('cadTipo')?.value==='profissional'?'block':'none'}
+    async cadastrar(){
+        const d={nome:document.getElementById('cadNome')?.value?.trim(),email:document.getElementById('cadEmail')?.value?.trim(),senha:document.getElementById('cadSenha')?.value,tipo:document.getElementById('cadTipo')?.value,celular:document.getElementById('cadCelular')?.value?.trim(),cpf:document.getElementById('cadCPF')?.value?.replace(/\D/g,''),profissao:document.getElementById('cadProfissao')?.value,experiencia:document.getElementById('cadExperiencia')?.value,habilidades:document.getElementById('cadHabilidades')?.value};
+        if(!d.nome||!d.email||!d.senha){this.mostrarToast('Preencha todos os campos!','erro');return}
+        if(d.tipo==='profissional'&&!d.profissao){this.mostrarToast('Selecione sua profissão!','erro');return}
+        this.mostrarToast('Cadastrando...','info');
+        const r=await authService.cadastrar(d);
+        if(r.sucesso){this.usuarioLogado=r.usuario;this.mostrarToast('Cadastro realizado!','sucesso');this.atualizarBotaoPublicar();this.mostrarTela('homeScreen')}
+        else this.mostrarToast(r.erro,'erro')
     }
-
-    async cadastrar() {
-        console.log('📝 Iniciando cadastro...');
-        
-        const dados = {
-            nome: document.getElementById('cadNome')?.value?.trim(),
-            email: document.getElementById('cadEmail')?.value?.trim(),
-            senha: document.getElementById('cadSenha')?.value,
-            tipo: document.getElementById('cadTipo')?.value,
-            celular: document.getElementById('cadCelular')?.value?.trim(),
-            cpf: document.getElementById('cadCPF')?.value?.replace(/\D/g, ''),
-            profissao: document.getElementById('cadProfissao')?.value,
-            experiencia: document.getElementById('cadExperiencia')?.value,
-            habilidades: document.getElementById('cadHabilidades')?.value
-        };
-
-        // Validações finais
-        if (!dados.nome || !dados.email || !dados.senha) {
-            this.mostrarToast('❌ Preencha todos os campos obrigatórios!', 'erro');
-            return;
-        }
-
-        if (dados.tipo === 'profissional' && !dados.profissao) {
-            this.mostrarToast('❌ Selecione sua profissão!', 'erro');
-            return;
-        }
-
-        this.mostrarToast('Cadastrando...', 'info');
-        
-        try {
-            const resultado = await authService.cadastrar(dados);
-            
-            if (resultado.sucesso) {
-                this.usuarioLogado = resultado.usuario;
-                this.mostrarToast('✅ Cadastro realizado com sucesso!', 'sucesso');
-                this.atualizarBotaoPublicar();
-                this.mostrarTela('homeScreen');
-            } else {
-                this.mostrarToast(`❌ ${resultado.erro}`, 'erro');
-            }
-        } catch (error) {
-            console.error('Erro no cadastro:', error);
-            this.mostrarToast('❌ Erro ao cadastrar. Tente novamente.', 'erro');
-        }
+    async recuperarSenha(){const e=prompt('Digite seu email:');if(!e)return;const r=await authService.recuperarSenha(e);if(r.sucesso)this.mostrarToast('Email enviado!','sucesso');else this.mostrarToast(r.erro,'erro')}
+    async sair(){await authService.logout();this.usuarioLogado=null;this.mostrarTela('loginScreen');this.mostrarToast('Até logo!','sucesso')}
+    async carregarHome(){
+        if(!this.usuarioLogado)return;
+        const h=new Date().getHours();let s='Bom dia';if(h>=12&&h<18)s='Boa tarde';if(h>=18)s='Boa noite';
+        document.getElementById('saudacao').textContent=`👋 ${s}, ${this.usuarioLogado.nome}!`;
+        document.getElementById('resumoTexto').textContent=`${this.usuarioLogado.tipo==='empreiteiro'?'🏢':'👷'} ${this.usuarioLogado.profissao||this.usuarioLogado.tipo}`;
+        try{await mapaService.initMap()}catch(e){}
+        await this.carregarFeed()
     }
-
-    async recuperarSenha() {
-        const email = prompt('Digite seu email para recuperar a senha:');
-        if (!email) return;
-
-        try {
-            const resultado = await authService.recuperarSenha(email);
-            if (resultado.sucesso) {
-                this.mostrarToast('✅ Email de recuperação enviado!', 'sucesso');
-            } else {
-                this.mostrarToast(`❌ ${resultado.erro}`, 'erro');
-            }
-        } catch (error) {
-            this.mostrarToast('❌ Erro ao enviar email de recuperação', 'erro');
-        }
+    async carregarFeed(){
+        const c=document.getElementById('feedContainer');if(!c)return;
+        c.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+        try{
+            const snap=await db.collection('vagas').get();const vagas=[];
+            snap.forEach(doc=>{const d=doc.data();if(d.ativa!==false)vagas.push({id:doc.id,...d})});
+            vagas.sort((a,b)=>{const da=a.dataCriacao?.toDate?.()||new Date(0);const db2=b.dataCriacao?.toDate?.()||new Date(0);return db2-da});
+            if(vagas.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-hard-hat" style="font-size:60px;color:#ccc;"></i><h3>Nenhuma vaga</h3>'+(this.usuarioLogado?.tipo==='empreiteiro'?'<button class="btn btn-primary" onclick="app.abrirTelaPublicacao()" style="margin-top:16px;">PUBLICAR VAGA</button>':'')+'</div>';return}
+            for(const v of vagas){try{const ad=await db.collection('usuarios').doc(v.usuarioId).get();v.autor=ad.exists?ad.data():null}catch(e){v.autor=null}}
+            c.innerHTML=vagas.map(v=>this.criarVagaCard(v)).join('')
+        }catch(e){c.innerHTML='<div class="card">Erro ao carregar</div>'}
     }
-
-    async sair() {
-        try {
-            await authService.logout();
-            this.usuarioLogado = null;
-            this.mostrarTela('loginScreen');
-            this.mostrarToast('👋 Até logo!', 'sucesso');
-        } catch (error) {
-            console.error('Erro ao sair:', error);
-        }
+    criarVagaCard(v){
+        const a=v.autor||{};const w=a.celular?a.celular.replace(/\D/g,''):'';
+        const d=v.dataCriacao?new Date(v.dataCriacao.toDate()).toLocaleDateString('pt-BR'):'';
+        return `<div class="vaga-card"><div class="vaga-header" onclick="app.verPerfil('${v.usuarioId}')" style="cursor:pointer;"><div class="vaga-avatar">${a.fotoPerfil?`<img src="${a.fotoPerfil}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:'<i class="fas fa-user-tie"></i>'}</div><div class="vaga-info"><div class="vaga-nome">${a.nome||'Empreiteiro'}</div><div class="vaga-data">📍 ${v.endereco||''} • ${d}</div></div><div>${'⭐'.repeat(Math.round(a.score||0))}</div></div><div class="vaga-body"><div class="vaga-titulo">🏗️ ${v.titulo||'Vaga'}</div><div class="vaga-descricao">${v.descricao||''}</div><div class="vaga-tags"><span class="vaga-tag">💰 R$${v.valorHora}/h</span><span class="vaga-tag">👷 ${v.profissoes||'Todas'}</span></div></div><div class="vaga-footer">${this.usuarioLogado&&this.usuarioLogado.tipo==='profissional'?`<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.candidatarVaga('${v.id}')" style="flex:1;">QUERO!</button>`:''}${w?`<a href="https://wa.me/55${w}" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>`:''}<button class="btn btn-outline btn-small" onclick="event.stopPropagation();app.verPerfil('${v.usuarioId}')"><i class="fas fa-user"></i></button></div></div>`
     }
-
-    // ===== HOME =====
-    async carregarHome() {
-        if (!this.usuarioLogado) return;
-
-        // Atualiza saudação
-        const hora = new Date().getHours();
-        let saudacao = 'Bom dia';
-        if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
-        if (hora >= 18) saudacao = 'Boa noite';
-        
-        document.getElementById('saudacao').textContent = `👋 ${saudacao}, ${this.usuarioLogado.nome}!`;
-        document.getElementById('resumoTexto').textContent = 
-            `${this.usuarioLogado.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional'} • ${this.usuarioLogado.profissao || this.usuarioLogado.tipo}`;
-
-        // Inicializa mapa
-        if (typeof mapaService !== 'undefined') {
-            try {
-                await mapaService.initMap();
-            } catch (e) {
-                console.warn('Mapa não inicializado:', e);
-            }
-        }
-
-        // Carrega feed
-        await this.carregarFeed();
+    async verPerfil(uid){
+        try{
+            const doc=await db.collection('usuarios').doc(uid).get();if(!doc.exists){this.mostrarToast('Não encontrado','erro');return}
+            this.usuarioSelecionado={id:doc.id,...doc.data()};const u=this.usuarioSelecionado;const w=u.celular?u.celular.replace(/\D/g,'':'');
+            const c=document.getElementById('perfilPublicoConteudo');
+            c.innerHTML=`<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar" style="background:${u.fotoPerfil?'white':'linear-gradient(135deg,#F47920,#E06B1A)'};">${u.fotoPerfil?`<img src="${u.fotoPerfil}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:'<i class="fas fa-user" style="font-size:40px;"></i>'}</div></div></div><div class="profile-info-card"><h2>${u.nome}</h2><p><i class="fas fa-tools"></i> ${u.profissao||'Profissional'}</p><p><i class="fas fa-calendar"></i> ${u.experiencia||0} anos</p><div class="stars-container">${'⭐'.repeat(Math.round(u.score||0))} ${u.score?u.score.toFixed(1):'Sem avaliações'}</div></div><div class="card"><h3>Habilidades</h3><p>${u.habilidades||'Não informado'}</p></div><div class="card"><h3>Contato</h3><p>📱 ${u.celular||'Não informado'}</p><p>📧 ${u.email}</p></div>${this.usuarioLogado&&this.usuarioLogado.id!==u.id?`<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">${w?`<a href="https://wa.me/55${w}" target="_blank" class="btn btn-success"><i class="fab fa-whatsapp"></i> WhatsApp</a>`:''}<button class="btn btn-primary" onclick="app.iniciarChat('${u.id}')"><i class="fas fa-comments"></i> Chat</button><button class="btn btn-outline" onclick="app.avaliarUsuario('${u.id}')"><i class="fas fa-star"></i> Avaliar</button></div>`:''}`;
+            this.mostrarTela('perfilPublicoScreen')
+        }catch(e){this.mostrarToast('Erro','erro')}
     }
-
-    async carregarFeed() {
-        const container = document.getElementById('feedContainer');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div style="text-align:center; padding:40px;">
-                <i class="fas fa-spinner fa-spin" style="font-size:40px; color:#F47920;"></i>
-                <p style="margin-top:16px; color:#666;">Carregando vagas...</p>
-            </div>
-        `;
-
-        try {
-            const snapshot = await db.collection('vagas')
-                .where('ativa', '==', true)
-                .orderBy('dataCriacao', 'desc')
-                .limit(20)
-                .get();
-
-            if (snapshot.empty) {
-                container.innerHTML = `
-                    <div class="card" style="text-align:center; padding:40px;">
-                        <i class="fas fa-hard-hat" style="font-size:60px; color:#ccc;"></i>
-                        <h3 style="margin-top:16px; color:#1A3A5C;">Nenhuma vaga publicada</h3>
-                        <p style="color:#999;">Seja o primeiro a publicar!</p>
-                        ${this.usuarioLogado?.tipo === 'empreiteiro' ? `
-                            <button class="btn btn-primary" onclick="app.publicarVaga()" style="margin-top:16px;">
-                                <i class="fas fa-plus-circle"></i> PUBLICAR VAGA
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-                return;
-            }
-
-            const vagas = [];
-            for (const doc of snapshot.docs) {
-                const vaga = { id: doc.id, ...doc.data() };
-                try {
-                    const autorDoc = await db.collection('usuarios').doc(vaga.usuarioId).get();
-                    vaga.autor = autorDoc.exists ? autorDoc.data() : null;
-                } catch (e) {
-                    vaga.autor = null;
-                }
-                vagas.push(vaga);
-            }
-
-            container.innerHTML = vagas.map(vaga => this.criarVagaCard(vaga)).join('');
-
-        } catch (error) {
-            console.error('Erro ao carregar feed:', error);
-            container.innerHTML = `
-                <div class="card" style="text-align:center;">
-                    <i class="fas fa-exclamation-triangle" style="font-size:40px; color:#EF4444;"></i>
-                    <p style="margin-top:16px;">Erro ao carregar vagas</p>
-                    <button class="btn btn-outline btn-small" onclick="app.carregarFeed()" style="margin-top:8px;">
-                        <i class="fas fa-redo"></i> Tentar novamente
-                    </button>
-                </div>
-            `;
-        }
+    carregarMeuPerfil(){
+        if(!this.usuarioLogado)return;const u=this.usuarioLogado;
+        document.getElementById('meuPerfilNome').textContent=u.nome||'Usuário';
+        document.getElementById('meuPerfilProfissao').textContent=`${u.tipo==='profissional'?'👷':'🏢'} ${u.profissao||u.tipo}`;
+        document.getElementById('meuPerfilAvaliacao').innerHTML='⭐'.repeat(Math.round(u.score||0))+' '+(u.score?u.score.toFixed(1):'Sem avaliações');
+        document.getElementById('editNome').value=u.nome||'';document.getElementById('editCelular').value=u.celular||'';
+        document.getElementById('editHabilidades').value=u.habilidades||'';document.getElementById('statsAvaliacoes').textContent=u.avaliacoesRecebidas||0;
+        this.carregarStatsConexoes()
     }
-
-    criarVagaCard(vaga) {
-        const autor = vaga.autor || {};
-        const whatsapp = autor.celular ? autor.celular.replace(/\D/g, '') : '';
-        const data = vaga.dataCriacao ? new Date(vaga.dataCriacao.toDate()).toLocaleDateString('pt-BR') : '';
-        
-        return `
-            <div class="vaga-card">
-                <div class="vaga-header" onclick="app.verPerfil('${vaga.usuarioId}')" style="cursor:pointer;">
-                    <div class="vaga-avatar">
-                        ${autor.fotoPerfil ? 
-                            `<img src="${autor.fotoPerfil}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : 
-                            '<i class="fas fa-user-tie"></i>'
-                        }
-                    </div>
-                    <div class="vaga-info">
-                        <div class="vaga-nome">${autor.nome || 'Empreiteiro'}</div>
-                        <div class="vaga-data">
-                            <i class="fas fa-map-marker-alt"></i> ${vaga.endereco || 'Local não informado'} • ${data}
-                        </div>
-                    </div>
-                    <div class="vaga-stars">
-                        ${'⭐'.repeat(Math.round(autor.score || 0))}
-                    </div>
-                </div>
-                <div class="vaga-body">
-                    <div class="vaga-titulo">🏗️ ${vaga.titulo || 'Vaga disponível'}</div>
-                    <div class="vaga-descricao">${vaga.descricao || 'Sem descrição'}</div>
-                    <div class="vaga-tags">
-                        <span class="vaga-tag">💰 R$ ${vaga.valorHora || '0'}/h</span>
-                        <span class="vaga-tag">👷 ${vaga.profissoes || 'Todas'}</span>
-                        ${vaga.interessados ? 
-                            `<span class="vaga-tag">👥 ${vaga.interessados.length} interessados</span>` : ''}
-                    </div>
-                </div>
-                <div class="vaga-footer">
-                    ${this.usuarioLogado && this.usuarioLogado.tipo === 'profissional' ? `
-                        <button class="btn btn-primary btn-small" onclick="event.stopPropagation(); app.candidatarVaga('${vaga.id}')" style="flex:1;">
-                            <i class="fas fa-hand-paper"></i> QUERO TRABALHAR
-                        </button>
-                    ` : ''}
-                    
-                    ${whatsapp ? `
-                        <a href="https://wa.me/55${whatsapp}?text=${encodeURIComponent('Olá! Vi sua vaga: ' + vaga.titulo)}" 
-                           target="_blank" class="btn btn-success btn-small" 
-                           style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;"
-                           onclick="event.stopPropagation();">
-                            <i class="fab fa-whatsapp"></i> WhatsApp
-                        </a>
-                    ` : ''}
-                    
-                    <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); app.verPerfil('${vaga.usuarioId}')">
-                        <i class="fas fa-user"></i>
-                    </button>
-                </div>
-            </div>
-        `;
+    async carregarStatsConexoes(){try{const cx=await databaseService.buscarConexoes(this.usuarioLogado.id);document.getElementById('statsConexoes').textContent=cx.length}catch(e){document.getElementById('statsConexoes').textContent='0'}}
+    async salvarPerfil(){
+        const d={nome:document.getElementById('editNome').value.trim(),celular:document.getElementById('editCelular').value.trim(),habilidades:document.getElementById('editHabilidades').value.trim()};
+        if(!d.nome){this.mostrarToast('Nome obrigatório!','erro');return}
+        await databaseService.atualizarUsuario(this.usuarioLogado.id,d);this.usuarioLogado={...this.usuarioLogado,...d};this.mostrarToast('Perfil atualizado!','sucesso');this.carregarMeuPerfil()
     }
-
-    // ===== PERFIL =====
-    async verPerfil(usuarioId) {
-        try {
-            const doc = await db.collection('usuarios').doc(usuarioId).get();
-            if (!doc.exists) {
-                this.mostrarToast('Usuário não encontrado', 'erro');
-                return;
-            }
-
-            this.usuarioSelecionado = { id: doc.id, ...doc.data() };
-            const usuario = this.usuarioSelecionado;
-            const whatsapp = usuario.celular ? usuario.celular.replace(/\D/g, '') : '';
-
-            const container = document.getElementById('perfilPublicoConteudo');
-            container.innerHTML = `
-                <div class="profile-header-container">
-                    <div class="profile-cover"></div>
-                    <div class="profile-avatar-container">
-                        <div class="profile-avatar" style="background: ${usuario.fotoPerfil ? 'white' : 'linear-gradient(135deg, #F47920, #E06B1A)'};">
-                            ${usuario.fotoPerfil ? 
-                                `<img src="${usuario.fotoPerfil}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` :
-                                '<i class="fas fa-user" style="font-size:40px;"></i>'
-                            }
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="profile-info-card">
-                    <h2>${usuario.nome}</h2>
-                    <p><i class="fas fa-tools"></i> ${usuario.profissao || 'Profissional'}</p>
-                    <p><i class="fas fa-calendar"></i> ${usuario.experiencia || 0} anos de experiência</p>
-                    <div class="stars-container">
-                        ${'⭐'.repeat(Math.round(usuario.score || 0))} 
-                        ${usuario.score ? usuario.score.toFixed(1) : 'Sem avaliações'}
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h3><i class="fas fa-info-circle"></i> Habilidades</h3>
-                    <p>${usuario.habilidades || 'Não informado'}</p>
-                </div>
-                
-                <div class="card">
-                    <h3><i class="fas fa-phone"></i> Contato</h3>
-                    <p><i class="fab fa-whatsapp"></i> ${usuario.celular || 'Não informado'}</p>
-                    <p><i class="fas fa-envelope"></i> ${usuario.email}</p>
-                </div>
-                
-                ${this.usuarioLogado && this.usuarioLogado.id !== usuario.id ? `
-                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
-                        ${whatsapp ? `
-                            <a href="https://wa.me/55${whatsapp}?text=${encodeURIComponent('Olá ' + usuario.nome.split(' ')[0] + '! Vi seu perfil no LPXConstrutor.')}" 
-                               target="_blank" class="btn btn-success">
-                                <i class="fab fa-whatsapp"></i> Chamar no WhatsApp
-                            </a>
-                        ` : ''}
-                        
-                        <button class="btn btn-primary" onclick="app.iniciarChat('${usuario.id}')">
-                            <i class="fas fa-comments"></i> Conversar no Chat
-                        </button>
-                        
-                        <button class="btn btn-outline" onclick="app.avaliarUsuario('${usuario.id}')">
-                            <i class="fas fa-star"></i> Avaliar Profissional
-                        </button>
-                    </div>
-                ` : ''}
-            `;
-
-            this.mostrarTela('perfilPublicoScreen');
-
-        } catch (error) {
-            console.error('Erro ao carregar perfil:', error);
-            this.mostrarToast('Erro ao carregar perfil', 'erro');
-        }
+    async uploadFoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async(ev)=>{await databaseService.atualizarUsuario(this.usuarioLogado.id,{fotoPerfil:ev.target.result});this.usuarioLogado.fotoPerfil=ev.target.result;this.mostrarToast('Foto atualizada!','sucesso');this.carregarMeuPerfil()};r.readAsDataURL(f)}
+    abrirTelaPublicacao(){if(!this.usuarioLogado||this.usuarioLogado.tipo!=='empreiteiro'){this.mostrarToast('Apenas empreiteiros!','erro');return};['vagaTitulo','vagaDescricao','vagaEndereco'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});document.getElementById('vagaValorHora').value='';document.getElementById('vagaQuantidade').value='1';document.querySelectorAll('#profissoesCheckboxes input').forEach(cb=>cb.checked=false);this.mostrarTela('publicarVagaScreen')}
+    async publicarVagaApp(){
+        const t=document.getElementById('vagaTitulo')?.value?.trim();const e=document.getElementById('vagaEndereco')?.value?.trim();const vh=document.getElementById('vagaValorHora')?.value;
+        const ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(cb=>ps.push(cb.value));
+        if(!t){this.mostrarToast('Digite um título!','erro');return}if(!e){this.mostrarToast('Informe o endereço!','erro');return}if(ps.length===0){this.mostrarToast('Selecione profissões!','erro');return}if(!vh||parseFloat(vh)<=0){this.mostrarToast('Valor inválido!','erro');return}
+        this.mostrarToast('Publicando...','info');
+        try{
+            let lat=null,lng=null;try{const pos=await this.getPosition();lat=pos.lat;lng=pos.lng}catch(ex){}
+            await db.collection('vagas').add({titulo:t,descricao:document.getElementById('vagaDescricao')?.value||'',endereco:e,profissoes:ps.join(', '),valorHora:parseFloat(vh),quantidade:parseInt(document.getElementById('vagaQuantidade')?.value||'1'),lat,lng,usuarioId:this.usuarioLogado.id,interessados:[],visualizacoes:0,dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true});
+            this.mostrarToast('Vaga publicada!','sucesso');setTimeout(()=>{this.mostrarTela('homeScreen');this.carregarFeed()},1000)
+        }catch(ex){this.mostrarToast('Erro ao publicar','erro')}
     }
-
-    carregarMeuPerfil() {
-        if (!this.usuarioLogado) return;
-
-        const u = this.usuarioLogado;
-        document.getElementById('meuPerfilNome').textContent = u.nome || 'Usuário';
-        document.getElementById('meuPerfilProfissao').textContent = 
-            `${u.tipo === 'profissional' ? '👷 Profissional' : '🏢 Empreiteiro'} • ${u.profissao || u.tipo}`;
-        
-        document.getElementById('meuPerfilAvaliacao').innerHTML = 
-            '⭐'.repeat(Math.round(u.score || 0)) + 
-            ` ${u.score ? u.score.toFixed(1) : 'Sem avaliações'}`;
-        
-        document.getElementById('editNome').value = u.nome || '';
-        document.getElementById('editCelular').value = u.celular || '';
-        document.getElementById('editHabilidades').value = u.habilidades || '';
-        
-        // Estatísticas
-        document.getElementById('statsAvaliacoes').textContent = u.avaliacoesRecebidas || 0;
-        this.carregarStatsConexoes();
+    getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation){reject(new Error('Sem GPS'));return}navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),e=>reject(e),{timeout:5000})})}
+    async candidatarVaga(vid){if(!this.usuarioLogado||this.usuarioLogado.tipo!=='profissional'){this.mostrarToast('Apenas profissionais!','erro');return}const doc=await db.collection('vagas').doc(vid).get();if(!doc.exists)return;const v=doc.data();if(!v.interessados)v.interessados=[];if(v.interessados.includes(this.usuarioLogado.id)){this.mostrarToast('Já se candidatou!','erro');return}v.interessados.push(this.usuarioLogado.id);await db.collection('vagas').doc(vid).update({interessados:v.interessados});this.mostrarToast('Candidatura enviada!','sucesso');this.carregarFeed()}
+    async buscarProfissionais(){
+        const c=document.getElementById('buscaResultados');if(!c)return;
+        c.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+        try{
+            const snap=await db.collection('usuarios').get();const todos=[];
+            snap.forEach(doc=>{const d=doc.data();console.log('📄',d.nome,'|',d.tipo,'|',d.profissao,'|',d.ativo);todos.push({id:doc.id,...d})});
+            const profs=todos.filter(u=>(u.tipo==='profissional'||u.tipo==='Profissional')&&u.ativo!==false);
+            console.log('👷 Profissionais:',profs.length);profs.forEach(p=>console.log('  -',p.nome,p.profissao));
+            const termo=document.getElementById('buscaInput')?.value?.toLowerCase().trim()||'';
+            let filtrados=termo?profs.filter(u=>(u.nome||'').toLowerCase().includes(termo)||(u.profissao||'').toLowerCase().includes(termo)||(u.habilidades||'').toLowerCase().includes(termo)):profs;
+            if(filtrados.length===0){c.innerHTML=`<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-search" style="font-size:60px;color:#ccc;"></i><h3>Nenhum profissional</h3><p style="color:#999;">Total no banco: ${todos.length} | Profissionais: ${profs.length}</p>${termo?`<button class="btn btn-outline btn-small" onclick="document.getElementById('buscaInput').value='';app.buscarProfissionais();">Mostrar todos</button>`:''}</div>`;return}
+            c.innerHTML=filtrados.map(u=>{const w=u.celular?.replace(/\D/g,'');const sc=u.score||0;return`<div class="vaga-card" style="cursor:pointer;" onclick="app.verPerfil('${u.id}')"><div class="vaga-header"><div class="vaga-avatar" style="background:${u.fotoPerfil?'white':'linear-gradient(135deg,#F47920,#E06B1A)'};">${u.fotoPerfil?`<img src="${u.fotoPerfil}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:'<i class="fas fa-hard-hat"></i>'}</div><div class="vaga-info"><div class="vaga-nome">${u.nome}</div><div class="vaga-data">${u.profissao||'Profissional'} • ${u.experiencia||0} anos</div></div><div><div>${'⭐'.repeat(Math.round(sc))||'☆'}</div><div style="font-size:11px;color:#999;">${sc>0?sc.toFixed(1):'Novo'}</div></div></div><div class="vaga-footer">${w?`<a href="https://wa.me/55${w}" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>`:''}<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.iniciarChat('${u.id}')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button></div></div>`}).join('')
+        }catch(e){c.innerHTML='<div class="card">Erro: '+e.message+'</div>'}
     }
-
-    async carregarStatsConexoes() {
-        try {
-            const conexoes = await databaseService.buscarConexoes(this.usuarioLogado.id);
-            document.getElementById('statsConexoes').textContent = conexoes.length;
-        } catch (e) {
-            document.getElementById('statsConexoes').textContent = '0';
-        }
+    async carregarRede(){
+        const c=document.getElementById('redeContainer');if(!c)return;
+        c.innerHTML='<div class="loading">Carregando...</div>';
+        try{
+            const cx=await databaseService.buscarConexoes(this.usuarioLogado.id);
+            if(cx.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-users" style="font-size:60px;color:#ccc;"></i><h3>Rede vazia</h3></div>';return}
+            const users=[];for(const x of cx){const aid=x.usuarioId===this.usuarioLogado.id?x.amigoId:x.usuarioId;const doc=await db.collection('usuarios').doc(aid).get();if(doc.exists)users.push({id:doc.id,...doc.data()})}
+            c.innerHTML=users.map(u=>{const w=u.celular?.replace(/\D/g,'');return`<div class="vaga-card" onclick="app.verPerfil('${u.id}')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user"></i></div><div class="vaga-info"><div class="vaga-nome">${u.nome}</div><div class="vaga-data">${u.profissao||'Usuário'}</div></div></div><div class="vaga-footer">${w?`<a href="https://wa.me/55${w}" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>`:''}<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.iniciarChat('${u.id}')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button></div></div>`}).join('')
+        }catch(e){c.innerHTML='<div class="card">Erro</div>'}
     }
-
-    async salvarPerfil() {
-        const dados = {
-            nome: document.getElementById('editNome').value.trim(),
-            celular: document.getElementById('editCelular').value.trim(),
-            habilidades: document.getElementById('editHabilidades').value.trim()
-        };
-
-        if (!dados.nome) {
-            this.mostrarToast('Nome é obrigatório!', 'erro');
-            return;
-        }
-
-        try {
-            await databaseService.atualizarUsuario(this.usuarioLogado.id, dados);
-            this.usuarioLogado = { ...this.usuarioLogado, ...dados };
-            this.mostrarToast('✅ Perfil atualizado com sucesso!', 'sucesso');
-            this.carregarMeuPerfil();
-        } catch (error) {
-            this.mostrarToast('Erro ao salvar perfil', 'erro');
-        }
+    async iniciarChat(uid){
+        if(!this.usuarioLogado)return;
+        const doc=await db.collection('usuarios').doc(uid).get();if(!doc.exists)return;
+        this.usuarioSelecionado={id:doc.id,...doc.data()};const u=this.usuarioSelecionado;
+        document.getElementById('chatHeaderInfo').innerHTML=`<div style="display:flex;align-items:center;gap:10px;"><div style="width:40px;height:40px;border-radius:50%;background:#F47920;display:flex;align-items:center;justify-content:center;color:white;"><i class="fas fa-user"></i></div><div><strong>${u.nome}</strong><div style="font-size:12px;color:#10B981;">Online</div></div></div>`;
+        this.carregarMensagens();this.mostrarTela('chatScreen')
     }
-
-    async uploadFoto(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        this.mostrarToast('Enviando foto...', 'info');
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const fotoBase64 = e.target.result;
-                await databaseService.atualizarUsuario(this.usuarioLogado.id, { fotoPerfil: fotoBase64 });
-                this.usuarioLogado.fotoPerfil = fotoBase64;
-                this.mostrarToast('✅ Foto atualizada!', 'sucesso');
-                this.carregarMeuPerfil();
-            } catch (error) {
-                this.mostrarToast('Erro ao enviar foto', 'erro');
-            }
-        };
-        reader.readAsDataURL(file);
+    async carregarMensagens(){
+        const c=document.getElementById('chatMessages');if(!c||!this.usuarioSelecionado)return;
+        try{
+            const snap=await db.collection('mensagens').get();const msgs=[];
+            snap.forEach(doc=>{const d=doc.data();if(d.participantes&&d.participantes.includes(this.usuarioLogado.id)&&d.participantes.includes(this.usuarioSelecionado.id))msgs.push({id:doc.id,...d})});
+            msgs.sort((a,b)=>{const da=a.dataEnvio?.toDate?.()||new Date(0);const db2=b.dataEnvio?.toDate?.()||new Date(0);return da-db2});
+            if(msgs.length===0){c.innerHTML='<div style="text-align:center;padding:60px;color:#999;">Nenhuma mensagem</div>';return}
+            c.innerHTML=msgs.map(m=>{const me=m.remetenteId===this.usuarioLogado.id;const h=m.dataEnvio?new Date(m.dataEnvio.toDate()).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';return`<div class="message ${me?'message-sent':'message-received'}"><div class="message-content">${m.conteudo}</div><div class="message-footer"><span class="message-time">${h}</span>${me?'<span class="message-status">✓</span>':''}</div></div>`}).join('');
+            c.scrollTop=c.scrollHeight
+        }catch(e){}
     }
-
-    // ===== VAGAS =====
-    async publicarVaga() {
-        if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'empreiteiro') {
-            this.mostrarToast('🚫 Apenas EMPREITEIROS podem publicar vagas!', 'erro');
-            return;
-        }
-
-        const titulo = prompt('📝 Título da vaga:');
-        if (!titulo) return;
-        
-        const descricao = prompt('📋 Descrição do serviço:');
-        const endereco = prompt('📍 Endereço da obra:');
-        if (!endereco) {
-            this.mostrarToast('Endereço é obrigatório!', 'erro');
-            return;
-        }
-
-        const valorHora = prompt('💰 Valor por hora (R$):', '25');
-        const profissoes = prompt('👷 Profissões necessárias (separadas por vírgula):');
-
-        this.mostrarToast('Publicando vaga...', 'info');
-
-        try {
-            const vaga = {
-                titulo,
-                descricao: descricao || '',
-                endereco,
-                valorHora: parseFloat(valorHora) || 25,
-                profissoes: profissoes || 'Geral',
-                usuarioId: this.usuarioLogado.id,
-                interessados: [],
-                dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
-                ativa: true
-            };
-
-            await db.collection('vagas').add(vaga);
-            this.mostrarToast('✅ Vaga publicada com sucesso!', 'sucesso');
-            this.carregarFeed();
-
-        } catch (error) {
-            console.error('Erro ao publicar:', error);
-            this.mostrarToast('❌ Erro ao publicar vaga', 'erro');
-        }
+    async enviarMensagem(){
+        const i=document.getElementById('chatInput');const ct=i?.value?.trim();if(!ct||!this.usuarioSelecionado)return;
+        await db.collection('mensagens').add({remetenteId:this.usuarioLogado.id,destinatarioId:this.usuarioSelecionado.id,participantes:[this.usuarioLogado.id,this.usuarioSelecionado.id],conteudo:ct,dataEnvio:firebase.firestore.FieldValue.serverTimestamp(),lida:false});
+        i.value='';await this.carregarMensagens()
     }
-
-    async candidatarVaga(vagaId) {
-        if (!this.usuarioLogado) {
-            this.mostrarToast('Faça login primeiro!', 'erro');
-            return;
-        }
-
-        if (this.usuarioLogado.tipo !== 'profissional') {
-            this.mostrarToast('Apenas profissionais podem se candidatar!', 'erro');
-            return;
-        }
-
-        try {
-            const vagaDoc = await db.collection('vagas').doc(vagaId).get();
-            if (!vagaDoc.exists) {
-                this.mostrarToast('Vaga não encontrada', 'erro');
-                return;
-            }
-
-            const vaga = vagaDoc.data();
-            if (!vaga.interessados) vaga.interessados = [];
-
-            if (vaga.interessados.includes(this.usuarioLogado.id)) {
-                this.mostrarToast('Você já se candidatou!', 'erro');
-                return;
-            }
-
-            vaga.interessados.push(this.usuarioLogado.id);
-            await db.collection('vagas').doc(vagaId).update({
-                interessados: vaga.interessados
-            });
-
-            this.mostrarToast('✅ Candidatura enviada!', 'sucesso');
-            this.carregarFeed();
-
-        } catch (error) {
-            console.error('Erro ao candidatar:', error);
-            this.mostrarToast('Erro ao se candidatar', 'erro');
-        }
-    }
-
-    // ===== CHAT =====
-    async iniciarChat(usuarioId) {
-        if (!this.usuarioLogado) {
-            this.mostrarToast('Faça login primeiro!', 'erro');
-            return;
-        }
-
-        try {
-            const doc = await db.collection('usuarios').doc(usuarioId).get();
-            if (!doc.exists) {
-                this.mostrarToast('Usuário não encontrado', 'erro');
-                return;
-            }
-
-            this.usuarioSelecionado = { id: doc.id, ...doc.data() };
-            const usuario = this.usuarioSelecionado;
-
-            document.getElementById('chatHeaderInfo').innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:40px; height:40px; border-radius:50%; background:#F47920; display:flex; align-items:center; justify-content:center; color:white;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <strong>${usuario.nome}</strong>
-                        <div style="font-size:12px; color:#10B981;">Online</div>
-                    </div>
-                </div>
-            `;
-
-            this.carregarMensagens();
-            this.mostrarTela('chatScreen');
-
-        } catch (error) {
-            console.error('Erro ao iniciar chat:', error);
-            this.mostrarToast('Erro ao abrir chat', 'erro');
-        }
-    }
-
-    async carregarMensagens() {
-        const container = document.getElementById('chatMessages');
-        if (!container || !this.usuarioSelecionado) return;
-
-        try {
-            const snapshot = await db.collection('mensagens')
-                .where('participantes', 'array-contains', this.usuarioLogado.id)
-                .orderBy('dataEnvio', 'asc')
-                .get();
-
-            const mensagens = snapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(m => m.participantes.includes(this.usuarioSelecionado.id));
-
-            if (mensagens.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding:60px 20px;">
-                        <i class="fas fa-comments" style="font-size:60px; color:#ccc;"></i>
-                        <p style="margin-top:16px; color:#999;">Nenhuma mensagem ainda</p>
-                        <p style="color:#999; font-size:13px;">Envie uma mensagem para começar a conversa</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = mensagens.map(m => {
-                const isMine = m.remetenteId === this.usuarioLogado.id;
-                const hora = m.dataEnvio ? new Date(m.dataEnvio.toDate()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-                
-                return `
-                    <div class="message ${isMine ? 'message-sent' : 'message-received'}">
-                        <div class="message-content">${m.conteudo}</div>
-                        <div class="message-footer">
-                            <span class="message-time">${hora}</span>
-                            ${isMine ? '<span class="message-status">✓</span>' : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            container.scrollTop = container.scrollHeight;
-
-        } catch (error) {
-            console.error('Erro ao carregar mensagens:', error);
-            container.innerHTML = '<div style="text-align:center; padding:40px;">Erro ao carregar mensagens</div>';
-        }
-    }
-
-    async enviarMensagem() {
-        const input = document.getElementById('chatInput');
-        const conteudo = input?.value?.trim();
-        
-        if (!conteudo || !this.usuarioSelecionado) return;
-
-        try {
-            await db.collection('mensagens').add({
-                remetenteId: this.usuarioLogado.id,
-                destinatarioId: this.usuarioSelecionado.id,
-                participantes: [this.usuarioLogado.id, this.usuarioSelecionado.id],
-                conteudo,
-                dataEnvio: firebase.firestore.FieldValue.serverTimestamp(),
-                lida: false
-            });
-
-            input.value = '';
-            await this.carregarMensagens();
-
-        } catch (error) {
-            console.error('Erro ao enviar:', error);
-            this.mostrarToast('Erro ao enviar mensagem', 'erro');
-        }
-    }
-
-    // ===== AVALIAÇÃO =====
-    async avaliarUsuario(usuarioId) {
-        const nota = prompt('Dê uma nota de 1 a 5 estrelas:');
-        if (!nota || isNaN(nota) || nota < 1 || nota > 5) {
-            this.mostrarToast('Nota inválida! Deve ser entre 1 e 5.', 'erro');
-            return;
-        }
-
-        const comentario = prompt('Deixe um comentário (opcional):') || '';
-
-        try {
-            await databaseService.avaliarUsuario(
-                this.usuarioLogado.id,
-                usuarioId,
-                parseInt(nota),
-                comentario
-            );
-            this.mostrarToast('✅ Avaliação enviada!', 'sucesso');
-        } catch (error) {
-            this.mostrarToast('Erro ao avaliar', 'erro');
-        }
-    }
-
-    // ===== BUSCA =====
-    async buscarProfissionais() {
-        const termo = document.getElementById('buscaInput')?.value?.toLowerCase() || '';
-        const container = document.getElementById('buscaResultados');
-        if (!container) return;
-
-        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-
-        try {
-            const usuarios = await databaseService.buscarTodosUsuarios();
-            const filtrados = usuarios.filter(u => 
-                u.tipo === 'profissional' && 
-                (!termo || 
-                 u.nome?.toLowerCase().includes(termo) || 
-                 u.profissao?.toLowerCase().includes(termo))
-            );
-
-            if (filtrados.length === 0) {
-                container.innerHTML = `
-                    <div class="card" style="text-align:center;">
-                        <i class="fas fa-search" style="font-size:40px; color:#ccc;"></i>
-                        <p style="margin-top:12px;">Nenhum profissional encontrado</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = filtrados.map(u => {
-                const whatsapp = u.celular?.replace(/\D/g, '');
-                return `
-                    <div class="vaga-card" style="cursor:pointer;">
-                        <div class="vaga-header" onclick="app.verPerfil('${u.id}')">
-                            <div class="vaga-avatar">
-                                <i class="fas fa-hard-hat"></i>
-                            </div>
-                            <div class="vaga-info">
-                                <div class="vaga-nome">${u.nome}</div>
-                                <div class="vaga-data">${u.profissao || 'Profissional'} • ${u.experiencia || 0} anos</div>
-                            </div>
-                            <div class="stars-container" style="font-size:14px;">
-                                ${'⭐'.repeat(Math.round(u.score || 0))}
-                            </div>
-                        </div>
-                        <div class="vaga-footer">
-                            ${whatsapp ? `
-                                <a href="https://wa.me/55${whatsapp}" target="_blank" 
-                                   class="btn btn-success btn-small" style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;"
-                                   onclick="event.stopPropagation();">
-                                    <i class="fab fa-whatsapp"></i> WhatsApp
-                                </a>
-                            ` : ''}
-                            <button class="btn btn-primary btn-small" 
-                                    onclick="event.stopPropagation(); app.iniciarChat('${u.id}')" style="flex:1;">
-                                <i class="fas fa-comments"></i> Chat
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-        } catch (error) {
-            container.innerHTML = '<div class="card">Erro ao buscar profissionais</div>';
-        }
-    }
-
-    // ===== REDE =====
-    async carregarRede() {
-        const container = document.getElementById('redeContainer');
-        if (!container) return;
-
-        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
-
-        try {
-            const conexoes = await databaseService.buscarConexoes(this.usuarioLogado.id);
-            
-            if (conexoes.length === 0) {
-                container.innerHTML = `
-                    <div class="card" style="text-align:center; padding:40px;">
-                        <i class="fas fa-users" style="font-size:60px; color:#ccc;"></i>
-                        <h3>Sua rede está vazia</h3>
-                        <p style="color:#999;">Conecte-se com profissionais</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const usuariosConectados = [];
-            for (const conexao of conexoes) {
-                const amigoId = conexao.usuarioId === this.usuarioLogado.id ? 
-                               conexao.amigoId : conexao.usuarioId;
-                const doc = await db.collection('usuarios').doc(amigoId).get();
-                if (doc.exists) {
-                    usuariosConectados.push({ id: doc.id, ...doc.data() });
-                }
-            }
-
-            container.innerHTML = usuariosConectados.map(u => {
-                const whatsapp = u.celular?.replace(/\D/g, '');
-                return `
-                    <div class="vaga-card" style="cursor:pointer;">
-                        <div class="vaga-header" onclick="app.verPerfil('${u.id}')">
-                            <div class="vaga-avatar"><i class="fas fa-user"></i></div>
-                            <div class="vaga-info">
-                                <div class="vaga-nome">${u.nome}</div>
-                                <div class="vaga-data">${u.profissao || 'Usuário'}</div>
-                            </div>
-                        </div>
-                        <div class="vaga-footer">
-                            ${whatsapp ? `
-                                <a href="https://wa.me/55${whatsapp}" target="_blank" 
-                                   class="btn btn-success btn-small" style="flex:1; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;"
-                                   onclick="event.stopPropagation();">
-                                    <i class="fab fa-whatsapp"></i> WhatsApp
-                                </a>
-                            ` : ''}
-                            <button class="btn btn-primary btn-small" 
-                                    onclick="event.stopPropagation(); app.iniciarChat('${u.id}')" style="flex:1;">
-                                <i class="fas fa-comments"></i> Chat
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-        } catch (error) {
-            container.innerHTML = '<div class="card">Erro ao carregar rede</div>';
-        }
-    }
-
-    // ===== NOTIFICAÇÕES =====
-    mostrarNotificacoes() {
-        this.mostrarTela('notificacoesScreen');
-        this.carregarNotificacoes();
-    }
-
-    async carregarNotificacoes() {
-        const container = document.getElementById('notificacoesContainer');
-        if (!container) return;
-
-        if (!this.notificacoes || this.notificacoes.length === 0) {
-            container.innerHTML = `
-                <div class="card" style="text-align:center; padding:40px;">
-                    <i class="fas fa-bell-slash" style="font-size:60px; color:#ccc;"></i>
-                    <p>Nenhuma notificação</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = this.notificacoes.map(n => `
-            <div class="card">
-                <strong>${n.titulo}</strong>
-                <p style="color:#666; font-size:13px; margin-top:4px;">${n.mensagem}</p>
-            </div>
-        `).join('');
-    }
-
-    // ===== UTILITÁRIOS =====
-    mostrarToast(mensagem, tipo = 'info') {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-
-        toast.textContent = mensagem;
-        
-        switch(tipo) {
-            case 'erro':
-                toast.style.background = '#EF4444';
-                break;
-            case 'sucesso':
-                toast.style.background = '#10B981';
-                break;
-            default:
-                toast.style.background = '#1F2937';
-        }
-        
-        toast.style.display = 'block';
-
-        clearTimeout(this.toastTimeout);
-        this.toastTimeout = setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
-    }
+    async avaliarUsuario(uid){const n=prompt('Nota (1-5):');if(!n||isNaN(n)||n<1||n>5)return;const c=prompt('Comentário:')||'';await databaseService.avaliarUsuario(this.usuarioLogado.id,uid,parseInt(n),c);this.mostrarToast('Avaliação enviada!','sucesso')}
+    mostrarNotificacoes(){this.mostrarTela('notificacoesScreen')}
+    mostrarToast(m,t='info'){const toast=document.getElementById('toast');if(!toast)return;toast.textContent=m;toast.style.background=t==='erro'?'#EF4444':t==='sucesso'?'#10B981':'#1F2937';toast.style.display='block';clearTimeout(this._tt);this._tt=setTimeout(()=>toast.style.display='none',3000)}
 }
-
-// Inicializa o app quando a página carregar
-window.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
-    console.log('✅ App carregado e pronto!');
-});
+window.addEventListener('DOMContentLoaded',()=>{window.app=new App();console.log('✅ App pronto!')});
