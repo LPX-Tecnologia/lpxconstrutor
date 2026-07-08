@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPXConstrutor - Rede Profissional</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Google Maps (Substitua pela sua chave) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_AQUI&libraries=places"></script>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">🏗️ LPXCONSTRUTOR</div>
+        <div class="header-subtitle">Rede Profissional da Construção</div>
+    </div>
+
+    <!-- Tela de Login -->
+    <div class="screen active" id="loginScreen">
+        <div style="text-align:center;margin:20px 0;">
+            <div style="font-size:60px;">🏗️</div>
+            <h2>Entrar</h2>
+        </div>
+        <div class="card">
+            <input type="email" id="loginEmail" class="input-field" placeholder="Email">
+            <input type="password" id="loginSenha" class="input-field" placeholder="Senha">
+            <button class="btn btn-primary" onclick="app.fazerLogin()">ENTRAR</button>
+            <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')">CRIAR CONTA</button>
+            <button class="btn btn-outline" onclick="app.mostrarTela('recuperarSenhaScreen')">ESQUECI SENHA</button>
+        </div>
+    </div>
+
+    <!-- Telas adicionais aqui (cadastro, recuperação, home, etc.) -->
+    <!-- [MANTER O RESTANTE DO HTML COMO ESTAVA] -->
+
+    <!-- Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/mapa.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

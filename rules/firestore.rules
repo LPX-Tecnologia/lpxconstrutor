@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Coleção de usuários
+    match /usuarios/{userId} {
+      // Qualquer um pode ler
+      allow read: if true;
+      
+      // Apenas criar se autenticado e for o próprio usuário
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.data.uid == userId;
+      
+      // Apenas atualizar o próprio perfil
+      allow update: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.data.uid == resource.data.uid;
+      
+      // Não permitir deletar
+      allow delete: if false;
+    }
+    
+    // Coleção de obras
+    match /obras/{obraId} {
+      // Qualquer um pode ler obras ativas
+      allow read: if resource.data.ativa == true;
+      
+      // Apenas usuários autenticados podem criar
+      allow create: if request.auth != null
+                    && request.resource.data.usuarioId == request.auth.uid;
+      
+      // Apenas o dono pode atualizar
+      allow update: if request.auth != null
+                    && resource.data.usuarioId == request.auth.uid;
+      
+      // Apenas o dono pode deletar
+      allow delete: if request.auth != null
+                    && resource.data.usuarioId == request.auth.uid;
+    }
+    
+    // Coleção de conexões
+    match /conexoes/{connId} {
+      allow read: if request.auth != null
+                  && (resource.data.usuarioId == request.auth.uid 
+                      || resource.data.amigoId == request.auth.uid);
+      
+      allow create: if request.auth != null
+                    && request.resource.data.usuarioId == request.auth.uid;
+      
+      allow update, delete: if request.auth != null
+                            && (resource.data.usuarioId == request.auth.uid 
+                                || resource.data.amigoId == request.auth.uid);
+    }
+    
+    // Coleção de mensagens
+    match /mensagens/{msgId} {
+      allow read: if request.auth != null
+                  && (resource.data.remetenteId == request.auth.uid 
+                      || resource.data.destinatarioId == request.auth.uid);
+      
+      allow create: if request.auth != null
+                    && request.resource.data.remetenteId == request.auth.uid;
+      
+      allow update: if request.auth != null
+                    && resource.data.destinatarioId == request.auth.uid;
+    }
+    
+    // Coleção de avaliações
+    match /avaliacoes/{avalId} {
+      allow read: if true;
+      
+      allow create: if request.auth != null
+                    && request.resource.data.avaliadorId == request.auth.uid
+                    && request.resource.data.avaliadoId != request.auth.uid;
+      
+      allow update, delete: if false;
+    }
+  }
+}
