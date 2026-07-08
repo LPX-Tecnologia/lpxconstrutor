@@ -1,32 +1,37 @@
 // ==========================================================
-// ===== SISTEMA DE AUTENTICAÇÃO =====
+// ===== auth.js CORRIGIDO =====
 // ==========================================================
 
 class AuthService {
     
     async login(email, senha) {
         try {
-            const userCredential = await auth.signInWithEmailAndPassword(email, senha);
+            console.log('🔑 Tentando login:', email);
             
-            // Busca dados completos do Firestore
+            const userCredential = await auth.signInWithEmailAndPassword(email, senha);
+            console.log('✅ Login auth OK:', userCredential.user.uid);
+            
+            // Busca dados no Firestore usando o UID do Auth
             const doc = await db.collection('usuarios').doc(userCredential.user.uid).get();
             
             if (!doc.exists) {
+                console.error('❌ Documento não encontrado no Firestore');
                 await auth.signOut();
-                return { sucesso: false, erro: 'Usuário não encontrado no banco de dados' };
+                return { sucesso: false, erro: 'Usuário não encontrado. Faça cadastro novamente.' };
             }
 
             const usuario = { id: doc.id, ...doc.data() };
+            console.log('✅ Dados carregados:', usuario.nome);
             
             // Atualiza último login
-            await db.collection('usuarios').doc(doc.id).update({
+            await db.collection('usuarios').doc(userCredential.user.uid).update({
                 ultimoLogin: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             return { sucesso: true, usuario };
 
         } catch (error) {
-            console.error('Erro no login:', error);
+            console.error('❌ Erro no login:', error.code, error.message);
             return { 
                 sucesso: false, 
                 erro: this.traduzirErro(error.code) 
@@ -36,6 +41,8 @@ class AuthService {
 
     async cadastrar(dados) {
         try {
+            console.log('📝 Iniciando cadastro:', dados.email);
+            
             // Validações
             if (!dados.nome || dados.nome.length < 3) {
                 return { sucesso: false, erro: 'Nome deve ter pelo menos 3 caracteres' };
@@ -47,25 +54,17 @@ class AuthService {
                 return { sucesso: false, erro: 'Senha deve ter pelo menos 6 caracteres' };
             }
 
-            // Verifica se email já existe
-            const snapshot = await db.collection('usuarios')
-                .where('email', '==', dados.email)
-                .limit(1)
-                .get();
-
-            if (!snapshot.empty) {
-                return { sucesso: false, erro: 'Este email já está cadastrado' };
-            }
-
             // Cria usuário no Authentication
+            console.log('🔐 Criando no Authentication...');
             const userCredential = await auth.createUserWithEmailAndPassword(
                 dados.email, 
                 dados.senha
             );
+            console.log('✅ Auth criado:', userCredential.user.uid);
 
-            // Prepara dados para Firestore (sem senha!)
+            // Prepara dados para Firestore (IMPORTANTE: usa UID do Auth como ID)
             const usuario = {
-                uid: userCredential.user.uid,
+                uid: userCredential.user.uid, // UID do Firebase Auth
                 nome: dados.nome,
                 email: dados.email,
                 tipo: dados.tipo,
@@ -79,13 +78,13 @@ class AuthService {
                 ativo: true
             };
 
-            // Salva no Firestore
+            // Salva no Firestore usando UID como ID do documento
+            console.log('💾 Salvando no Firestore...');
             await db.collection('usuarios')
-                .doc(userCredential.user.uid)
+                .doc(userCredential.user.uid) // USA O UID DO AUTH COMO ID
                 .set(usuario);
-
-            // Envia email de verificação
-            await userCredential.user.sendEmailVerification();
+            
+            console.log('✅ Cadastro completo!');
 
             return { 
                 sucesso: true, 
@@ -93,12 +92,17 @@ class AuthService {
             };
 
         } catch (error) {
-            console.error('Erro no cadastro:', error);
+            console.error('❌ Erro no cadastro:', error.code, error.message);
             
-            // Se criou auth mas falhou Firestore, remove auth
-            if (error.code === 'permission-denied') {
-                const user = auth.currentUser;
-                if (user) await user.delete();
+            // Se criou auth mas falhou Firestore, limpa
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    await user.delete();
+                    console.log('🗑️ Usuário auth removido');
+                } catch (e) {
+                    console.error('Erro ao limpar auth:', e);
+                }
             }
             
             return { 
@@ -136,17 +140,22 @@ class AuthService {
         return auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
+                    console.log('🔄 Verificando sessão:', user.uid);
                     const doc = await db.collection('usuarios').doc(user.uid).get();
+                    
                     if (doc.exists) {
+                        console.log('✅ Sessão válida');
                         callback({ id: doc.id, ...doc.data() });
                     } else {
+                        console.warn('⚠️ Documento não encontrado');
                         callback(null);
                     }
                 } catch (error) {
-                    console.error('Erro ao buscar usuário:', error);
+                    console.error('❌ Erro ao verificar sessão:', error);
                     callback(null);
                 }
             } else {
+                console.log('👤 Nenhum usuário logado');
                 callback(null);
             }
         });
@@ -163,7 +172,8 @@ class AuthService {
             'auth/wrong-password': 'Senha incorreta',
             'auth/invalid-credential': 'Credenciais inválidas',
             'auth/too-many-requests': 'Muitas tentativas. Tente mais tarde',
-            'auth/network-request-failed': 'Erro de conexão. Verifique sua internet'
+            'auth/network-request-failed': 'Erro de conexão. Verifique sua internet',
+            'permission-denied': 'Sem permissão. Verifique as regras de segurança'
         };
         return erros[codigo] || `Erro: ${codigo}`;
     }
@@ -171,3 +181,5 @@ class AuthService {
 
 // Instância global
 const authService = new AuthService();
+
+console.log('✅ AuthService carregado');
