@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== CONFIGURAÇÃO DO FIREBASE (SEGURO) =====
+// ===== CONFIGURAÇÃO DO FIREBASE =====
 // ==========================================================
 
 const firebaseConfig = {
@@ -12,14 +12,11 @@ const firebaseConfig = {
 };
 
 // Inicializa Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 
-// Serviços
+// Serviços globais
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
 // Configurações do Firestore
 db.settings({
@@ -30,11 +27,9 @@ db.settings({
 // Habilita persistência offline
 db.enablePersistence({ synchronizeTabs: true })
     .then(() => console.log('🔥 Firestore offline ativado'))
-    .catch(err => console.warn('⚠️ Cache offline:', err));
+    .catch(err => console.warn('⚠️ Erro offline:', err));
 
-// Configurações de segurança
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-    .then(() => console.log('🔒 Auth persistente ativado'))
-    .catch(err => console.error('Erro auth:', err));
+// Configura idioma da autenticação
+auth.useDeviceLanguage();
 
 console.log('✅ Firebase configurado com sucesso');
