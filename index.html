@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places&loading=async" async defer></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -39,7 +39,6 @@
             <div class="login-logo">🏗️</div>
             <h2>LPXConstrutor</h2>
             <p class="login-subtitle">Rede Profissional da Construção</p>
-            
             <div class="card">
                 <div class="input-group">
                     <label><i class="fas fa-envelope"></i> Email</label>
@@ -49,15 +48,9 @@
                     <label><i class="fas fa-lock"></i> Senha</label>
                     <input type="password" class="input-field" id="loginSenha" placeholder="Sua senha">
                 </div>
-                <button class="btn btn-primary" onclick="app.fazerLogin()">
-                    <i class="fas fa-sign-in-alt"></i> ENTRAR
-                </button>
-                <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')">
-                    <i class="fas fa-user-plus"></i> Criar Conta
-                </button>
-                <button class="btn btn-outline" onclick="app.recuperarSenha()">
-                    <i class="fas fa-key"></i> Esqueci a Senha
-                </button>
+                <button class="btn btn-primary" onclick="app.fazerLogin()"><i class="fas fa-sign-in-alt"></i> ENTRAR</button>
+                <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')"><i class="fas fa-user-plus"></i> Criar Conta</button>
+                <button class="btn btn-outline" onclick="app.recuperarSenha()"><i class="fas fa-key"></i> Esqueci a Senha</button>
             </div>
         </div>
     </div>
@@ -68,29 +61,27 @@
             <button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button>
             <h2>Criar Conta</h2>
         </div>
-        
         <div class="card">
             <div id="etapa1">
                 <h3><i class="fas fa-user-circle"></i> Dados Pessoais</h3>
-                <div class="input-group"><label><i class="fas fa-user"></i> Nome Completo</label><input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo"></div>
-                <div class="input-group"><label><i class="fas fa-envelope"></i> Email</label><input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com"></div>
-                <div class="input-group"><label><i class="fab fa-whatsapp"></i> WhatsApp</label><input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999"></div>
-                <div class="input-group"><label><i class="fas fa-id-card"></i> CPF</label><input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00" maxlength="14"></div>
-                <div class="input-group"><label><i class="fas fa-lock"></i> Senha</label><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres"></div>
+                <div class="input-group"><label>Nome Completo</label><input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo"></div>
+                <div class="input-group"><label>Email</label><input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com"></div>
+                <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999"></div>
+                <div class="input-group"><label>CPF</label><input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00"></div>
+                <div class="input-group"><label>Senha</label><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres"></div>
                 <button class="btn btn-primary" onclick="app.proximaEtapa(2)">PRÓXIMO <i class="fas fa-arrow-right"></i></button>
             </div>
-            
             <div id="etapa2" style="display:none;">
                 <h3><i class="fas fa-tools"></i> Dados Profissionais</h3>
-                <div class="input-group"><label><i class="fas fa-building"></i> Tipo de Conta</label><select class="input-field" id="cadTipo" onchange="app.toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
+                <div class="input-group"><label>Tipo de Conta</label><select class="input-field" id="cadTipo" onchange="app.toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
                 <div id="grupoProfissao">
-                    <div class="input-group"><label><i class="fas fa-tools"></i> Profissão</label><select class="input-field" id="cadProfissao"><option value="">Selecione...</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option><option value="azulejista">Azulejista</option><option value="soldador">Soldador</option></select></div>
+                    <div class="input-group"><label>Profissão</label><select class="input-field" id="cadProfissao"><option value="">Selecione...</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div>
                 </div>
-                <div class="input-group"><label><i class="fas fa-calendar-alt"></i> Anos de Experiência</label><input type="number" class="input-field" id="cadExperiencia" placeholder="5" min="0" max="50"></div>
-                <div class="input-group"><label><i class="fas fa-star"></i> Habilidades</label><textarea class="input-field" id="cadHabilidades" rows="3" placeholder="Ex: Assentamento de pisos, reboco..."></textarea></div>
+                <div class="input-group"><label>Experiência (anos)</label><input type="number" class="input-field" id="cadExperiencia" placeholder="5" value="0"></div>
+                <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="cadHabilidades" rows="3" placeholder="Suas habilidades..."></textarea></div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" onclick="app.proximaEtapa(1)" style="flex:1;"><i class="fas fa-arrow-left"></i> VOLTAR</button>
-                    <button class="btn btn-primary" onclick="app.cadastrar()" style="flex:1;"><i class="fas fa-check"></i> FINALIZAR</button>
+                    <button class="btn btn-outline" onclick="app.proximaEtapa(1)" style="flex:1;">VOLTAR</button>
+                    <button class="btn btn-primary" onclick="app.cadastrar()" style="flex:1;">FINALIZAR</button>
                 </div>
             </div>
         </div>
@@ -102,8 +93,8 @@
             <div style="display: flex; align-items: center; gap: 12px;">
                 <div style="font-size: 40px;">👋</div>
                 <div>
-                    <div class="saudacao" id="saudacao" style="color: white; font-size: 18px;">Bem-vindo!</div>
-                    <div style="font-size: 13px; opacity: 0.9;" id="resumoTexto">Carregando...</div>
+                    <div id="saudacao" style="color: white; font-size: 18px;">Bem-vindo!</div>
+                    <div id="resumoTexto" style="font-size: 13px; opacity: 0.9;">Carregando...</div>
                 </div>
             </div>
         </div>
@@ -111,12 +102,12 @@
         <div class="mapa-container"><div id="map"></div></div>
         
         <div class="tabs-container">
-            <button class="tab active" onclick="app.mudarTab('feed')"><i class="fas fa-newspaper"></i> Feed de Vagas</button>
+            <button class="tab active" onclick="app.mudarTab('feed')"><i class="fas fa-newspaper"></i> Feed</button>
             <button class="tab" onclick="app.mudarTab('rede')"><i class="fas fa-users"></i> Minha Rede</button>
         </div>
         
-        <div id="feedContainer" class="feed-container"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando vagas...</div></div>
-        <div id="redeContainer" class="feed-container" style="display:none;"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando rede...</div></div>
+        <div id="feedContainer" class="feed-container"><div class="loading">Carregando...</div></div>
+        <div id="redeContainer" class="feed-container" style="display:none;"><div class="loading">Carregando rede...</div></div>
     </div>
 
     <!-- BUSCA -->
@@ -130,10 +121,10 @@
             <input type="text" class="search-input" id="buscaInput" placeholder="Buscar por nome ou profissão..." oninput="app.buscarProfissionais()">
         </div>
         <div class="vaga-tags" style="margin-bottom: 16px;">
-            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='pedreiro'; app.buscarProfissionais()" style="cursor:pointer;">👷 Pedreiro</span>
-            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='eletricista'; app.buscarProfissionais()" style="cursor:pointer;">⚡ Eletricista</span>
-            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='pintor'; app.buscarProfissionais()" style="cursor:pointer;">🎨 Pintor</span>
-            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='encanador'; app.buscarProfissionais()" style="cursor:pointer;">🔧 Encanador</span>
+            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='pedreiro';app.buscarProfissionais()" style="cursor:pointer;">👷 Pedreiro</span>
+            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='eletricista';app.buscarProfissionais()" style="cursor:pointer;">⚡ Eletricista</span>
+            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='pintor';app.buscarProfissionais()" style="cursor:pointer;">🎨 Pintor</span>
+            <span class="vaga-tag" onclick="document.getElementById('buscaInput').value='encanador';app.buscarProfissionais()" style="cursor:pointer;">🔧 Encanador</span>
         </div>
         <div id="buscaResultados" class="feed-container"></div>
     </div>
@@ -166,28 +157,13 @@
             <div id="meuPerfilAvaliacao" class="stars-container"></div>
         </div>
         <div class="card">
-            <h3><i class="fas fa-edit"></i> Editar</h3>
+            <h3>Editar</h3>
             <div class="input-group"><label>Nome</label><input type="text" class="input-field" id="editNome"></div>
             <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="editCelular"></div>
             <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="editHabilidades" rows="3"></textarea></div>
-            <button class="btn btn-primary" onclick="app.salvarPerfil()"><i class="fas fa-save"></i> SALVAR</button>
+            <button class="btn btn-primary" onclick="app.salvarPerfil()">SALVAR</button>
         </div>
-        <div class="card">
-            <h3><i class="fas fa-chart-bar"></i> Estatísticas</h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                <div style="text-align:center; padding:12px; background:#f0f9ff; border-radius:12px;">
-                    <div style="font-size:24px;">⭐</div>
-                    <div style="font-size:20px; font-weight:700;" id="statsAvaliacoes">0</div>
-                    <div style="font-size:12px; color:#666;">Avaliações</div>
-                </div>
-                <div style="text-align:center; padding:12px; background:#f0fdf4; border-radius:12px;">
-                    <div style="font-size:24px;">👥</div>
-                    <div style="font-size:20px; font-weight:700;" id="statsConexoes">0</div>
-                    <div style="font-size:12px; color:#666;">Conexões</div>
-                </div>
-            </div>
-        </div>
-        <button class="btn btn-danger" onclick="app.sair()"><i class="fas fa-sign-out-alt"></i> SAIR</button>
+        <button class="btn btn-danger" onclick="app.sair()">SAIR</button>
     </div>
 
     <!-- CHAT -->
@@ -198,7 +174,7 @@
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-container">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter') app.enviarMensagem()">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')app.enviarMensagem()">
             <button class="btn-send" onclick="app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
@@ -219,11 +195,11 @@
             <h2>Publicar Vaga</h2>
         </div>
         <div class="card">
-            <div class="input-group"><label><i class="fas fa-heading"></i> Título</label><input type="text" class="input-field" id="vagaTitulo" placeholder="Ex: Preciso de Pedreiro"></div>
-            <div class="input-group"><label><i class="fas fa-align-left"></i> Descrição</label><textarea class="input-field" id="vagaDescricao" rows="4" placeholder="Descreva o serviço..."></textarea></div>
-            <div class="input-group"><label><i class="fas fa-map-marker-alt"></i> Endereço</label><input type="text" class="input-field" id="vagaEndereco" placeholder="Rua, número, bairro, cidade"></div>
+            <div class="input-group"><label>Título</label><input type="text" class="input-field" id="vagaTitulo" placeholder="Ex: Preciso de Pedreiro"></div>
+            <div class="input-group"><label>Descrição</label><textarea class="input-field" id="vagaDescricao" rows="4" placeholder="Descreva o serviço..."></textarea></div>
+            <div class="input-group"><label>Endereço</label><input type="text" class="input-field" id="vagaEndereco" placeholder="Rua, número, bairro"></div>
             <div class="input-group">
-                <label><i class="fas fa-tools"></i> Profissões</label>
+                <label>Profissões</label>
                 <div class="profissoes-checkboxes" id="profissoesCheckboxes">
                     <label class="checkbox-item"><input type="checkbox" value="servente"> Servente</label>
                     <label class="checkbox-item"><input type="checkbox" value="pedreiro"> Pedreiro</label>
@@ -235,12 +211,12 @@
                     <label class="checkbox-item"><input type="checkbox" value="azulejista"> Azulejista</label>
                 </div>
             </div>
-            <div class="input-group"><label><i class="fas fa-money-bill-wave"></i> Valor/Hora (R$)</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25" min="1"></div>
-            <div class="input-group"><label><i class="fas fa-users"></i> Vagas</label><input type="number" class="input-field" id="vagaQuantidade" value="1" min="1"></div>
+            <div class="input-group"><label>Valor/Hora (R$)</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25" min="1"></div>
+            <div class="input-group"><label>Quantidade de Vagas</label><input type="number" class="input-field" id="vagaQuantidade" value="1" min="1"></div>
         </div>
         <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn btn-outline" onclick="app.mostrarTela('homeScreen')" style="flex:1;"><i class="fas fa-times"></i> CANCELAR</button>
-            <button class="btn btn-primary" onclick="app.publicarVagaApp()" style="flex:1;"><i class="fas fa-check"></i> PUBLICAR</button>
+            <button class="btn btn-outline" onclick="app.mostrarTela('homeScreen')" style="flex:1;">CANCELAR</button>
+            <button class="btn btn-primary" onclick="app.publicarVagaApp()" style="flex:1;">PUBLICAR</button>
         </div>
     </div>
 
@@ -263,31 +239,5 @@
 <script src="js/mapa.js"></script>
 <script src="js/app.js"></script>
 
-
-
-    <script>
-    // Garante que o app existe antes dos cliques
-    window.app = window.app || {
-        fazerLogin: function() { console.log('Carregando...'); },
-        mostrarTela: function(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); var t = document.getElementById(id); if(t) t.classList.add('active'); },
-        cadastrar: function() { console.log('Carregando...'); },
-        recuperarSenha: function() { console.log('Carregando...'); },
-        proximaEtapa: function() { console.log('Carregando...'); },
-        toggleProfissao: function() { console.log('Carregando...'); },
-        mudarTab: function() { console.log('Carregando...'); },
-        buscarProfissionais: function() { console.log('Carregando...'); },
-        verPerfil: function() { console.log('Carregando...'); },
-        iniciarChat: function() { console.log('Carregando...'); },
-        enviarMensagem: function() { console.log('Carregando...'); },
-        salvarPerfil: function() { console.log('Carregando...'); },
-        uploadFoto: function() { console.log('Carregando...'); },
-        abrirTelaPublicacao: function() { console.log('Carregando...'); },
-        publicarVagaApp: function() { console.log('Carregando...'); },
-        candidatarVaga: function() { console.log('Carregando...'); },
-        avaliarUsuario: function() { console.log('Carregando...'); },
-        mostrarNotificacoes: function() { console.log('Carregando...'); },
-        sair: function() { console.log('Carregando...'); }
-    };
-</script>
 </body>
 </html>
