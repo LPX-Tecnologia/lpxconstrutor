@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lpxconstrutor-v2';
+const CACHE_NAME = 'lpxconstrutor-v3';
 
 const urlsToCache = [
     './',
@@ -11,33 +11,37 @@ const urlsToCache = [
     './js/mapa.js',
     './js/chat.js',
     './js/notifications.js',
-    './imagem/logo-lpxconstrutor.png',
-    './manifest.json',
-    './termos.html',
-    './privacidade.html'
+    './imagem/logo-lpxconstrutor.png'
 ];
 
-// Instala o Service Worker
+// Instala
 self.addEventListener('install', function(event) {
     console.log('🔧 Service Worker instalando...');
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then(function(cache) {
-            console.log('📦 Cache aberto');
-            return cache.addAll(urlsToCache).catch(function(error) {
-                console.log('⚠️ Erro ao adicionar ao cache:', error);
+            return cache.addAll(urlsToCache).catch(function(err) {
+                console.log('⚠️ Cache parcial:', err);
             });
         })
     );
 });
 
-// Busca do cache
+// Busca - NÃO interceptar Firebase/Google APIs
 self.addEventListener('fetch', function(event) {
+    const url = event.request.url;
+    
+    // NÃO interceptar requisições do Firebase ou Google APIs
+    if (url.includes('firestore.googleapis.com') || 
+        url.includes('googleapis.com') ||
+        url.includes('gstatic.com') ||
+        url.includes('firebase')) {
+        return; // Deixa passar direto
+    }
+    
     event.respondWith(
         caches.match(event.request).then(function(response) {
-            if (response) {
-                return response;
-            }
-            return fetch(event.request).then(function(response) {
+            return response || fetch(event.request).then(function(response) {
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
@@ -47,14 +51,13 @@ self.addEventListener('fetch', function(event) {
                 });
                 return response;
             }).catch(function() {
-                // Se offline, retorna a página inicial
                 return caches.match('./index.html');
             });
         })
     );
 });
 
-// Atualiza cache
+// Ativa
 self.addEventListener('activate', function(event) {
     console.log('✅ Service Worker ativado');
     event.waitUntil(
@@ -62,7 +65,6 @@ self.addEventListener('activate', function(event) {
             return Promise.all(
                 cacheNames.map(function(cacheName) {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('🗑️ Removendo cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
