@@ -4,85 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Privacidade - LPXConstrutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; color: #333; line-height: 1.6; }
-        h1 { color: #1A3A5C; text-align: center; }
-        h2 { color: #F47920; margin-top: 30px; }
-        .last-update { text-align: center; color: #999; font-size: 14px; }
+        :root{--primary:#1A3A5C;--secondary:#F47920;--success:#10B981;--danger:#EF4444;--warning:#F59E0B;--dark:#1F2937;--gray:#6B7280;--light:#F3F4F6;--white:#FFF}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--light);color:var(--dark);line-height:1.8}
+        .container{max-width:800px;margin:0 auto;padding:20px}
+        .header{background:linear-gradient(135deg,var(--primary),#2C5F8A);color:white;padding:40px 20px;text-align:center;margin-bottom:30px}
+        .header h1{font-size:28px;font-weight:900;margin-bottom:8px}
+        .header p{font-size:14px;opacity:0.9}
+        .content{background:white;border-radius:20px;padding:30px;box-shadow:0 2px 20px rgba(0,0,0,.08)}
+        h2{color:var(--primary);font-size:22px;margin:30px 0 15px;padding-bottom:10px;border-bottom:3px solid var(--secondary)}
+        h2:first-child{margin-top:0}
+        h3{color:var(--secondary);font-size:18px;margin:20px 0 10px}
+        p{margin-bottom:15px;text-align:justify}
+        ul,ol{margin:10px 0 20px 20px}
+        li{margin-bottom:8px}
+        .alert{background:#FEF3C7;border-left:4px solid var(--warning);padding:15px 20px;margin:20px 0;border-radius:8px}
+        .alert-info{background:#E0F2FE;border-left:4px solid #3B82F6}
+        .alert-success{background:#D1FAE5;border-left:4px solid var(--success)}
+        .footer{text-align:center;padding:40px 20px;color:var(--gray);font-size:13px}
+        .btn-voltar{display:inline-block;background:var(--secondary);color:white;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:700;margin:20px 0;transition:.3s}
+        .btn-voltar:hover{background:#E06B1A;transform:translateY(-2px)}
+        @media(max-width:600px){.content{padding:20px 15px}h2{font-size:20px}}
     </style>
 </head>
 <body>
 
-<h1>🔒 POLÍTICA DE PRIVACIDADE</h1>
-<h1>LPXCONSTRUTOR</h1>
-<p class="last-update">Última atualização: 08 de Julho de 2026</p>
+<div class="header">
+    <h1>🔒 POLÍTICA DE PRIVACIDADE</h1>
+    <h1>LPXCONSTRUTOR</h1>
+    <p>Última atualização: 09 de Julho de 2026</p>
+</div>
 
-<h2>1. INFORMAÇÕES COLETADAS</h2>
-<h3>1.1. Dados de Cadastro</h3>
-<ul>
-    <li>Nome completo</li>
-    <li>Endereço de email</li>
-    <li>Número de telefone (WhatsApp)</li>
-    <li>CPF</li>
-    <li>Profissão e experiência</li>
-    <li>Habilidades profissionais</li>
-    <li>Foto de perfil (opcional)</li>
-</ul>
+<div class="container">
+    <div class="content">
 
-<h3>1.2. Dados de Uso</h3>
-<ul>
-    <li>Vagas publicadas e candidaturas</li>
-    <li>Mensagens trocadas no chat</li>
-    <li>Avaliações recebidas e enviadas</li>
-    <li>Conexões de rede</li>
-    <li>Localização (para funcionalidade do mapa)</li>
-</ul>
+        <div class="alert alert-info">
+            <strong>📋 RESUMO:</strong> Esta política explica como coletamos, usamos, armazenamos e protegemos seus dados pessoais, em conformidade com a LGPD (Lei Geral de Proteção de Dados - Lei 13.709/2018).
+        </div>
 
-<h2>2. USO DAS INFORMAÇÕES</h2>
-<p>Seus dados são utilizados para:</p>
-<ul>
-    <li>Criar e gerenciar sua conta</li>
-    <li>Conectar profissionais e empreiteiros</li>
-    <li>Exibir seu perfil para outros usuários</li>
-    <li>Enviar notificações relevantes</li>
-    <li>Melhorar nossos serviços</li>
-</ul>
+        <h2>1. DADOS COLETADOS</h2>
+        <h3>1.1. Dados de Cadastro (Obrigatórios)</h3>
+        <ul>
+            <li>Nome completo</li>
+            <li>Endereço de email</li>
+            <li>Número de telefone/WhatsApp</li>
+            <li>CPF</li>
+            <li>Profissão</li>
+            <li>Anos de experiência</li>
+        </ul>
 
-<h2>3. COMPARTILHAMENTO DE DADOS</h2>
-<ul>
-    <li><strong>NÃO vendemos</strong> seus dados pessoais</li>
-    <li>Seu nome, profissão e avaliações são <strong>visíveis publicamente</strong></li>
-    <li>Seu WhatsApp é visível para <strong>usuários logados</strong></li>
-    <li>Seu CPF <strong>NÃO é visível</strong> para outros usuários</li>
-    <li>Mensagens do chat são <strong>privadas</strong> entre os participantes</li>
-</ul>
+        <h3>1.2. Dados Opcionais</h3>
+        <ul>
+            <li>Foto de perfil</li>
+            <li>Habilidades profissionais</li>
+            <li>Fotos de serviços/portfólio</li>
+        </ul>
 
-<h2>4. ARMAZENAMENTO E SEGURANÇA</h2>
-<ul>
-    <li>Dados armazenados no Firebase (Google Cloud)</li>
-    <li>Criptografia em trânsito (HTTPS/SSL)</li>
-    <li>Senhas armazenadas com hash (Firebase Auth)</li>
-    <li>Acesso restrito a dados sensíveis</li>
-</ul>
+        <h3>1.3. Dados de Uso</h3>
+        <ul>
+            <li>Vagas publicadas</li>
+            <li>Candidaturas realizadas</li>
+            <li>Mensagens do chat</li>
+            <li>Avaliações enviadas/recebidas</li>
+            <li>Conexões de rede</li>
+            <li>Localização (para funcionalidade do mapa)</li>
+        </ul>
 
-<h2>5. SEUS DIREITOS</h2>
-<ul>
-    <li>Acessar seus dados a qualquer momento</li>
-    <li>Corrigir informações incorretas</li>
-    <li>Solicitar exclusão da conta e dados</li>
-    <li>Revogar consentimento de uso</li>
-</ul>
+        <h2>2. FINALIDADE DO USO</h2>
+        <ul>
+            <li>Criar e gerenciar sua conta</li>
+            <li>Conectar profissionais com empreiteiros</li>
+            <li>Exibir seu perfil profissional</li>
+            <li>Enviar notificações de vagas e mensagens</li>
+            <li>Melhorar a experiência do usuário</li>
+            <li>Cumprir obrigações legais</li>
+        </ul>
 
-<h2>6. EXCLUSÃO DE DADOS</h2>
-<p>Para excluir sua conta e todos os dados associados, entre em contato pelo email: <strong>suporte@lpxconstrutor.com.br</strong></p>
+        <h2>3. COMPARTILHAMENTO DE DADOS</h2>
+        <div class="alert alert-success">
+            <strong>✅ NÃO VENDEMOS SEUS DADOS!</strong>
+        </div>
+        <ul>
+            <li><strong>Nome e profissão:</strong> Visíveis publicamente no perfil</li>
+            <li><strong>WhatsApp:</strong> Visível para usuários logados</li>
+            <li><strong>CPF:</strong> NUNCA é visível para outros usuários</li>
+            <li><strong>Email:</strong> Visível para usuários logados</li>
+            <li><strong>Mensagens:</strong> Privadas entre os participantes</li>
+            <li><strong>Localização:</strong> Usada apenas para o mapa</li>
+        </ul>
 
-<h2>7. CONTATO</h2>
-<p>📧 Email: suporte@lpxconstrutor.com.br</p>
-<p>💬 WhatsApp: (47) 99999-9999</p>
+        <h2>4. ARMAZENAMENTO E SEGURANÇA</h2>
+        <ul>
+            <li>Servidores: Firebase (Google Cloud)</li>
+            <li>Criptografia: HTTPS/SSL em trânsito</li>
+            <li>Senhas: Hash criptografado (Firebase Auth)</li>
+            <li>Backup: Realizado automaticamente</li>
+            <li>Acesso: Restrito a administradores autorizados</li>
+        </ul>
 
-<p style="text-align: center; margin-top: 40px; color: #999;">
-    © 2026 LPXConstrutor. Todos os direitos reservados.
-</p>
+        <h2>5. SEUS DIREITOS (LGPD)</h2>
+        <ul>
+            <li>✅ Acessar seus dados</li>
+            <li>✅ Corrigir dados incompletos</li>
+            <li>✅ Solicitar exclusão total</li>
+            <li>✅ Revogar consentimento</li>
+            <li>✅ Portabilidade dos dados</li>
+            <li>✅ Saber com quem compartilhamos</li>
+        </ul>
+
+        <h2>6. EXCLUSÃO DE DADOS</h2>
+        <p>Para excluir sua conta e todos os dados:</p>
+        <ol>
+            <li>Acesse o app e vá em "Meu Perfil"</li>
+            <li>Clique em "SAIR"</li>
+            <li>Envie um email para: <strong>lpxdesenvolvimento@gmail.com</strong></li>
+            <li>Assunto: "EXCLUSÃO DE DADOS - [Seu Nome]"</li>
+            <li>Seus dados serão excluídos em até 7 dias úteis</li>
+        </ol>
+
+        <h2>7. COOKIES E TECNOLOGIAS</h2>
+        <ul>
+            <li>Usamos armazenamento local para melhorar a experiência</li>
+            <li>Não usamos cookies de rastreamento de terceiros</li>
+            <li>Firebase Analytics (dados anônimos de uso)</li>
+        </ul>
+
+        <h2>8. CONTATO</h2>
+        <ul>
+            <li>📧 Email: lpxdesenvolvimento@gmail.com</li>
+            <li>📱 WhatsApp: (47) 99999-9999</li>
+        </ul>
+
+        <div style="text-align:center;margin-top:30px;">
+            <a href="index.html" class="btn-voltar">🏗️ VOLTAR PARA O APLICATIVO</a>
+        </div>
+
+    </div>
+    <div class="footer">
+        <p>© 2026 LPXConstrutor. Todos os direitos reservados.</p>
+    </div>
+</div>
 
 </body>
 </html>
