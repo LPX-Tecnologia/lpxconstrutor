@@ -97,7 +97,7 @@ textarea.input-field{resize:vertical;min-height:80px}
 /* ===== LOGO NO HEADER ===== */
 .app-header h1 img,
 .header-logo {
-    height: 36px;
+    height: 56px;
     width: auto;
     vertical-align: middle;
     border-radius: 4px;
@@ -116,8 +116,8 @@ textarea.input-field{resize:vertical;min-height:80px}
 /* ===== LOGO NA TELA DE LOGIN ===== */
 .login-logo img,
 .logo-login {
-    width: 120px;
-    height: 120px;
+    width: 180px;
+    height: 180px;
     border-radius: 20px;
     object-fit: contain;
     background: transparent;
