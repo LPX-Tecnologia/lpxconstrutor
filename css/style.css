@@ -179,3 +179,30 @@ textarea.input-field{resize:vertical;min-height:80px}
     #homeScreen .card:first-child img{width:55px!important;height:55px!important}
     #homeScreen #saudacao{font-size:18px!important}
 }
+
+/* ===== TELAS DE TERMOS E PRIVACIDADE ===== */
+.termos-content {
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+.termos-content h2 {
+    font-size: 16px;
+    margin-top: 16px;
+}
+
+.termos-content p,
+.termos-content li {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.termos-content ul {
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.termos-content .card {
+    padding: 16px;
+}
