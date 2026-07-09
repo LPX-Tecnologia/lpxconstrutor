@@ -2,38 +2,20 @@
 // ===== LPXCONSTRUTOR - APLICAÇÃO PRINCIPAL =====
 // ==========================================================
 
-// Placeholder para evitar "app is not defined"
 window.app = {
-    fazerLogin: function(){},
-    mostrarTela: function(id){
+    fazerLogin: function(){}, mostrarTela: function(id){
         document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
-        var t = document.getElementById(id);
-        if(t) t.classList.add('active');
+        var t = document.getElementById(id); if(t) t.classList.add('active');
     },
-    cadastrar: function(){},
-    proximaEtapa: function(){},
-    toggleProfissao: function(){},
-    recuperarSenha: function(){},
-    enviarRecuperacao: function(){},
-    sair: function(){},
-    buscarProfissionais: function(){},
-    verPerfil: function(){},
-    iniciarChat: function(){},
-    enviarMensagem: function(){},
-    salvarPerfil: function(){},
-    uploadFoto: function(){},
-    abrirTelaPublicacao: function(){},
-    publicarVagaApp: function(){},
-    candidatarVaga: function(){},
-    contratarProfissional: function(){},
-    adicionarNaRede: function(){},
-    removerDaRede: function(){},
-    avaliarUsuario: function(){},
-    mostrarNotificacoes: function(){},
-    mudarTab: function(){}
+    cadastrar: function(){}, proximaEtapa: function(){}, toggleProfissao: function(){},
+    recuperarSenha: function(){}, enviarRecuperacao: function(){}, sair: function(){},
+    buscarProfissionais: function(){}, verPerfil: function(){}, iniciarChat: function(){},
+    enviarMensagem: function(){}, salvarPerfil: function(){}, uploadFoto: function(){},
+    abrirTelaPublicacao: function(){}, publicarVagaApp: function(){}, candidatarVaga: function(){},
+    contratarProfissional: function(){}, adicionarNaRede: function(){}, removerDaRede: function(){},
+    avaliarUsuario: function(){}, mostrarNotificacoes: function(){}, mudarTab: function(){}
 };
 
-// Classe principal
 var App = function() {
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
@@ -68,13 +50,10 @@ App.prototype.atualizarBotaoPublicar = function() {
     btn.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
 };
 
-// ===== NAVEGAÇÃO (CORRIGIDA) =====
 App.prototype.mostrarTela = function(id) {
     var self = this;
     
-    document.querySelectorAll('.screen').forEach(function(s) {
-        s.classList.remove('active');
-    });
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
     
     var tela = document.getElementById(id);
     if (!tela) return;
@@ -82,62 +61,33 @@ App.prototype.mostrarTela = function(id) {
     tela.classList.add('active');
     self.telaAtual = id;
     
-    // Bottom nav
     var nav = document.getElementById('bottomNav');
     if (nav) {
         var telasComNav = ['homeScreen', 'buscaScreen', 'meuPerfilScreen', 'chatScreen', 'publicarVagaScreen'];
         nav.style.display = telasComNav.indexOf(id) >= 0 ? 'flex' : 'none';
         
-        // Destacar item ativo
         nav.querySelectorAll('.nav-item').forEach(function(item) {
             item.classList.remove('active');
-            if (item.getAttribute('data-screen') === id) {
-                item.classList.add('active');
-            }
+            if (item.getAttribute('data-screen') === id) item.classList.add('active');
         });
     }
     
-    // 🚀 FORÇA ATUALIZAÇÃO AO VOLTAR PARA HOME
-    if (id === 'homeScreen') {
-        setTimeout(function() {
-            self.carregarHome();
-        }, 100);
-    }
-    
-    if (id === 'meuPerfilScreen') {
-        setTimeout(function() {
-            self.carregarMeuPerfil();
-        }, 100);
-    }
-    
-    if (id === 'buscaScreen') {
-        setTimeout(function() {
-            self.buscarProfissionais();
-        }, 100);
-    }
-    
-    if (id === 'recuperarSenhaScreen') {
-        self.abrirRecuperarSenha();
-    }
-    
-    if (id === 'chatScreen') {
-        setTimeout(function() {
-            var input = document.getElementById('chatInput');
-            if (input) input.focus();
-        }, 300);
-    }
+    if (id === 'homeScreen') setTimeout(function() { self.carregarHome(); }, 100);
+    if (id === 'meuPerfilScreen') setTimeout(function() { self.carregarMeuPerfil(); }, 100);
+    if (id === 'buscaScreen') setTimeout(function() { self.buscarProfissionais(); }, 100);
+    if (id === 'recuperarSenhaScreen') self.abrirRecuperarSenha();
+    if (id === 'chatScreen') setTimeout(function() {
+        var input = document.getElementById('chatInput');
+        if (input) input.focus();
+    }, 300);
 };
 
-// ===== AUTENTICAÇÃO =====
 App.prototype.fazerLogin = function() {
     var self = this;
     var email = (document.getElementById('loginEmail') || {}).value || '';
     var senha = (document.getElementById('loginSenha') || {}).value || '';
     
-    if (!email || !senha) {
-        self.mostrarToast('❌ Preencha todos os campos!', 'erro');
-        return;
-    }
+    if (!email || !senha) { self.mostrarToast('❌ Preencha todos os campos!', 'erro'); return; }
     
     self.mostrarToast('Entrando...', 'info');
     
@@ -169,15 +119,8 @@ App.prototype.cadastrar = function() {
         habilidades: (document.getElementById('cadHabilidades') || {}).value || ''
     };
     
-    if (!d.nome || !d.email || !d.senha) {
-        self.mostrarToast('❌ Preencha todos os campos!', 'erro');
-        return;
-    }
-    
-    if (d.tipo === 'profissional' && !d.profissao) {
-        self.mostrarToast('❌ Selecione sua profissão!', 'erro');
-        return;
-    }
+    if (!d.nome || !d.email || !d.senha) { self.mostrarToast('❌ Preencha todos os campos!', 'erro'); return; }
+    if (d.tipo === 'profissional' && !d.profissao) { self.mostrarToast('❌ Selecione sua profissão!', 'erro'); return; }
     
     self.mostrarToast('Cadastrando...', 'info');
     
@@ -196,33 +139,20 @@ App.prototype.cadastrar = function() {
 };
 
 App.prototype.proximaEtapa = function(e) {
-    var e1 = document.getElementById('etapa1');
-    var e2 = document.getElementById('etapa2');
+    var e1 = document.getElementById('etapa1'), e2 = document.getElementById('etapa2');
     if (!e1 || !e2) return;
     
-    if (e === 1) {
-        e1.style.display = 'block';
-        e2.style.display = 'none';
-    } else {
+    if (e === 1) { e1.style.display = 'block'; e2.style.display = 'none'; }
+    else {
         var nome = (document.getElementById('cadNome') || {}).value || '';
         var email = (document.getElementById('cadEmail') || {}).value || '';
         var senha = (document.getElementById('cadSenha') || {}).value || '';
         
-        if (!nome || nome.length < 3) {
-            this.mostrarToast('❌ Nome deve ter pelo menos 3 caracteres', 'erro');
-            return;
-        }
-        if (!email || !email.includes('@')) {
-            this.mostrarToast('❌ Email inválido', 'erro');
-            return;
-        }
-        if (!senha || senha.length < 6) {
-            this.mostrarToast('❌ Senha mínima de 6 caracteres', 'erro');
-            return;
-        }
+        if (!nome || nome.length < 3) { this.mostrarToast('❌ Nome deve ter pelo menos 3 caracteres', 'erro'); return; }
+        if (!email || !email.includes('@')) { this.mostrarToast('❌ Email inválido', 'erro'); return; }
+        if (!senha || senha.length < 6) { this.mostrarToast('❌ Senha mínima de 6 caracteres', 'erro'); return; }
         
-        e1.style.display = 'none';
-        e2.style.display = 'block';
+        e1.style.display = 'none'; e2.style.display = 'block';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
@@ -233,16 +163,14 @@ App.prototype.toggleProfissao = function() {
     if (g) g.style.display = t === 'profissional' ? 'block' : 'none';
 };
 
-// ===== RECUPERAR SENHA =====
+// ===== RECUPERAR SENHA (CORRIGIDO) =====
 App.prototype.abrirRecuperarSenha = function() {
     var emailEl = document.getElementById('recEmail');
     if (emailEl) emailEl.value = '';
     var statusEl = document.getElementById('recuperacaoStatus');
     if (statusEl) statusEl.style.display = 'none';
     this.mostrarTela('recuperarSenhaScreen');
-    setTimeout(function() {
-        if (emailEl) emailEl.focus();
-    }, 500);
+    setTimeout(function() { if (emailEl) emailEl.focus(); }, 500);
 };
 
 App.prototype.recuperarSenha = function() {
@@ -257,15 +185,8 @@ App.prototype.enviarRecuperacao = function() {
     var msgEl = document.getElementById('recuperacaoMensagem');
     var subEl = document.getElementById('recuperacaoSubtexto');
     
-    if (!email) {
-        self.mostrarToast('❌ Digite seu email!', 'erro');
-        return;
-    }
-    
-    if (!email.includes('@') || !email.includes('.')) {
-        self.mostrarToast('❌ Email inválido!', 'erro');
-        return;
-    }
+    if (!email) { self.mostrarToast('❌ Digite seu email!', 'erro'); return; }
+    if (!email.includes('@') || !email.includes('.')) { self.mostrarToast('❌ Email inválido!', 'erro'); return; }
     
     if (statusEl) {
         statusEl.style.display = 'block';
@@ -273,7 +194,7 @@ App.prototype.enviarRecuperacao = function() {
         statusEl.style.border = '2px solid #7DD3FC';
     }
     if (iconEl) iconEl.textContent = '⏳';
-    if (msgEl) msgEl.textContent = 'Enviando...';
+    if (msgEl) msgEl.textContent = 'Enviando email...';
     if (subEl) subEl.textContent = 'Aguarde um momento';
     
     var btn = document.querySelector('#recuperarSenhaScreen .btn-primary');
@@ -287,64 +208,46 @@ App.prototype.enviarRecuperacao = function() {
         if (statusEl) statusEl.style.display = 'block';
         
         if (r.sucesso) {
-            if (statusEl) {
-                statusEl.style.background = '#D1FAE5';
-                statusEl.style.border = '2px solid #6EE7B7';
-            }
+            if (statusEl) { statusEl.style.background = '#D1FAE5'; statusEl.style.border = '2px solid #6EE7B7'; }
             if (iconEl) iconEl.textContent = '✅';
-            if (msgEl) {
-                msgEl.textContent = 'Email enviado com sucesso!';
-                msgEl.style.color = '#065F46';
-            }
+            if (msgEl) { msgEl.textContent = 'Email enviado com sucesso!'; msgEl.style.color = '#065F46'; }
             if (subEl) {
-                subEl.textContent = 'Verifique sua caixa de entrada.';
+                subEl.innerHTML = '📧 Enviamos para: <strong>' + email + '</strong><br>📋 Verifique sua caixa de entrada<br>📁 Se não encontrar, olhe a pasta SPAM';
                 subEl.style.color = '#065F46';
             }
-            self.mostrarToast('✅ Email enviado!', 'sucesso');
-            setTimeout(function() {
-                self.mostrarTela('loginScreen');
-            }, 3000);
+            self.mostrarToast('✅ Email enviado! Verifique também o SPAM', 'sucesso');
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.innerHTML = '<i class="fas fa-check"></i> EMAIL ENVIADO!';
+            }
         } else {
-            if (statusEl) {
-                statusEl.style.background = '#FEE2E2';
-                statusEl.style.border = '2px solid #FCA5A5';
-            }
+            if (statusEl) { statusEl.style.background = '#FEE2E2'; statusEl.style.border = '2px solid #FCA5A5'; }
             if (iconEl) iconEl.textContent = '❌';
-            if (msgEl) {
-                msgEl.textContent = r.erro || 'Erro ao enviar';
-                msgEl.style.color = '#991B1B';
-            }
+            if (msgEl) { msgEl.textContent = r.erro || 'Erro ao enviar email'; msgEl.style.color = '#991B1B'; }
             if (subEl) {
-                subEl.textContent = 'Verifique o email e tente novamente.';
+                subEl.innerHTML = '🔍 Verifique se o email está correto<br>📝 ' + email + '<br>🔄 Tente novamente em alguns minutos';
                 subEl.style.color = '#991B1B';
             }
-            self.mostrarToast('❌ ' + (r.erro || 'Erro'), 'erro');
+            self.mostrarToast('❌ ' + (r.erro || 'Email não encontrado'), 'erro');
+            
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE';
+            }
         }
+    }).catch(function(error) {
+        if (statusEl) { statusEl.style.display = 'block'; statusEl.style.background = '#FEE2E2'; statusEl.style.border = '2px solid #FCA5A5'; }
+        if (iconEl) iconEl.textContent = '❌';
+        if (msgEl) { msgEl.textContent = 'Erro de conexão'; msgEl.style.color = '#991B1B'; }
+        if (subEl) { subEl.textContent = 'Verifique sua internet e tente novamente.'; subEl.style.color = '#991B1B'; }
         
         if (btn) {
             btn.disabled = false;
             btn.style.opacity = '1';
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR LINK DE RECUPERAÇÃO';
-        }
-    }).catch(function(error) {
-        if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.style.background = '#FEE2E2';
-            statusEl.style.border = '2px solid #FCA5A5';
-        }
-        if (iconEl) iconEl.textContent = '❌';
-        if (msgEl) {
-            msgEl.textContent = 'Erro de conexão';
-            msgEl.style.color = '#991B1B';
-        }
-        if (subEl) {
-            subEl.textContent = 'Verifique sua internet.';
-            subEl.style.color = '#991B1B';
-        }
-        if (btn) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR LINK DE RECUPERAÇÃO';
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE';
         }
     });
 };
@@ -358,12 +261,10 @@ App.prototype.sair = function() {
     });
 };
 
-// ===== HOME =====
 App.prototype.carregarHome = function() {
     if (!this.usuarioLogado) return;
     
-    var h = new Date().getHours();
-    var s = 'Bom dia';
+    var h = new Date().getHours(), s = 'Bom dia';
     if (h >= 12 && h < 18) s = 'Boa tarde';
     if (h >= 18) s = 'Boa noite';
     
@@ -374,612 +275,242 @@ App.prototype.carregarHome = function() {
     if (resumoEl) resumoEl.textContent = (this.usuarioLogado.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional') + ' • ' + (this.usuarioLogado.profissao || this.usuarioLogado.tipo);
     
     var self = this;
-    setTimeout(function() {
-        try {
-            if (typeof mapaService !== 'undefined') {
-                mapaService.initMap();
-            }
-        } catch(e) {
-            console.log('Mapa não disponível');
-        }
-    }, 500);
+    setTimeout(function() { try { if (typeof mapaService !== 'undefined') mapaService.initMap(); } catch(e) {} }, 500);
     
     this.carregarFeed();
 };
 
-// ===== FEED (CORRIGIDO COM TIMEOUT) =====
 App.prototype.carregarFeed = function() {
-    var self = this;
-    var c = document.getElementById('feedContainer');
+    var self = this, c = document.getElementById('feedContainer');
     if (!c) return;
     
     c.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando vagas...</div>';
     
     var timeout = setTimeout(function() {
-        c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:40px;color:#F59E0B;"></i><h3 style="margin-top:16px;">Tempo esgotado</h3><p style="color:#999;">Verifique sua conexão</p><button class="btn btn-outline btn-small" onclick="app.carregarFeed()" style="margin-top:8px;">Tentar novamente</button></div>';
+        c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Tempo esgotado</h3><button class="btn btn-outline btn-small" onclick="app.carregarFeed()">Tentar novamente</button></div>';
     }, 10000);
     
     db.collection('vagas').get().then(function(snap) {
         clearTimeout(timeout);
-        
         var vagas = [];
-        snap.forEach(function(doc) {
-            var d = doc.data();
-            if (d.ativa !== false) vagas.push({ id: doc.id, data: d });
-        });
+        snap.forEach(function(doc) { var d = doc.data(); if (d.ativa !== false) vagas.push({ id: doc.id, data: d }); });
         
         if (vagas.length === 0) {
-            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-hard-hat" style="font-size:60px;color:#ccc;"></i><h3 style="margin-top:16px;">Nenhuma vaga publicada</h3><p style="color:#999;">As vagas publicadas aparecerão aqui</p>' + 
-                (self.usuarioLogado && self.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="app.abrirTelaPublicacao()" style="margin-top:16px;"><i class="fas fa-plus-circle"></i> PUBLICAR VAGA</button>' : '') + '</div>';
+            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-hard-hat" style="font-size:60px;color:#ccc;"></i><h3>Nenhuma vaga</h3>' + (self.usuarioLogado && self.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="app.abrirTelaPublicacao()">PUBLICAR VAGA</button>' : '') + '</div>';
             return;
         }
         
         var html = '';
         vagas.forEach(function(v) {
-            html += '<div class="vaga-card">' +
-                '<div class="vaga-header">' +
-                    '<div class="vaga-avatar"><i class="fas fa-user-tie"></i></div>' +
-                    '<div class="vaga-info">' +
-                        '<div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div>' +
-                        '<div class="vaga-data"><i class="fas fa-map-marker-alt"></i> ' + (v.data.endereco || 'Local não informado') + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="vaga-body">' +
-                    '<div class="vaga-titulo">🏗️ ' + (v.data.titulo || 'Vaga') + '</div>' +
-                    '<div class="vaga-descricao">' + (v.data.descricao || '') + '</div>' +
-                    '<div class="vaga-tags">' +
-                        '<span class="vaga-tag">💰 R$ ' + (v.data.valorHora || '0') + '/h</span>' +
-                        '<span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span>' +
-                        (v.data.interessados ? '<span class="vaga-tag">👥 ' + v.data.interessados.length + ' interessados</span>' : '') +
-                    '</div>' +
-                '</div>' +
-                '<div class="vaga-footer">' +
-                    (self.usuarioLogado && self.usuarioLogado.tipo === 'profissional' ? '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.candidatarVaga(\'' + v.id + '\')" style="flex:1;"><i class="fas fa-hand-paper"></i> QUERO!</button>' : '') +
-                '</div>' +
-            '</div>';
+            html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || '') + '</div></div></div><div class="vaga-body"><div class="vaga-titulo">🏗️ ' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-descricao">' + (v.data.descricao || '') + '</div><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div></div><div class="vaga-footer">' + (self.usuarioLogado && self.usuarioLogado.tipo === 'profissional' ? '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.candidatarVaga(\'' + v.id + '\')" style="flex:1;">✋ QUERO!</button>' : '') + '</div></div>';
         });
         c.innerHTML = html;
-        
     }).catch(function(error) {
         clearTimeout(timeout);
-        c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:40px;color:#EF4444;"></i><h3 style="margin-top:16px;">Erro ao carregar</h3><p style="color:#999;">' + error.message + '</p><button class="btn btn-outline btn-small" onclick="app.carregarFeed()" style="margin-top:8px;"><i class="fas fa-redo"></i> Tentar novamente</button></div>';
+        c.innerHTML = '<div class="card" style="text-align:center;"><p>Erro ao carregar</p><button class="btn btn-outline btn-small" onclick="app.carregarFeed()">Tentar novamente</button></div>';
     });
 };
 
-// ===== REDE =====
 App.prototype.carregarRede = function() {
-    var self = this;
-    var c = document.getElementById('redeContainer');
+    var self = this, c = document.getElementById('redeContainer');
     if (!c) return;
-    
-    c.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando sua rede...</div>';
+    c.innerHTML = '<div class="loading">Carregando rede...</div>';
     
     db.collection('conexoes').get().then(function(snap) {
         var conexoes = [];
-        snap.forEach(function(doc) {
-            var d = doc.data();
-            if (d.usuarioId === self.usuarioLogado.id || d.amigoId === self.usuarioLogado.id) {
-                conexoes.push({ id: doc.id, data: d });
-            }
-        });
+        snap.forEach(function(doc) { var d = doc.data(); if (d.usuarioId === self.usuarioLogado.id || d.amigoId === self.usuarioLogado.id) conexoes.push({ id: doc.id, data: d }); });
         
         if (conexoes.length === 0) {
-            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-users" style="font-size:60px;color:#ccc;"></i><h3 style="margin-top:16px;">Sua rede está vazia</h3><p style="color:#999;">Busque profissionais e adicione na sua rede!</p><button class="btn btn-primary" onclick="app.mostrarTela(\'buscaScreen\')" style="margin-top:16px;">🔍 Buscar Profissionais</button></div>';
+            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-users" style="font-size:60px;color:#ccc;"></i><h3>Rede vazia</h3><button class="btn btn-primary" onclick="app.mostrarTela(\'buscaScreen\')">Buscar Profissionais</button></div>';
             return;
         }
         
         var promessas = [];
-        conexoes.forEach(function(con) {
-            var amigoId = con.data.usuarioId === self.usuarioLogado.id ? con.data.amigoId : con.data.usuarioId;
-            promessas.push(db.collection('usuarios').doc(amigoId).get());
-        });
+        conexoes.forEach(function(con) { var amigoId = con.data.usuarioId === self.usuarioLogado.id ? con.data.amigoId : con.data.usuarioId; promessas.push(db.collection('usuarios').doc(amigoId).get()); });
         
         Promise.all(promessas).then(function(docs) {
             var html = '';
             docs.forEach(function(doc) {
                 if (doc.exists) {
-                    var u = doc.data();
-                    var w = u.celular ? u.celular.replace(/\D/g, '') : '';
-                    html += '<div class="vaga-card" onclick="app.verPerfil(\'' + doc.id + '\')" style="cursor:pointer;">' +
-                        '<div class="vaga-header">' +
-                            '<div class="vaga-avatar"><i class="fas fa-user"></i></div>' +
-                            '<div class="vaga-info">' +
-                                '<div class="vaga-nome">' + u.nome + '</div>' +
-                                '<div class="vaga-data">' + (u.profissao || 'Profissional') + ' • ' + (u.experiencia || 0) + ' anos</div>' +
-                            '</div>' +
-                            '<div>' + '⭐'.repeat(Math.round(u.score || 0)) + '</div>' +
-                        '</div>' +
-                        '<div class="vaga-footer">' +
-                            (w ? '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>' : '') +
-                            '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.iniciarChat(\'' + doc.id + '\')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button>' +
-                            '<button class="btn btn-danger btn-small" onclick="event.stopPropagation();app.removerDaRede(\'' + doc.id + '\')" title="Remover">✕</button>' +
-                        '</div>' +
-                    '</div>';
+                    var u = doc.data(), w = u.celular ? u.celular.replace(/\D/g, '') : '';
+                    html += '<div class="vaga-card" onclick="app.verPerfil(\'' + doc.id + '\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user"></i></div><div class="vaga-info"><div class="vaga-nome">' + u.nome + '</div><div class="vaga-data">' + (u.profissao || 'Profissional') + '</div></div></div><div class="vaga-footer">' + (w ? '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>' : '') + '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.iniciarChat(\'' + doc.id + '\')">Chat</button><button class="btn btn-danger btn-small" onclick="event.stopPropagation();app.removerDaRede(\'' + doc.id + '\')">✕</button></div></div>';
                 }
             });
-            c.innerHTML = html || '<div class="card" style="text-align:center;">Nenhum amigo encontrado</div>';
+            c.innerHTML = html || '<div class="card">Nenhum amigo</div>';
         });
-    }).catch(function(e) {
-        c.innerHTML = '<div class="card" style="text-align:center;">Erro ao carregar rede</div>';
     });
 };
 
 App.prototype.adicionarNaRede = function(amigoId) {
     var self = this;
     if (!this.usuarioLogado) { this.mostrarToast('Faça login!', 'erro'); return; }
-    if (this.usuarioLogado.id === amigoId) { this.mostrarToast('Você não pode se adicionar!', 'erro'); return; }
+    if (this.usuarioLogado.id === amigoId) { this.mostrarToast('Não pode se adicionar!', 'erro'); return; }
     
     db.collection('conexoes').get().then(function(snap) {
         var existe = false;
-        snap.forEach(function(doc) {
-            var d = doc.data();
-            if ((d.usuarioId === self.usuarioLogado.id && d.amigoId === amigoId) || (d.usuarioId === amigoId && d.amigoId === self.usuarioLogado.id)) {
-                existe = true;
-            }
-        });
+        snap.forEach(function(doc) { var d = doc.data(); if ((d.usuarioId === self.usuarioLogado.id && d.amigoId === amigoId) || (d.usuarioId === amigoId && d.amigoId === self.usuarioLogado.id)) existe = true; });
+        if (existe) { self.mostrarToast('Já está na rede!', 'erro'); return; }
         
-        if (existe) {
-            self.mostrarToast('Este profissional já está na sua rede!', 'erro');
-            return;
-        }
-        
-        db.collection('conexoes').add({
-            usuarioId: self.usuarioLogado.id,
-            amigoId: amigoId,
-            status: 'ativo',
-            dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(function() {
-            self.mostrarToast('✅ Adicionado na sua rede!', 'sucesso');
-        }).catch(function() {
-            self.mostrarToast('Erro ao adicionar', 'erro');
-        });
+        db.collection('conexoes').add({ usuarioId: self.usuarioLogado.id, amigoId: amigoId, status: 'ativo', dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }).then(function() { self.mostrarToast('✅ Adicionado!', 'sucesso'); });
     });
 };
 
 App.prototype.removerDaRede = function(amigoId) {
     var self = this;
-    if (!confirm('Remover este profissional da sua rede?')) return;
-    
+    if (!confirm('Remover da rede?')) return;
     db.collection('conexoes').get().then(function(snap) {
-        snap.forEach(function(doc) {
-            var d = doc.data();
-            if ((d.usuarioId === self.usuarioLogado.id && d.amigoId === amigoId) || (d.usuarioId === amigoId && d.amigoId === self.usuarioLogado.id)) {
-                db.collection('conexoes').doc(doc.id).delete().then(function() {
-                    self.mostrarToast('Removido da rede', 'sucesso');
-                    self.carregarRede();
-                });
-            }
-        });
+        snap.forEach(function(doc) { var d = doc.data(); if ((d.usuarioId === self.usuarioLogado.id && d.amigoId === amigoId) || (d.usuarioId === amigoId && d.amigoId === self.usuarioLogado.id)) { db.collection('conexoes').doc(doc.id).delete().then(function() { self.mostrarToast('Removido', 'sucesso'); self.carregarRede(); }); } });
     });
 };
 
 App.prototype.contratarProfissional = function(profId) {
     var self = this;
-    if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'empreiteiro') {
-        this.mostrarToast('Apenas empreiteiros podem contratar!', 'erro');
-        return;
-    }
-    
-    var obra = prompt('Nome da obra:');
-    if (!obra) return;
-    var valor = prompt('Valor por hora (R$):', '25');
-    if (!valor) return;
-    
-    db.collection('conexoes').add({
-        usuarioId: this.usuarioLogado.id,
-        amigoId: profId,
-        status: 'contratado',
-        obra: obra,
-        valorHora: parseFloat(valor),
-        dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function() {
-        self.mostrarToast('🤝 Profissional contratado!', 'sucesso');
-        self.adicionarNaRede(profId);
-    }).catch(function() {
-        self.mostrarToast('Erro ao contratar', 'erro');
-    });
+    if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'empreiteiro') { this.mostrarToast('Apenas empreiteiros!', 'erro'); return; }
+    var obra = prompt('Nome da obra:'); if (!obra) return;
+    var valor = prompt('Valor/hora (R$):', '25'); if (!valor) return;
+    db.collection('conexoes').add({ usuarioId: this.usuarioLogado.id, amigoId: profId, status: 'contratado', obra: obra, valorHora: parseFloat(valor), dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }).then(function() { self.mostrarToast('🤝 Contratado!', 'sucesso'); self.adicionarNaRede(profId); });
 };
 
-// ===== PERFIL =====
 App.prototype.carregarMeuPerfil = function() {
-    if (!this.usuarioLogado) return;
-    var u = this.usuarioLogado;
-    
-    var n = document.getElementById('meuPerfilNome');
-    if (n) n.textContent = u.nome || 'Usuário';
-    
-    var p = document.getElementById('meuPerfilProfissao');
-    if (p) p.textContent = (u.tipo === 'profissional' ? '👷 Profissional' : '🏢 Empreiteiro') + ' • ' + (u.profissao || u.tipo);
-    
-    var a = document.getElementById('meuPerfilAvaliacao');
-    if (a) a.innerHTML = '⭐'.repeat(Math.round(u.score || 0)) + ' ' + (u.score ? u.score.toFixed(1) : 'Sem avaliações');
-    
-    var en = document.getElementById('editNome');
-    if (en) en.value = u.nome || '';
-    
-    var ec = document.getElementById('editCelular');
-    if (ec) ec.value = u.celular || '';
-    
-    var eh = document.getElementById('editHabilidades');
-    if (eh) eh.value = u.habilidades || '';
-    
-    var statsAv = document.getElementById('statsAvaliacoes');
-    if (statsAv) statsAv.textContent = u.avaliacoesRecebidas || 0;
-    
-    var statsCx = document.getElementById('statsConexoes');
-    if (statsCx) {
-        var self = this;
-        databaseService.buscarConexoes(this.usuarioLogado.id).then(function(cx) {
-            statsCx.textContent = cx.length;
-        }).catch(function() {
-            statsCx.textContent = '0';
-        });
-    }
+    if (!this.usuarioLogado) return; var u = this.usuarioLogado;
+    var n = document.getElementById('meuPerfilNome'); if (n) n.textContent = u.nome || 'Usuário';
+    var p = document.getElementById('meuPerfilProfissao'); if (p) p.textContent = (u.tipo === 'profissional' ? '👷' : '🏢') + ' ' + (u.profissao || u.tipo);
+    var a = document.getElementById('meuPerfilAvaliacao'); if (a) a.innerHTML = '⭐'.repeat(Math.round(u.score || 0)) + ' ' + (u.score ? u.score.toFixed(1) : 'Sem avaliações');
+    var en = document.getElementById('editNome'); if (en) en.value = u.nome || '';
+    var ec = document.getElementById('editCelular'); if (ec) ec.value = u.celular || '';
+    var eh = document.getElementById('editHabilidades'); if (eh) eh.value = u.habilidades || '';
+    var sa = document.getElementById('statsAvaliacoes'); if (sa) sa.textContent = u.avaliacoesRecebidas || 0;
 };
 
 App.prototype.salvarPerfil = function() {
     var self = this;
-    var d = {
-        nome: (document.getElementById('editNome') || {}).value || '',
-        celular: (document.getElementById('editCelular') || {}).value || '',
-        habilidades: (document.getElementById('editHabilidades') || {}).value || ''
-    };
-    
-    if (!d.nome) {
-        this.mostrarToast('Nome obrigatório!', 'erro');
-        return;
-    }
-    
-    databaseService.atualizarUsuario(this.usuarioLogado.id, d).then(function() {
-        self.usuarioLogado.nome = d.nome;
-        self.usuarioLogado.celular = d.celular;
-        self.usuarioLogado.habilidades = d.habilidades;
-        self.mostrarToast('✅ Perfil atualizado!', 'sucesso');
-        self.carregarMeuPerfil();
-    }).catch(function() {
-        self.mostrarToast('Erro ao salvar', 'erro');
-    });
+    var d = { nome: (document.getElementById('editNome') || {}).value || '', celular: (document.getElementById('editCelular') || {}).value || '', habilidades: (document.getElementById('editHabilidades') || {}).value || '' };
+    if (!d.nome) { this.mostrarToast('Nome obrigatório!', 'erro'); return; }
+    databaseService.atualizarUsuario(this.usuarioLogado.id, d).then(function() { self.usuarioLogado.nome = d.nome; self.usuarioLogado.celular = d.celular; self.usuarioLogado.habilidades = d.habilidades; self.mostrarToast('✅ Atualizado!', 'sucesso'); self.carregarMeuPerfil(); });
 };
 
 App.prototype.uploadFoto = function(e) {
-    var self = this;
-    var f = e.target.files[0];
-    if (!f) return;
-    
+    var self = this, f = e.target.files[0]; if (!f) return;
     var r = new FileReader();
-    r.onload = function(ev) {
-        databaseService.atualizarUsuario(self.usuarioLogado.id, { fotoPerfil: ev.target.result }).then(function() {
-            self.usuarioLogado.fotoPerfil = ev.target.result;
-            self.mostrarToast('✅ Foto atualizada!', 'sucesso');
-        }).catch(function() {
-            self.mostrarToast('Erro ao enviar foto', 'erro');
-        });
-    };
+    r.onload = function(ev) { databaseService.atualizarUsuario(self.usuarioLogado.id, { fotoPerfil: ev.target.result }).then(function() { self.usuarioLogado.fotoPerfil = ev.target.result; self.mostrarToast('✅ Foto atualizada!', 'sucesso'); }); };
     r.readAsDataURL(f);
 };
 
-// ===== BUSCA =====
 App.prototype.buscarProfissionais = function() {
-    var self = this;
-    var c = document.getElementById('buscaResultados');
-    if (!c) return;
-    
-    c.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+    var self = this, c = document.getElementById('buscaResultados'); if (!c) return;
+    c.innerHTML = '<div class="loading">Buscando...</div>';
     
     db.collection('usuarios').get().then(function(snap) {
-        var todos = [];
-        snap.forEach(function(doc) {
-            todos.push({ id: doc.id, data: doc.data() });
-        });
-        
-        var profs = todos.filter(function(u) {
-            return u.data.tipo === 'profissional' && u.data.ativo !== false;
-        });
-        
+        var todos = []; snap.forEach(function(doc) { todos.push({ id: doc.id, data: doc.data() }); });
+        var profs = todos.filter(function(u) { return u.data.tipo === 'profissional' && u.data.ativo !== false; });
         var termo = (document.getElementById('buscaInput') || {}).value || '';
-        var filtrados = termo ? profs.filter(function(u) {
-            return (u.data.nome || '').toLowerCase().indexOf(termo.toLowerCase()) >= 0 || 
-                   (u.data.profissao || '').toLowerCase().indexOf(termo.toLowerCase()) >= 0;
-        }) : profs;
+        var filtrados = termo ? profs.filter(function(u) { return (u.data.nome || '').toLowerCase().indexOf(termo.toLowerCase()) >= 0 || (u.data.profissao || '').toLowerCase().indexOf(termo.toLowerCase()) >= 0; }) : profs;
         
-        if (filtrados.length === 0) {
-            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-search" style="font-size:60px;color:#ccc;"></i><h3 style="margin-top:16px;">Nenhum profissional encontrado</h3><p style="color:#999;">Total de profissionais: ' + profs.length + '</p>' + 
-                (termo ? '<button class="btn btn-outline btn-small" onclick="document.getElementById(\'buscaInput\').value=\'\';app.buscarProfissionais();" style="margin-top:8px;">Mostrar todos</button>' : '') + '</div>';
-            return;
-        }
+        if (filtrados.length === 0) { c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhum profissional</h3></div>'; return; }
         
         var html = '';
         filtrados.forEach(function(u) {
-            var w = u.data.celular ? u.data.celular.replace(/\D/g, '') : '';
-            var sc = u.data.score || 0;
-            
-            html += '<div class="vaga-card" onclick="app.verPerfil(\'' + u.id + '\')" style="cursor:pointer;">' +
-                '<div class="vaga-header">' +
-                    '<div class="vaga-avatar"><i class="fas fa-hard-hat"></i></div>' +
-                    '<div class="vaga-info">' +
-                        '<div class="vaga-nome">' + u.data.nome + '</div>' +
-                        '<div class="vaga-data">' + (u.data.profissao || 'Profissional') + ' • ' + (u.data.experiencia || 0) + ' anos</div>' +
-                    '</div>' +
-                    '<div style="text-align:right;">' +
-                        '<div style="font-size:16px;">' + '⭐'.repeat(Math.round(sc)) + '</div>' +
-                        '<div style="font-size:11px;color:#999;">' + (sc > 0 ? sc.toFixed(1) : 'Novo') + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="vaga-footer">' +
-                    (w ? '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>' : '') +
-                    '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.iniciarChat(\'' + u.id + '\')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button>' +
-                    '<button class="btn btn-outline btn-small" onclick="event.stopPropagation();app.adicionarNaRede(\'' + u.id + '\')" style="background:#10B981;color:white;" title="Adicionar na rede">➕</button>' +
-                '</div>' +
-            '</div>';
+            var w = u.data.celular ? u.data.celular.replace(/\D/g, '') : '', sc = u.data.score || 0;
+            html += '<div class="vaga-card" onclick="app.verPerfil(\'' + u.id + '\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-hard-hat"></i></div><div class="vaga-info"><div class="vaga-nome">' + u.data.nome + '</div><div class="vaga-data">' + (u.data.profissao || 'Profissional') + ' • ' + (u.data.experiencia || 0) + ' anos</div></div><div>' + '⭐'.repeat(Math.round(sc)) + '</div></div><div class="vaga-footer">' + (w ? '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>' : '') + '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();app.iniciarChat(\'' + u.id + '\')">Chat</button><button class="btn btn-outline btn-small" onclick="event.stopPropagation();app.adicionarNaRede(\'' + u.id + '\')" style="background:#10B981;color:white;">➕</button></div></div>';
         });
         c.innerHTML = html;
-    }).catch(function(e) {
-        c.innerHTML = '<div class="card" style="text-align:center;">Erro ao buscar</div>';
     });
 };
 
-// ===== PERFIL PÚBLICO =====
 App.prototype.verPerfil = function(uid) {
     var self = this;
-    
     db.collection('usuarios').doc(uid).get().then(function(doc) {
-        if (!doc.exists) {
-            self.mostrarToast('Usuário não encontrado', 'erro');
-            return;
-        }
-        
-        var u = doc.data();
-        var w = u.celular ? u.celular.replace(/\D/g, '') : '';
-        var c = document.getElementById('perfilPublicoConteudo');
+        if (!doc.exists) { self.mostrarToast('Não encontrado', 'erro'); return; }
+        var u = doc.data(), w = u.celular ? u.celular.replace(/\D/g, '') : '', c = document.getElementById('perfilPublicoConteudo');
         if (!c) return;
         
-        var html = '<div class="profile-header-container"><div class="profile-cover"></div>' +
-            '<div class="profile-avatar-container"><div class="profile-avatar"><i class="fas fa-user" style="font-size:40px;"></i></div></div></div>' +
-            '<div class="profile-info-card"><h2>' + u.nome + '</h2>' +
-            '<p><i class="fas fa-tools"></i> ' + (u.profissao || 'Profissional') + '</p>' +
-            '<p><i class="fas fa-calendar"></i> ' + (u.experiencia || 0) + ' anos</p>' +
-            '<div class="stars-container">' + '⭐'.repeat(Math.round(u.score || 0)) + ' ' + (u.score ? u.score.toFixed(1) : 'Sem avaliações') + '</div></div>' +
-            '<div class="card"><h3><i class="fas fa-info-circle"></i> Habilidades</h3><p>' + (u.habilidades || 'Não informado') + '</p></div>' +
-            '<div class="card"><h3><i class="fas fa-phone"></i> Contato</h3><p>📱 ' + (u.celular || 'Não informado') + '</p><p>📧 ' + u.email + '</p></div>';
+        var html = '<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar"><i class="fas fa-user"></i></div></div></div><div class="profile-info-card"><h2>' + u.nome + '</h2><p>' + (u.profissao || 'Profissional') + ' • ' + (u.experiencia || 0) + ' anos</p><div>' + '⭐'.repeat(Math.round(u.score || 0)) + ' ' + (u.score ? u.score.toFixed(1) : 'Sem avaliações') + '</div></div><div class="card"><h3>Habilidades</h3><p>' + (u.habilidades || 'Não informado') + '</p></div><div class="card"><h3>Contato</h3><p>📱 ' + (u.celular || 'Não informado') + '</p><p>📧 ' + u.email + '</p></div>';
         
         if (self.usuarioLogado && self.usuarioLogado.id !== uid) {
             html += '<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">';
-            if (w) html += '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success"><i class="fab fa-whatsapp"></i> Chamar no WhatsApp</a>';
-            html += '<button class="btn btn-primary" onclick="app.iniciarChat(\'' + uid + '\')"><i class="fas fa-comments"></i> Conversar no Chat</button>';
-            html += '<button class="btn btn-outline" onclick="app.adicionarNaRede(\'' + uid + '\')" style="background:#10B981;color:white;"><i class="fas fa-user-plus"></i> Adicionar na Minha Rede</button>';
-            if (self.usuarioLogado.tipo === 'empreiteiro') {
-                html += '<button class="btn btn-outline" onclick="app.contratarProfissional(\'' + uid + '\')" style="background:#1A3A5C;color:white;"><i class="fas fa-handshake"></i> CONTRATAR</button>';
-            }
-            html += '<button class="btn btn-outline" onclick="app.avaliarUsuario(\'' + uid + '\')"><i class="fas fa-star"></i> Avaliar</button>';
-            html += '</div>';
+            if (w) html += '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success">WhatsApp</a>';
+            html += '<button class="btn btn-primary" onclick="app.iniciarChat(\'' + uid + '\')">Chat</button>';
+            html += '<button class="btn btn-outline" onclick="app.adicionarNaRede(\'' + uid + '\')" style="background:#10B981;color:white;">Adicionar na Rede</button>';
+            if (self.usuarioLogado.tipo === 'empreiteiro') html += '<button class="btn btn-outline" onclick="app.contratarProfissional(\'' + uid + '\')" style="background:#1A3A5C;color:white;">CONTRATAR</button>';
+            html += '<button class="btn btn-outline" onclick="app.avaliarUsuario(\'' + uid + '\')">Avaliar</button></div>';
         }
-        
-        c.innerHTML = html;
-        self.mostrarTela('perfilPublicoScreen');
+        c.innerHTML = html; self.mostrarTela('perfilPublicoScreen');
     });
 };
 
-// ===== CHAT =====
 App.prototype.iniciarChat = function(uid) {
     var self = this;
-    
     db.collection('usuarios').doc(uid).get().then(function(doc) {
         if (!doc.exists) return;
         self.usuarioSelecionado = { id: doc.id, data: doc.data() };
-        
         var h = document.getElementById('chatHeaderInfo');
-        if (h) h.innerHTML = '<div style="display:flex;align-items:center;gap:10px;">' +
-            '<div style="width:40px;height:40px;border-radius:50%;background:#F47920;display:flex;align-items:center;justify-content:center;color:white;"><i class="fas fa-user"></i></div>' +
-            '<div><strong>' + doc.data().nome + '</strong><div style="font-size:12px;color:#10B981;">Online</div></div></div>';
-        
-        self.carregarMensagens();
-        self.mostrarTela('chatScreen');
+        if (h) h.innerHTML = '<div><strong>' + doc.data().nome + '</strong></div>';
+        self.carregarMensagens(); self.mostrarTela('chatScreen');
     });
 };
 
 App.prototype.carregarMensagens = function() {
-    var self = this;
-    var c = document.getElementById('chatMessages');
+    var self = this, c = document.getElementById('chatMessages');
     if (!c || !this.usuarioSelecionado) return;
-    
     db.collection('mensagens').get().then(function(snap) {
         var msgs = [];
-        snap.forEach(function(doc) {
-            var d = doc.data();
-            if (d.participantes && d.participantes.indexOf(self.usuarioLogado.id) >= 0 && d.participantes.indexOf(self.usuarioSelecionado.id) >= 0) {
-                msgs.push({ id: doc.id, data: d });
-            }
-        });
-        
-        msgs.sort(function(a, b) {
-            var da = a.data.dataEnvio ? a.data.dataEnvio.toDate() : new Date(0);
-            var db = b.data.dataEnvio ? b.data.dataEnvio.toDate() : new Date(0);
-            return da - db;
-        });
-        
-        if (msgs.length === 0) {
-            c.innerHTML = '<div style="text-align:center;padding:60px;color:#999;"><i class="fas fa-comments" style="font-size:60px;"></i><p style="margin-top:16px;">Nenhuma mensagem ainda</p></div>';
-            return;
-        }
-        
-        var html = '';
-        msgs.forEach(function(m) {
-            var isMine = m.data.remetenteId === self.usuarioLogado.id;
-            var hora = m.data.dataEnvio ? new Date(m.data.dataEnvio.toDate()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-            
-            html += '<div class="message ' + (isMine ? 'message-sent' : 'message-received') + '">' +
-                '<div class="message-content">' + m.data.conteudo + '</div>' +
-                '<div class="message-footer">' +
-                    '<span class="message-time">' + hora + '</span>' +
-                    (isMine ? '<span class="message-status">✓</span>' : '') +
-                '</div>' +
-            '</div>';
-        });
-        
-        c.innerHTML = html;
+        snap.forEach(function(doc) { var d = doc.data(); if (d.participantes && d.participantes.indexOf(self.usuarioLogado.id) >= 0 && d.participantes.indexOf(self.usuarioSelecionado.id) >= 0) msgs.push({ data: d }); });
+        msgs.sort(function(a, b) { return (a.data.dataEnvio ? a.data.dataEnvio.toDate() : new Date(0)) - (b.data.dataEnvio ? b.data.dataEnvio.toDate() : new Date(0)); });
+        if (msgs.length === 0) { c.innerHTML = '<div style="text-align:center;padding:60px;">Nenhuma mensagem</div>'; return; }
+        c.innerHTML = msgs.map(function(m) { var isMine = m.data.remetenteId === self.usuarioLogado.id; return '<div class="message ' + (isMine ? 'message-sent' : 'message-received') + '"><div class="message-content">' + m.data.conteudo + '</div></div>'; }).join('');
         c.scrollTop = c.scrollHeight;
     });
 };
 
 App.prototype.enviarMensagem = function() {
-    var self = this;
-    var i = document.getElementById('chatInput');
-    var ct = i ? i.value.trim() : '';
-    
+    var self = this, i = document.getElementById('chatInput'), ct = i ? i.value.trim() : '';
     if (!ct || !this.usuarioSelecionado) return;
-    
-    db.collection('mensagens').add({
-        remetenteId: this.usuarioLogado.id,
-        destinatarioId: this.usuarioSelecionado.id,
-        participantes: [this.usuarioLogado.id, this.usuarioSelecionado.id],
-        conteudo: ct,
-        dataEnvio: firebase.firestore.FieldValue.serverTimestamp(),
-        lida: false
-    }).then(function() {
-        if (i) i.value = '';
-        self.carregarMensagens();
-    });
+    db.collection('mensagens').add({ remetenteId: this.usuarioLogado.id, destinatarioId: this.usuarioSelecionado.id, participantes: [this.usuarioLogado.id, this.usuarioSelecionado.id], conteudo: ct, dataEnvio: firebase.firestore.FieldValue.serverTimestamp(), lida: false }).then(function() { i.value = ''; self.carregarMensagens(); });
 };
 
-// ===== VAGAS =====
 App.prototype.abrirTelaPublicacao = function() {
-    if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'empreiteiro') {
-        this.mostrarToast('Apenas empreiteiros podem publicar!', 'erro');
-        return;
-    }
-    
-    ['vagaTitulo', 'vagaDescricao', 'vagaEndereco'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    document.getElementById('vagaValorHora').value = '';
-    document.getElementById('vagaQuantidade').value = '1';
+    if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'empreiteiro') { this.mostrarToast('Apenas empreiteiros!', 'erro'); return; }
+    ['vagaTitulo','vagaDescricao','vagaEndereco'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('vagaValorHora').value = ''; document.getElementById('vagaQuantidade').value = '1';
     document.querySelectorAll('#profissoesCheckboxes input').forEach(function(cb) { cb.checked = false; });
-    
     this.mostrarTela('publicarVagaScreen');
 };
 
 App.prototype.publicarVagaApp = function() {
-    var self = this;
-    var t = (document.getElementById('vagaTitulo') || {}).value || '';
-    var e = (document.getElementById('vagaEndereco') || {}).value || '';
-    var vh = (document.getElementById('vagaValorHora') || {}).value || '0';
-    
-    if (!t || !e) {
-        this.mostrarToast('Preencha título e endereço!', 'erro');
-        return;
-    }
-    
-    var ps = [];
-    document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) {
-        ps.push(cb.value);
-    });
-    
-    if (ps.length === 0) {
-        this.mostrarToast('Selecione pelo menos uma profissão!', 'erro');
-        return;
-    }
-    
+    var self = this, t = (document.getElementById('vagaTitulo') || {}).value || '', e = (document.getElementById('vagaEndereco') || {}).value || '';
+    if (!t || !e) { this.mostrarToast('Preencha título e endereço!', 'erro'); return; }
+    var ps = []; document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { ps.push(cb.value); });
     this.mostrarToast('Publicando...', 'info');
-    
-    db.collection('vagas').add({
-        titulo: t,
-        descricao: (document.getElementById('vagaDescricao') || {}).value || '',
-        endereco: e,
-        profissoes: ps.join(', '),
-        valorHora: parseFloat(vh) || 0,
-        quantidade: parseInt((document.getElementById('vagaQuantidade') || {}).value) || 1,
-        usuarioId: this.usuarioLogado.id,
-        interessados: [],
-        dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
-        ativa: true
-    }).then(function() {
-        self.mostrarToast('✅ Vaga publicada!', 'sucesso');
-        setTimeout(function() {
-            self.mostrarTela('homeScreen');
-            self.carregarFeed();
-        }, 1000);
-    }).catch(function() {
-        self.mostrarToast('Erro ao publicar', 'erro');
-    });
+    db.collection('vagas').add({ titulo: t, descricao: (document.getElementById('vagaDescricao') || {}).value || '', endereco: e, profissoes: ps.join(', ') || 'Geral', valorHora: parseFloat((document.getElementById('vagaValorHora') || {}).value) || 0, quantidade: parseInt((document.getElementById('vagaQuantidade') || {}).value) || 1, usuarioId: this.usuarioLogado.id, interessados: [], dataCriacao: firebase.firestore.FieldValue.serverTimestamp(), ativa: true }).then(function() { self.mostrarToast('✅ Vaga publicada!', 'sucesso'); setTimeout(function() { self.mostrarTela('homeScreen'); self.carregarFeed(); }, 1000); });
 };
 
 App.prototype.candidatarVaga = function(vid) {
     var self = this;
-    if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'profissional') {
-        this.mostrarToast('Apenas profissionais podem se candidatar!', 'erro');
-        return;
-    }
-    
-    db.collection('vagas').doc(vid).get().then(function(doc) {
-        if (!doc.exists) return;
-        var v = doc.data();
-        if (!v.interessados) v.interessados = [];
-        
-        if (v.interessados.indexOf(self.usuarioLogado.id) >= 0) {
-            self.mostrarToast('Você já se candidatou!', 'erro');
-            return;
-        }
-        
-        v.interessados.push(self.usuarioLogado.id);
-        db.collection('vagas').doc(vid).update({ interessados: v.interessados }).then(function() {
-            self.mostrarToast('✅ Candidatura enviada!', 'sucesso');
-        });
-    });
+    if (!this.usuarioLogado || this.usuarioLogado.tipo !== 'profissional') { this.mostrarToast('Apenas profissionais!', 'erro'); return; }
+    db.collection('vagas').doc(vid).get().then(function(doc) { if (!doc.exists) return; var v = doc.data(); if (!v.interessados) v.interessados = []; if (v.interessados.indexOf(self.usuarioLogado.id) >= 0) { self.mostrarToast('Já se candidatou!', 'erro'); return; } v.interessados.push(self.usuarioLogado.id); db.collection('vagas').doc(vid).update({ interessados: v.interessados }).then(function() { self.mostrarToast('✅ Candidatura enviada!', 'sucesso'); }); });
 };
 
-// ===== AVALIAÇÃO =====
 App.prototype.avaliarUsuario = function(uid) {
-    var n = prompt('Dê uma nota de 1 a 5:');
-    if (!n || isNaN(n) || n < 1 || n > 5) {
-        this.mostrarToast('Nota inválida!', 'erro');
-        return;
-    }
-    
-    var c = prompt('Comentário (opcional):') || '';
-    var self = this;
-    
-    databaseService.avaliarUsuario(this.usuarioLogado.id, uid, parseInt(n), c).then(function() {
-        self.mostrarToast('✅ Avaliação enviada!', 'sucesso');
-    }).catch(function() {
-        self.mostrarToast('Erro ao avaliar', 'erro');
-    });
+    var n = prompt('Nota (1-5):'); if (!n || isNaN(n) || n < 1 || n > 5) return;
+    var c = prompt('Comentário:') || ''; var self = this;
+    databaseService.avaliarUsuario(this.usuarioLogado.id, uid, parseInt(n), c).then(function() { self.mostrarToast('✅ Avaliação enviada!', 'sucesso'); });
 };
 
-// ===== TABS =====
 App.prototype.mudarTab = function(tab) {
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     event.target.closest('.tab').classList.add('active');
-    
     document.getElementById('feedContainer').style.display = tab === 'feed' ? 'block' : 'none';
     document.getElementById('redeContainer').style.display = tab === 'rede' ? 'block' : 'none';
-    
     if (tab === 'feed') this.carregarFeed();
     if (tab === 'rede') this.carregarRede();
 };
 
-// ===== NOTIFICAÇÕES =====
-App.prototype.mostrarNotificacoes = function() {
-    this.mostrarTela('notificacoesScreen');
-};
+App.prototype.mostrarNotificacoes = function() { this.mostrarTela('notificacoesScreen'); };
 
-// ===== TOAST =====
 App.prototype.mostrarToast = function(m, t) {
-    var toast = document.getElementById('toast');
-    if (!toast) return;
-    
-    toast.textContent = m;
-    toast.style.background = t === 'erro' ? '#EF4444' : t === 'sucesso' ? '#10B981' : '#1F2937';
-    toast.style.display = 'block';
-    
-    clearTimeout(this._tt);
-    this._tt = setTimeout(function() {
-        toast.style.display = 'none';
-    }, 3000);
+    var toast = document.getElementById('toast'); if (!toast) return;
+    toast.textContent = m; toast.style.background = t === 'erro' ? '#EF4444' : t === 'sucesso' ? '#10B981' : '#1F2937';
+    toast.style.display = 'block'; clearTimeout(this._tt); this._tt = setTimeout(function() { toast.style.display = 'none'; }, 3000);
 };
 
-// ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', function() {
-    window.app = new App();
-    console.log('✅ App pronto!');
-});
+document.addEventListener('DOMContentLoaded', function() { window.app = new App(); console.log('✅ App pronto!'); });
