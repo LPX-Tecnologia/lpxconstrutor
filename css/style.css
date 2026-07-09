@@ -90,3 +90,5 @@ textarea.input-field{resize:vertical;min-height:80px}
 #recuperarSenhaScreen .card{text-align:center}
 #recuperacaoStatus{animation:fadeIn .3s ease}
 #recEmail{text-align:center;font-size:16px}
+#recEmail::placeholder{text-align:center}
+@media(max-width:480px){.app-container{border-radius:0}}
