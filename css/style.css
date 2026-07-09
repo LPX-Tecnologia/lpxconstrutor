@@ -92,3 +92,24 @@ textarea.input-field{resize:vertical;min-height:80px}
 #recEmail{text-align:center;font-size:16px}
 #recEmail::placeholder{text-align:center}
 @media(max-width:480px){.app-container{border-radius:0}}
+/* Logo no header */
+.app-header h1 img {
+    height: 40px;
+    vertical-align: middle;
+    border-radius: 8px;
+    margin-right: 8px;
+}
+
+/* Logo na tela de login */
+.login-logo img {
+    width: 140px;
+    height: 140px;
+    border-radius: 28px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
