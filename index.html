@@ -4,33 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1A3A5C">
+    <meta name="description" content="LPXConstrutor - Rede Profissional da Construção Civil">
     <title>LPXConstrutor</title>
     
+    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
+    <!-- Google Maps -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places&loading=async" async defer></script>
     
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- PWA -->
+    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="LPXConstrutor">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="imagem/logo-lpxconstrutor.png">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="imagem/logo-lpxconstrutor.png">
+    
+    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-                    console.log('Service Worker registrado:', registration.scope);
+                    console.log('✅ Service Worker registrado:', registration.scope);
                 }).catch(function(error) {
-                    console.log('Falha no Service Worker:', error);
+                    console.log('⚠️ Falha no Service Worker:', error);
                 });
             });
         }
@@ -40,9 +53,13 @@
 
 <div class="app-container">
     
+    <!-- HEADER -->
     <header class="app-header">
         <div class="header-content">
-            <h1>🏗️ LPXCONSTRUTOR</h1>
+            <h1>
+                <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" class="header-logo">
+                LPXCONSTRUTOR
+            </h1>
             <button class="icon-btn" onclick="app.mostrarNotificacoes()">
                 <i class="fas fa-bell"></i>
                 <span class="badge-notification" id="badgeNotificacoes" style="display:none;">0</span>
@@ -50,46 +67,64 @@
         </div>
     </header>
 
+    <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!-- LOGIN -->
+    <!-- ===== TELA DE LOGIN ===== -->
     <div class="screen active" id="loginScreen">
         <div class="login-container">
-            <div class="login-logo">🏗️</div>
+            <div class="login-logo">
+                <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" class="logo-login">
+            </div>
             <h2>LPXConstrutor</h2>
             <p class="login-subtitle">Rede Profissional da Construção</p>
+            
             <div class="card">
                 <div class="input-group">
                     <label><i class="fas fa-envelope"></i> Email</label>
-                    <input type="email" class="input-field" id="loginEmail" placeholder="seu@email.com">
+                    <input type="email" class="input-field" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
                 </div>
+                
                 <div class="input-group">
                     <label><i class="fas fa-lock"></i> Senha</label>
-                    <input type="password" class="input-field" id="loginSenha" placeholder="Sua senha">
+                    <input type="password" class="input-field" id="loginSenha" placeholder="Sua senha" autocomplete="current-password">
                 </div>
-                <button class="btn btn-primary" onclick="app.fazerLogin()"><i class="fas fa-sign-in-alt"></i> ENTRAR</button>
-                <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')"><i class="fas fa-user-plus"></i> Criar Conta</button>
-                <button class="btn btn-outline" onclick="app.mostrarTela('recuperarSenhaScreen')"><i class="fas fa-key"></i> Esqueci a Senha</button>
+                
+                <button class="btn btn-primary" onclick="app.fazerLogin()">
+                    <i class="fas fa-sign-in-alt"></i> ENTRAR
+                </button>
+                
+                <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')">
+                    <i class="fas fa-user-plus"></i> Criar Conta
+                </button>
+                
+                <button class="btn btn-outline" onclick="app.mostrarTela('recuperarSenhaScreen')">
+                    <i class="fas fa-key"></i> Esqueci a Senha
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- CADASTRO -->
+    <!-- ===== TELA DE CADASTRO ===== -->
     <div class="screen" id="cadastroScreen">
         <div class="screen-header">
-            <button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button>
+            <button class="btn-voltar" onclick="app.mostrarTela('loginScreen')">
+                <i class="fas fa-arrow-left"></i>
+            </button>
             <h2>Criar Conta</h2>
         </div>
+        
         <div class="card">
             <div id="etapa1">
                 <h3><i class="fas fa-user-circle"></i> Dados Pessoais</h3>
                 <div class="input-group"><label>Nome Completo</label><input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo"></div>
                 <div class="input-group"><label>Email</label><input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com"></div>
                 <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999"></div>
-                <div class="input-group"><label>CPF</label><input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00"></div>
+                <div class="input-group"><label>CPF</label><input type="text" class="input-field" id="cadCPF" placeholder="000.000.000-00" maxlength="14"></div>
                 <div class="input-group"><label>Senha</label><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres"></div>
                 <button class="btn btn-primary" onclick="app.proximaEtapa(2)">PRÓXIMO <i class="fas fa-arrow-right"></i></button>
             </div>
+            
             <div id="etapa2" style="display:none;">
                 <h3><i class="fas fa-tools"></i> Dados Profissionais</h3>
                 <div class="input-group"><label>Tipo de Conta</label><select class="input-field" id="cadTipo" onchange="app.toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
@@ -104,6 +139,7 @@
                 </div>
             </div>
         </div>
+        
         <p style="text-align:center; font-size:12px; color:#999; margin-top:16px;">
             Ao se cadastrar, você concorda com nossos<br>
             <a href="termos.html" target="_blank" style="color:#F47920;">Termos de Uso</a> e 
@@ -111,7 +147,7 @@
         </p>
     </div>
 
-    <!-- RECUPERAR SENHA -->
+    <!-- ===== RECUPERAR SENHA ===== -->
     <div class="screen" id="recuperarSenhaScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -119,8 +155,8 @@
         </div>
         <div class="card">
             <div style="text-align:center; margin-bottom: 24px;">
-                <i class="fas fa-lock" style="font-size: 60px; color: #F47920;"></i>
-                <h3 style="margin-top: 16px; color: #1A3A5C;">Esqueceu sua senha?</h3>
+                <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 16px;">
+                <h3 style="color: #1A3A5C;">Esqueceu sua senha?</h3>
                 <p style="color: #666; font-size: 14px; margin-top: 8px;">
                     Digite seu email cadastrado que enviaremos um link para redefinir sua senha.
                 </p>
@@ -145,11 +181,11 @@
         </div>
     </div>
 
-    <!-- HOME -->
+    <!-- ===== HOME ===== -->
     <div class="screen" id="homeScreen">
         <div class="card" style="background: linear-gradient(135deg, #1A3A5C, #2C5F8A); color: white; margin-bottom: 16px;">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="font-size: 40px;">👋</div>
+                <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width: 50px; height: 50px; border-radius: 12px;">
                 <div>
                     <div id="saudacao" style="color: white; font-size: 18px;">Bem-vindo!</div>
                     <div id="resumoTexto" style="font-size: 13px; opacity: 0.9;">Carregando...</div>
@@ -168,7 +204,7 @@
         <div id="redeContainer" class="feed-container" style="display:none;"><div class="loading">Carregando rede...</div></div>
     </div>
 
-    <!-- BUSCA -->
+    <!-- ===== BUSCA ===== -->
     <div class="screen" id="buscaScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -187,7 +223,7 @@
         <div id="buscaResultados" class="feed-container"></div>
     </div>
 
-    <!-- PERFIL PÚBLICO -->
+    <!-- ===== PERFIL PÚBLICO ===== -->
     <div class="screen" id="perfilPublicoScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -196,7 +232,7 @@
         <div id="perfilPublicoConteudo"></div>
     </div>
 
-    <!-- MEU PERFIL -->
+    <!-- ===== MEU PERFIL ===== -->
     <div class="screen" id="meuPerfilScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -205,7 +241,9 @@
         <div class="profile-header-container">
             <div class="profile-cover"></div>
             <div class="profile-avatar-container">
-                <div class="profile-avatar" onclick="document.getElementById('inputFoto').click()"><i class="fas fa-camera"></i></div>
+                <div class="profile-avatar" onclick="document.getElementById('inputFoto').click()">
+                    <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                </div>
                 <input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="app.uploadFoto(event)">
             </div>
         </div>
@@ -224,7 +262,7 @@
         <button class="btn btn-danger" onclick="app.sair()">SAIR</button>
     </div>
 
-    <!-- CHAT -->
+    <!-- ===== CHAT ===== -->
     <div class="screen" id="chatScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -237,7 +275,7 @@
         </div>
     </div>
 
-    <!-- NOTIFICAÇÕES -->
+    <!-- ===== NOTIFICAÇÕES ===== -->
     <div class="screen" id="notificacoesScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -246,7 +284,7 @@
         <div id="notificacoesContainer"></div>
     </div>
 
-    <!-- PUBLICAR VAGA -->
+    <!-- ===== PUBLICAR VAGA ===== -->
     <div class="screen" id="publicarVagaScreen">
         <div class="screen-header">
             <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
@@ -278,7 +316,7 @@
         </div>
     </div>
 
-    <!-- BOTTOM NAV -->
+    <!-- ===== BOTTOM NAV ===== -->
     <nav class="bottom-nav" id="bottomNav">
         <button class="nav-item active" data-screen="homeScreen" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-home"></i><span>Início</span></button>
         <button class="nav-item" data-screen="buscaScreen" onclick="app.mostrarTela('buscaScreen')"><i class="fas fa-search"></i><span>Buscar</span></button>
@@ -289,6 +327,7 @@
 
 </div>
 
+<!-- Scripts -->
 <script src="js/firebase-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/database.js"></script>
