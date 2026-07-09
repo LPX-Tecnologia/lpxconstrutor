@@ -4,198 +4,507 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Termos de Uso - LPXConstrutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #1A3A5C;
+            --secondary: #F47920;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --dark: #1F2937;
+            --gray: #6B7280;
+            --light: #F3F4F6;
+            --white: #FFF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.8;
+            padding: 0;
+        }
+        
+        .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 40px 20px;
-            color: #333;
-            line-height: 1.6;
+            padding: 20px;
         }
-        h1 { color: #1A3A5C; text-align: center; }
-        h2 { color: #F47920; margin-top: 30px; }
-        h3 { color: #1A3A5C; }
-        .last-update { text-align: center; color: #999; font-size: 14px; margin-bottom: 30px; }
-        .important { background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0; }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary), #2C5F8A);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header img {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+        
+        h2 {
+            color: var(--primary);
+            font-size: 22px;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        h2:first-child {
+            margin-top: 0;
+        }
+        
+        h3 {
+            color: var(--secondary);
+            font-size: 18px;
+            margin: 20px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin: 10px 0 20px 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .alert {
+            background: #FEF3C7;
+            border-left: 4px solid var(--warning);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .alert-danger {
+            background: #FEE2E2;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .alert-success {
+            background: #D1FAE5;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-info {
+            background: #E0F2FE;
+            border-left: 4px solid #3B82F6;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+            font-size: 13px;
+        }
+        
+        .btn-voltar {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            margin: 20px 0;
+            transition: 0.3s;
+        }
+        
+        .btn-voltar:hover {
+            background: #E06B1A;
+            transform: translateY(-2px);
+        }
+        
+        .indice {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .indice a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .indice a:hover {
+            color: var(--secondary);
+        }
+        
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px 15px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<h1>📋 TERMOS DE USO</h1>
-<h1>LPXCONSTRUTOR</h1>
-<p class="last-update">Última atualização: 08 de Julho de 2026</p>
-
-<div class="important">
-    <strong>⚠️ IMPORTANTE:</strong> Leia atentamente estes Termos de Uso antes de utilizar o aplicativo LPXConstrutor. Ao se cadastrar e utilizar nossos serviços, você concorda com todos os termos aqui estabelecidos.
+<div class="header">
+    <h1>📋 TERMOS DE USO</h1>
+    <h1>LPXCONSTRUTOR</h1>
+    <p>Rede Profissional da Construção Civil</p>
+    <p style="margin-top:10px;">Última atualização: 09 de Julho de 2026</p>
 </div>
 
-<h2>1. ACEITAÇÃO DOS TERMOS</h2>
-<p>Ao acessar e usar o LPXConstrutor ("Aplicativo"), você concorda em cumprir estes Termos de Uso ("Termos"). Se você não concordar com qualquer parte destes termos, não deverá utilizar o Aplicativo.</p>
-<p>O LPXConstrutor é uma plataforma de conexão entre profissionais da construção civil ("Profissionais") e empreiteiros/contratantes ("Empreiteiros").</p>
+<div class="container">
+    <div class="content">
 
-<h2>2. DEFINIÇÕES</h2>
-<ul>
-    <li><strong>Plataforma:</strong> Aplicativo LPXConstrutor, incluindo todas as suas funcionalidades.</li>
-    <li><strong>Usuário:</strong> Qualquer pessoa que se cadastre na Plataforma.</li>
-    <li><strong>Profissional:</strong> Usuário cadastrado como prestador de serviços da construção civil.</li>
-    <li><strong>Empreiteiro:</strong> Usuário cadastrado como contratante de serviços.</li>
-    <li><strong>Vaga:</strong> Oportunidade de trabalho publicada por um Empreiteiro.</li>
-    <li><strong>Rede:</strong> Conexão entre usuários dentro da Plataforma.</li>
-</ul>
+        <div class="alert alert-info">
+            <strong>⚠️ LEIA ATENTAMENTE:</strong> Ao se cadastrar e utilizar o aplicativo LPXConstrutor, você concorda integralmente com todos os termos e condições aqui estabelecidos. Caso não concorde com qualquer parte, não utilize o aplicativo.
+        </div>
 
-<h2>3. CADASTRO E CONTA</h2>
-<h3>3.1. Requisitos para Cadastro</h3>
-<ul>
-    <li>Ter idade mínima de 18 anos</li>
-    <li>Fornecer informações verdadeiras e completas</li>
-    <li>Manter seus dados atualizados</li>
-    <li>Ser responsável pela segurança de sua senha</li>
-</ul>
+        <!-- ÍNDICE -->
+        <div class="indice">
+            <h3>📑 Índice</h3>
+            <ol>
+                <li><a href="#aceitacao">Aceitação dos Termos</a></li>
+                <li><a href="#definicoes">Definições</a></li>
+                <li><a href="#cadastro">Cadastro e Conta</a></li>
+                <li><a href="#servicos">Serviços Oferecidos</a></li>
+                <li><a href="#regras">Regras de Uso e Conduta</a></li>
+                <li><a href="#imagem">Direitos de Imagem</a></li>
+                <li><a href="#privacidade">Privacidade e Proteção de Dados</a></li>
+                <li><a href="#seguranca">Segurança e Responsabilidades</a></li>
+                <li><a href="#avaliacoes">Avaliações e Reputação</a></li>
+                <li><a href="#propriedade">Propriedade Intelectual</a></li>
+                <li><a href="#limitacao">Limitação de Responsabilidade</a></li>
+                <li><a href="#penalidades">Penalidades e Suspensão</a></li>
+                <li><a href="#alteracoes">Alterações dos Termos</a></li>
+                <li><a href="#legislacao">Legislação Aplicável</a></li>
+                <li><a href="#contato">Contato</a></li>
+            </ol>
+        </div>
 
-<h3>3.2. Responsabilidades do Usuário</h3>
-<ul>
-    <li>Não compartilhar sua conta com terceiros</li>
-    <li>Notificar imediatamente sobre uso não autorizado</li>
-    <li>Não criar múltiplas contas</li>
-    <li>Não usar identidade falsa</li>
-</ul>
+        <!-- 1. ACEITAÇÃO -->
+        <h2 id="aceitacao">1. ACEITAÇÃO DOS TERMOS</h2>
+        <p>Ao acessar, cadastrar-se ou utilizar o aplicativo LPXConstrutor ("Plataforma"), você ("Usuário") concorda em cumprir integralmente estes Termos de Uso, bem como todas as leis e regulamentos aplicáveis.</p>
+        <p>O LPXConstrutor é uma plataforma digital de intermediação que conecta <strong>Profissionais da Construção Civil</strong> (prestadores de serviços) com <strong>Empreiteiros</strong> (contratantes), não constituindo vínculo empregatício entre as partes ou com a plataforma.</p>
 
-<h2>4. SERVIÇOS OFERECIDOS</h2>
-<h3>4.1. Para Profissionais</h3>
-<ul>
-    <li>Criação de perfil profissional</li>
-    <li>Busca por vagas de trabalho</li>
-    <li>Candidatura a vagas publicadas</li>
-    <li>Chat com empreiteiros</li>
-    <li>Recebimento de avaliações</li>
-    <li>Conexão com outros profissionais</li>
-</ul>
+        <!-- 2. DEFINIÇÕES -->
+        <h2 id="definicoes">2. DEFINIÇÕES</h2>
+        <ul>
+            <li><strong>Plataforma:</strong> Aplicativo LPXConstrutor e todos os seus serviços.</li>
+            <li><strong>Usuário:</strong> Pessoa física maior de 18 anos cadastrada na Plataforma.</li>
+            <li><strong>Profissional:</strong> Usuário cadastrado como prestador de serviços da construção civil.</li>
+            <li><strong>Empreiteiro:</strong> Usuário cadastrado como contratante de serviços.</li>
+            <li><strong>Vaga:</strong> Oportunidade de trabalho publicada por um Empreiteiro.</li>
+            <li><strong>Rede:</strong> Conexão estabelecida entre usuários dentro da Plataforma.</li>
+            <li><strong>Chat:</strong> Sistema de mensagens interno da Plataforma.</li>
+        </ul>
 
-<h3>4.2. Para Empreiteiros</h3>
-<ul>
-    <li>Publicação de vagas de trabalho</li>
-    <li>Busca por profissionais qualificados</li>
-    <li>Chat com profissionais</li>
-    <li>Avaliação de profissionais</li>
-    <li>Gestão de rede de contatos</li>
-    <li>Contratação de serviços</li>
-</ul>
+        <!-- 3. CADASTRO -->
+        <h2 id="cadastro">3. CADASTRO E CONTA</h2>
+        
+        <h3>3.1. Requisitos para Cadastro</h3>
+        <ul>
+            <li>Ser pessoa física com idade mínima de <strong>18 anos</strong>;</li>
+            <li>Fornecer informações <strong>verdadeiras, precisas e completas</strong>;</li>
+            <li>Manter seus dados <strong>sempre atualizados</strong>;</li>
+            <li>Ser <strong>responsável</strong> pela segurança de sua senha de acesso;</li>
+            <li>Não compartilhar sua conta com terceiros;</li>
+            <li>Cada CPF pode ter apenas <strong>uma conta</strong> na Plataforma.</li>
+        </ul>
 
-<h2>5. REGRAS DE USO</h2>
-<h3>5.1. Condutas Proibidas</h3>
-<ul>
-    <li>Publicar conteúdo falso, enganoso ou fraudulento</li>
-    <li>Assediar, ameaçar ou discriminar outros usuários</li>
-    <li>Usar linguagem ofensiva ou inadequada</li>
-    <li>Publicar vagas fantasmas ou inexistentes</li>
-    <li>Combinar contratações para burlar a plataforma</li>
-    <li>Usar a plataforma para fins ilegais</li>
-    <li>Enviar spam ou propaganda não solicitada</li>
-    <li>Coletar dados de outros usuários sem autorização</li>
-    <li>Tentar invadir ou comprometer a segurança da plataforma</li>
-</ul>
+        <h3>3.2. Veracidade das Informações</h3>
+        <p>O Usuário declara que todas as informações fornecidas no cadastro são verdadeiras, respondendo civil e criminalmente por quaisquer falsidades ou omissões. A Plataforma se reserva o direito de suspender ou excluir contas com informações comprovadamente falsas.</p>
 
-<h3>5.2. Publicação de Vagas</h3>
-<ul>
-    <li>Vagas devem ser reais e com informações precisas</li>
-    <li>O valor anunciado deve ser o efetivamente pago</li>
-    <li>É proibido publicar vagas com informações discriminatórias</li>
-    <li>Vagas devem estar relacionadas à construção civil</li>
-</ul>
+        <h3>3.3. Segurança da Conta</h3>
+        <p>O Usuário é o único responsável por manter a confidencialidade de sua senha. Qualquer atividade realizada através de sua conta será de sua inteira responsabilidade. Em caso de uso não autorizado, o Usuário deve notificar imediatamente a Plataforma.</p>
 
-<h2>6. RESPONSABILIDADES</h2>
-<h3>6.1. Da Plataforma</h3>
-<p>O LPXConstrutor atua APENAS como intermediário, conectando profissionais e empreiteiros. NÃO nos responsabilizamos por:</p>
-<ul>
-    <li>Acordos financeiros entre as partes</li>
-    <li>Qualidade do serviço prestado</li>
-    <li>Pagamentos ou inadimplência</li>
-    <li>Acidentes de trabalho</li>
-    <li>Relações trabalhistas entre as partes</li>
-    <li>Veracidade das informações fornecidas pelos usuários</li>
-</ul>
+        <!-- 4. SERVIÇOS -->
+        <h2 id="servicos">4. SERVIÇOS OFERECIDOS</h2>
+        
+        <h3>4.1. Para Profissionais</h3>
+        <ul>
+            <li>Criação de perfil profissional com foto e habilidades;</li>
+            <li>Busca por vagas de trabalho na construção civil;</li>
+            <li>Candidatura a vagas publicadas por empreiteiros;</li>
+            <li>Chat interno para comunicação com empreiteiros;</li>
+            <li>Recebimento e envio de avaliações;</li>
+            <li>Construção de rede de contatos profissionais;</li>
+            <li>Link direto para WhatsApp.</li>
+        </ul>
 
-<h3>6.2. Dos Usuários</h3>
-<ul>
-    <li>Profissionais são responsáveis por sua qualificação técnica</li>
-    <li>Empreiteiros são responsáveis pelas condições de trabalho</li>
-    <li>Ambas as partes são responsáveis por acordos financeiros</li>
-    <li>Cada usuário é responsável por suas avaliações e comentários</li>
-</ul>
+        <h3>4.2. Para Empreiteiros</h3>
+        <ul>
+            <li>Publicação de vagas de trabalho;</li>
+            <li>Busca por profissionais qualificados por profissão;</li>
+            <li>Visualização de perfis completos com avaliações;</li>
+            <li>Chat interno para comunicação com profissionais;</li>
+            <li>Avaliação de profissionais contratados;</li>
+            <li>Gestão de rede de profissionais de confiança;</li>
+            <li>Contratação direta com registro na plataforma.</li>
+        </ul>
 
-<h2>7. AVALIAÇÕES E REPUTAÇÃO</h2>
-<ul>
-    <li>Avaliações devem refletir experiências reais</li>
-    <li>É proibido combinar avaliações falsas</li>
-    <li>A plataforma se reserva o direito de remover avaliações suspeitas</li>
-    <li>Avaliações ofensivas ou difamatórias serão removidas</li>
-</ul>
+        <!-- 5. REGRAS DE USO -->
+        <h2 id="regras">5. REGRAS DE USO E CONDUTA</h2>
+        
+        <h3>5.1. Condutas Permitidas</h3>
+        <ul>
+            <li>Publicar vagas reais e legítimas de trabalho;</li>
+            <li>Candidatar-se a vagas compatíveis com sua qualificação;</li>
+            <li>Avaliar profissionais/empreiteiros com quem teve experiência real;</li>
+            <li>Comunicar-se de forma respeitosa e profissional;</li>
+            <li>Manter seu perfil atualizado com informações verdadeiras.</li>
+        </ul>
 
-<h2>8. PRIVACIDADE E DADOS</h2>
-<p>Seus dados são tratados conforme nossa Política de Privacidade. Resumidamente:</p>
-<ul>
-    <li>Dados pessoais são protegidos</li>
-    <li>Não vendemos seus dados</li>
-    <li>Informações de contato (WhatsApp) são visíveis para outros usuários</li>
-    <li>Você pode solicitar a exclusão de seus dados a qualquer momento</li>
-</ul>
+        <h3>5.2. Condutas PROIBIDAS</h3>
+        <div class="alert alert-danger">
+            <strong>🚫 É EXPRESSAMENTE PROIBIDO:</strong>
+        </div>
+        <ol>
+            <li>Publicar conteúdo falso, enganoso ou fraudulento;</li>
+            <li>Criar perfis falsos ou usar identidade de terceiros;</li>
+            <li>Assediar, ameaçar, intimidar ou discriminar outros usuários;</li>
+            <li>Usar linguagem ofensiva, obscena ou inadequada;</li>
+            <li>Publicar vagas fantasmas ou inexistentes;</li>
+            <li>Combinar contratações para burlar a plataforma;</li>
+            <li>Usar a plataforma para fins ilegais ou criminosos;</li>
+            <li>Enviar spam, propaganda não solicitada ou correntes;</li>
+            <li>Coletar dados de outros usuários sem autorização;</li>
+            <li>Tentar invadir, hackear ou comprometer a segurança da plataforma;</li>
+            <li>Publicar conteúdo pornográfico, violento ou perturbador;</li>
+            <li>Praticar qualquer forma de discriminação por raça, cor, religião, gênero ou orientação sexual;</li>
+            <li>Usar a plataforma para atividades políticas ou eleitorais;</li>
+            <li>Publicar informações de contato de terceiros sem autorização;</li>
+            <li>Cobrar taxas ou comissões de outros usuários em nome da plataforma.</li>
+        </ol>
 
-<h2>9. PROPRIEDADE INTELECTUAL</h2>
-<ul>
-    <li>O nome LPXConstrutor e sua marca são propriedade exclusiva</li>
-    <li>Conteúdo publicado pelos usuários é de sua responsabilidade</li>
-    <li>Não é permitido copiar ou reproduzir a plataforma</li>
-</ul>
+        <!-- 6. DIREITOS DE IMAGEM -->
+        <h2 id="imagem">6. DIREITOS DE IMAGEM</h2>
+        
+        <h3>6.1. Autorização de Uso de Imagem</h3>
+        <p>Ao cadastrar-se na Plataforma e fazer upload de fotos (perfil, serviços, portfólio), o Usuário:</p>
+        <ul>
+            <li><strong>Concede licença gratuita</strong> à Plataforma para exibir suas imagens dentro do aplicativo;</li>
+            <li><strong>Autoriza</strong> que outros usuários visualizem suas fotos de perfil e portfólio;</li>
+            <li><strong>Declara ser o titular</strong> dos direitos sobre as imagens enviadas;</li>
+            <li><strong>Assume total responsabilidade</strong> por qualquer violação de direitos de terceiros;</li>
+            <li><strong>Reconhece</strong> que imagens de serviços executados podem ser usadas para avaliação.</li>
+        </ul>
 
-<h2>10. SUSPENSÃO E EXCLUSÃO</h2>
-<p>A plataforma se reserva o direito de:</p>
-<ul>
-    <li>Suspender ou excluir contas que violem estes termos</li>
-    <li>Remover conteúdo inadequado sem aviso prévio</li>
-    <li>Bloquear usuários que apresentem comportamento abusivo</li>
-    <li>Cancelar vagas que violem as regras</li>
-</ul>
+        <h3>6.2. Restrições de Uso de Imagens</h3>
+        <ul>
+            <li>É proibido fazer upload de fotos de terceiros sem autorização expressa;</li>
+            <li>É proibido usar fotos da Plataforma para fins comerciais sem autorização;</li>
+            <li>Imagens de obras devem ser do próprio trabalho do Profissional;</li>
+            <li>A Plataforma não reivindica propriedade sobre as imagens dos usuários;</li>
+            <li>O Usuário pode solicitar a remoção de suas imagens a qualquer momento.</li>
+        </ul>
 
-<h2>11. ISENÇÃO DE GARANTIAS</h2>
-<p>O LPXConstrutor é fornecido "como está", sem garantias de:</p>
-<ul>
-    <li>Disponibilidade ininterrupta</li>
-    <li>Ausência de erros ou falhas</li>
-    <li>Resultados específicos de contratação</li>
-    <li>Veracidade absoluta de todas as informações</li>
-</ul>
+        <h3>6.3. Direitos Cedidos</h3>
+        <p>Os seguintes direitos são cedidos pelo Usuário à Plataforma:</p>
+        <ul>
+            <li><strong>Direito de exibição:</strong> A Plataforma pode exibir as imagens no perfil do usuário;</li>
+            <li><strong>Direito de armazenamento:</strong> As imagens ficam armazenadas nos servidores da Plataforma;</li>
+            <li><strong>Direito de moderação:</strong> A Plataforma pode remover imagens que violem os termos;</li>
+            <li><strong>Direito de uso estatístico:</strong> Imagens podem ser usadas para melhorar o algoritmo.</li>
+        </ul>
 
-<h2>12. LIMITAÇÃO DE RESPONSABILIDADE</h2>
-<p>Em nenhuma circunstância o LPXConstrutor será responsável por:</p>
-<ul>
-    <li>Danos diretos ou indiretos decorrentes do uso da plataforma</li>
-    <li>Perdas financeiras entre usuários</li>
-    <li>Problemas trabalhistas entre as partes</li>
-    <li>Danos morais ou materiais</li>
-</ul>
+        <div class="alert alert-success">
+            <strong>✅ GARANTIA:</strong> A Plataforma NÃO vende, NÃO licencia e NÃO transfere as imagens dos usuários para terceiros. As imagens são usadas EXCLUSIVAMENTE dentro da Plataforma.
+        </div>
 
-<h2>13. MODIFICAÇÕES DOS TERMOS</h2>
-<p>Reservamo-nos o direito de modificar estes termos a qualquer momento. Mudanças significativas serão comunicadas aos usuários por email ou notificação no aplicativo.</p>
+        <!-- 7. PRIVACIDADE -->
+        <h2 id="privacidade">7. PRIVACIDADE E PROTEÇÃO DE DADOS</h2>
+        
+        <h3>7.1. Dados Coletados</h3>
+        <ul>
+            <li>Nome completo;</li>
+            <li>Endereço de email;</li>
+            <li>Número de telefone (WhatsApp);</li>
+            <li>CPF (não visível publicamente);</li>
+            <li>Profissão e experiência profissional;</li>
+            <li>Fotos de perfil e portfólio;</li>
+            <li>Localização (para funcionalidade do mapa);</li>
+            <li>Mensagens trocadas no chat.</li>
+        </ul>
 
-<h2>14. LEI APLICÁVEL</h2>
-<p>Estes termos são regidos pelas leis da República Federativa do Brasil. Qualquer disputa será resolvida no foro da comarca da sede da empresa.</p>
+        <h3>7.2. Uso dos Dados</h3>
+        <ul>
+            <li>Conectar profissionais e empreiteiros;</li>
+            <li>Exibir perfis na Plataforma;</li>
+            <li>Enviar notificações relevantes;</li>
+            <li>Melhorar a experiência do usuário;</li>
+            <li>Cumprir obrigações legais.</li>
+        </ul>
 
-<h2>15. CONTATO</h2>
-<p>Para dúvidas sobre estes termos, entre em contato:</p>
-<ul>
-    <li>📧 Email: suporte@lpxconstrutor.com.br</li>
-    <li>💬 WhatsApp: (47) 99999-9999</li>
-    <li>📍 Endereço: [Seu endereço completo]</li>
-</ul>
+        <h3>7.3. Proteção de Dados (LGPD)</h3>
+        <p>A Plataforma está em conformidade com a <strong>Lei Geral de Proteção de Dados (Lei 13.709/2018)</strong>. O Usuário tem direito a:</p>
+        <ul>
+            <li>Acessar seus dados a qualquer momento;</li>
+            <li>Corrigir dados incompletos ou desatualizados;</li>
+            <li>Solicitar a exclusão de seus dados;</li>
+            <li>Revogar o consentimento de uso;</li>
+            <li>Portabilidade dos dados.</li>
+        </ul>
 
-<div class="important" style="margin-top: 40px;">
-    <strong>✅ AO SE CADASTRAR NO LPXCONSTRUTOR, VOCÊ DECLARA QUE LEU, ENTENDEU E CONCORDA COM TODOS OS TERMOS ACIMA.</strong>
+        <!-- 8. SEGURANÇA -->
+        <h2 id="seguranca">8. SEGURANÇA E RESPONSABILIDADES</h2>
+        
+        <h3>8.1. Segurança da Plataforma</h3>
+        <ul>
+            <li>Dados são armazenados no Firebase (Google Cloud) com criptografia;</li>
+            <li>Senhas são protegidas com hash (Firebase Authentication);</li>
+            <li>Conexões são criptografadas (HTTPS/SSL);</li>
+            <li>Acesso a dados sensíveis é restrito e controlado;</li>
+            <li>Backups são realizados regularmente.</li>
+        </ul>
+
+        <h3>8.2. Responsabilidade do Usuário</h3>
+        <ul>
+            <li>Manter seu dispositivo seguro (antivírus, senha de tela);</li>
+            <li>Não compartilhar sua senha;</li>
+            <li>Não usar redes Wi-Fi públicas para acessar a Plataforma;</li>
+            <li>Verificar a identidade de quem você está contratando;</li>
+            <li>Reportar atividades suspeitas imediatamente.</li>
+        </ul>
+
+        <h3>8.3. Segurança nas Contratações</h3>
+        <div class="alert alert-warning">
+            <strong>⚠️ ATENÇÃO:</strong> A Plataforma é apenas um intermediário. Toda negociação, pagamento e execução de serviços é de responsabilidade EXCLUSIVA das partes envolvidas.
+        </div>
+        <ul>
+            <li>Verifique referências antes de contratar;</li>
+            <li>Formalize acordos por escrito;</li>
+            <li>Não faça pagamentos antecipados sem garantias;</li>
+            <li>Utilize o chat da Plataforma para registrar conversas;</li>
+            <li>Em caso de problemas, busque orientação jurídica.</li>
+        </ul>
+
+        <!-- 9. AVALIAÇÕES -->
+        <h2 id="avaliacoes">9. AVALIAÇÕES E REPUTAÇÃO</h2>
+        <ul>
+            <li>Avaliações devem refletir experiências <strong>REAIS</strong> de trabalho;</li>
+            <li>É proibido combinar ou trocar avaliações falsas;</li>
+            <li>Avaliações ofensivas, difamatórias ou caluniosas serão removidas;</li>
+            <li>A Plataforma se reserva o direito de moderar avaliações;</li>
+            <li>O Usuário avaliado pode contestar avaliações injustas;</li>
+            <li>Avaliações fraudulentas resultam em suspensão da conta.</li>
+        </ul>
+
+        <!-- 10. PROPRIEDADE INTELECTUAL -->
+        <h2 id="propriedade">10. PROPRIEDADE INTELECTUAL</h2>
+        <ul>
+            <li>O nome <strong>LPXConstrutor</strong>, logotipo e identidade visual são propriedade exclusiva da Plataforma;</li>
+            <li>O código-fonte, design e funcionalidades são protegidos por direitos autorais;</li>
+            <li>É proibido copiar, reproduzir ou engenharia reversa da Plataforma;</li>
+            <li>Conteúdo publicado pelos usuários pertence aos mesmos;</li>
+            <li>A Plataforma pode usar feedback para melhorias.</li>
+        </ul>
+
+        <!-- 11. LIMITAÇÃO -->
+        <h2 id="limitacao">11. LIMITAÇÃO DE RESPONSABILIDADE</h2>
+        <p>A Plataforma <strong>NÃO SE RESPONSABILIZA</strong> por:</p>
+        <ol>
+            <li>Acordos financeiros entre as partes;</li>
+            <li>Qualidade ou conclusão de serviços contratados;</li>
+            <li>Pagamentos, inadimplência ou calotes;</li>
+            <li>Acidentes de trabalho ou danos materiais;</li>
+            <li>Relações trabalhistas, vínculo empregatício ou obrigações fiscais;</li>
+            <li>Veracidade absoluta de informações fornecidas por usuários;</li>
+            <li>Danos morais, materiais ou lucros cessantes;</li>
+            <li>Indisponibilidade temporária da Plataforma;</li>
+            <li>Conteúdo publicado por terceiros;</li>
+            <li>Vazamento de dados por falha do usuário.</li>
+        </ol>
+
+        <!-- 12. PENALIDADES -->
+        <h2 id="penalidades">12. PENALIDADES E SUSPENSÃO</h2>
+        <p>A Plataforma se reserva o direito de:</p>
+        <ul>
+            <li><strong>Advertência:</strong> Notificação por violação leve;</li>
+            <li><strong>Suspensão temporária:</strong> Bloqueio por 7 a 30 dias;</li>
+            <li><strong>Suspensão permanente:</strong> Exclusão definitiva da conta;</li>
+            <li><strong>Remoção de conteúdo:</strong> Vagas, avaliações ou fotos;</li>
+            <li><strong>Bloqueio de IP:</strong> Impedir novo cadastro.</li>
+        </ul>
+
+        <!-- 13. ALTERAÇÕES -->
+        <h2 id="alteracoes">13. ALTERAÇÕES DOS TERMOS</h2>
+        <ul>
+            <li>A Plataforma pode alterar estes termos a qualquer momento;</li>
+            <li>Alterações significativas serão comunicadas por email ou notificação;</li>
+            <li>O uso continuado da Plataforma após alterações implica aceitação;</li>
+            <li>Recomenda-se revisar os termos periodicamente.</li>
+        </ul>
+
+        <!-- 14. LEGISLAÇÃO -->
+        <h2 id="legislacao">14. LEGISLAÇÃO APLICÁVEL</h2>
+        <p>Estes Termos são regidos pelas leis da <strong>República Federativa do Brasil</strong>, incluindo:</p>
+        <ul>
+            <li><strong>Código Civil Brasileiro</strong> (Lei 10.406/2002);</li>
+            <li><strong>Código de Defesa do Consumidor</strong> (Lei 8.078/1990);</li>
+            <li><strong>Marco Civil da Internet</strong> (Lei 12.965/2014);</li>
+            <li><strong>LGPD</strong> (Lei 13.709/2018);</li>
+            <li><strong>Código Penal Brasileiro</strong> (Decreto-Lei 2.848/1940).</li>
+        </ul>
+        <p>Qualquer disputa será resolvida no foro da comarca de [SUA CIDADE/ESTADO], com exclusão de qualquer outro.</p>
+
+        <!-- 15. CONTATO -->
+        <h2 id="contato">15. CONTATO E SUPORTE</h2>
+        <p>Para dúvidas, denúncias ou solicitações:</p>
+        <ul>
+            <li>📧 <strong>Email:</strong> lpxdesenvolvimento@gmail.com</li>
+            <li>📱 <strong>WhatsApp:</strong> (47) 99999-9999</li>
+            <li>⏰ <strong>Horário:</strong> Segunda a Sexta, 9h às 18h</li>
+        </ul>
+
+        <div class="alert alert-success" style="margin-top:30px;">
+            <strong>✅ DECLARAÇÃO DE ACEITE:</strong><br>
+            AO SE CADASTRAR E UTILIZAR O APLICATIVO LPXCONSTRUTOR, VOCÊ DECLARA QUE LEU, ENTENDEU E CONCORDA INTEGRALMENTE COM TODOS OS TERMOS E CONDIÇÕES AQUI ESTABELECIDOS, SOB PENA DAS SANÇÕES LEGAIS CABÍVEIS.
+        </div>
+
+        <div style="text-align:center; margin-top:30px;">
+            <a href="index.html" class="btn-voltar">🏗️ VOLTAR PARA O APLICATIVO</a>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <p>© 2026 LPXConstrutor. Todos os direitos reservados.</p>
+        <p>Desenvolvido por LPX Tecnologia</p>
+    </div>
 </div>
-
-<p style="text-align: center; margin-top: 40px; color: #999;">
-    © 2026 LPXConstrutor. Todos os direitos reservados.
-</p>
 
 </body>
 </html>
