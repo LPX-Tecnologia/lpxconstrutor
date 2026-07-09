@@ -153,34 +153,76 @@
             <button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button>
             <h2>Recuperar Senha</h2>
         </div>
-        <div class="card">
-            <div style="text-align:center; margin-bottom: 24px;">
-                <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 16px;">
-                <h3 style="color: #1A3A5C;">Esqueceu sua senha?</h3>
-                <p style="color: #666; font-size: 14px; margin-top: 8px;">
-                    Digite seu email cadastrado que enviaremos um link para redefinir sua senha.
-                </p>
+        
+        <!-- PASSO 1: Solicitar código -->
+        <div id="recPasso1">
+            <div class="card">
+                <div style="text-align:center; margin-bottom: 24px;">
+                    <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 16px;">
+                    <h3 style="color: #1A3A5C;">Esqueceu sua senha?</h3>
+                    <p style="color: #666; font-size: 14px; margin-top: 8px;">
+                        Digite seu email cadastrado para receber um código de recuperação.
+                    </p>
+                </div>
+                
+                <div class="input-group">
+                    <label><i class="fas fa-envelope"></i> Email cadastrado</label>
+                    <input type="email" class="input-field" id="recEmail" placeholder="seu@email.com">
+                </div>
+                
+                <button class="btn btn-primary" onclick="app.solicitarCodigo()">
+                    <i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO
+                </button>
+                
+                <div id="recStatus1" style="display:none; text-align:center; padding: 16px; margin-top: 16px; border-radius: 12px;">
+                    <div id="recIcon1" style="font-size: 40px; margin-bottom: 8px;"></div>
+                    <p id="recMsg1" style="font-weight: 600;"></p>
+                    <p id="recSub1" style="font-size: 13px; color: #666; margin-top: 4px;"></p>
+                    <div id="recCodigoMostrado" style="display:none; background:#1A3A5C; color:white; padding:16px; border-radius:8px; margin-top:12px; font-size:28px; font-weight:900; letter-spacing:8px;"></div>
+                </div>
             </div>
-            <div class="input-group">
-                <label><i class="fas fa-envelope"></i> Email cadastrado</label>
-                <input type="email" class="input-field" id="recEmail" placeholder="seu@email.com">
-            </div>
-            <button class="btn btn-primary" onclick="app.enviarRecuperacao()">
-                <i class="fas fa-paper-plane"></i> ENVIAR LINK DE RECUPERAÇÃO
-            </button>
-            <div id="recuperacaoStatus" style="display:none; text-align:center; padding: 16px; margin-top: 16px; border-radius: 12px;">
-                <div id="recuperacaoIcon" style="font-size: 40px; margin-bottom: 8px;"></div>
-                <p id="recuperacaoMensagem" style="font-weight: 600;"></p>
-                <p id="recuperacaoSubtexto" style="font-size: 13px; color: #666; margin-top: 4px;"></p>
-            </div>
+            
             <div style="background:#E0F2FE;padding:12px;border-radius:8px;margin-top:16px;text-align:left;font-size:13px;color:#1E40AF;">
                 <strong>📋 Dicas:</strong><br>
                 • Verifique a pasta <strong>SPAM</strong> ou <strong>Lixo eletrônico</strong><br>
-                • O email vem de: <strong>noreply@firebase.com</strong><br>
-                • O link expira em <strong>1 hora</strong><br>
-                • Se não chegar em 5 minutos, tente novamente
+                • O código expira em <strong>30 minutos</strong><br>
+                • Se o email não chegar, o código aparecerá na tela
             </div>
         </div>
+        
+        <!-- PASSO 2: Digitar código -->
+        <div id="recPasso2" style="display:none;">
+            <div class="card">
+                <div style="text-align:center; margin-bottom: 24px;">
+                    <i class="fas fa-key" style="font-size: 60px; color: #F47920;"></i>
+                    <h3 style="color: #1A3A5C; margin-top: 16px;">Digite o código</h3>
+                    <p style="color: #666; font-size: 14px;">
+                        Digite o código de 6 dígitos e sua nova senha.
+                    </p>
+                </div>
+                
+                <div class="input-group">
+                    <label><i class="fas fa-hashtag"></i> Código de 6 dígitos</label>
+                    <input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;">
+                </div>
+                
+                <div class="input-group">
+                    <label><i class="fas fa-lock"></i> Nova Senha</label>
+                    <input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <button class="btn btn-primary" onclick="app.verificarCodigo()">
+                    <i class="fas fa-check"></i> REDEFINIR SENHA
+                </button>
+                
+                <button class="btn btn-outline" onclick="app.voltarPasso1()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+                
+                <div id="recStatus2" style="display:none; text-align:center; padding: 16px; margin-top: 16px; border-radius: 12px;"></div>
+            </div>
+        </div>
+        
         <div style="text-align:center; margin-top: 20px;">
             <button class="btn btn-outline" onclick="app.mostrarTela('loginScreen')">
                 <i class="fas fa-arrow-left"></i> Voltar para o Login
