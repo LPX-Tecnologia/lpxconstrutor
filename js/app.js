@@ -8,18 +8,21 @@ window.app = {
         var t = document.getElementById(id); if(t) t.classList.add('active');
     },
     cadastrar: function(){}, proximaEtapa: function(){}, toggleProfissao: function(){},
-    recuperarSenha: function(){}, enviarRecuperacao: function(){}, sair: function(){},
-    buscarProfissionais: function(){}, verPerfil: function(){}, iniciarChat: function(){},
-    enviarMensagem: function(){}, salvarPerfil: function(){}, uploadFoto: function(){},
-    abrirTelaPublicacao: function(){}, publicarVagaApp: function(){}, candidatarVaga: function(){},
-    contratarProfissional: function(){}, adicionarNaRede: function(){}, removerDaRede: function(){},
-    avaliarUsuario: function(){}, mostrarNotificacoes: function(){}, mudarTab: function(){}
+    recuperarSenha: function(){}, enviarRecuperacao: function(){},
+    solicitarCodigo: function(){}, verificarCodigo: function(){}, voltarPasso1: function(){},
+    sair: function(){}, buscarProfissionais: function(){}, verPerfil: function(){},
+    iniciarChat: function(){}, enviarMensagem: function(){}, salvarPerfil: function(){},
+    uploadFoto: function(){}, abrirTelaPublicacao: function(){}, publicarVagaApp: function(){},
+    candidatarVaga: function(){}, contratarProfissional: function(){}, adicionarNaRede: function(){},
+    removerDaRede: function(){}, avaliarUsuario: function(){}, mostrarNotificacoes: function(){},
+    mudarTab: function(){}, carregarFeed: function(){}, carregarRede: function(){}
 };
 
 var App = function() {
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
     this.telaAtual = 'loginScreen';
+    this.recuperacaoUid = null;
     this.notificacoes = [];
     this.init();
 };
@@ -75,7 +78,13 @@ App.prototype.mostrarTela = function(id) {
     if (id === 'homeScreen') setTimeout(function() { self.carregarHome(); }, 100);
     if (id === 'meuPerfilScreen') setTimeout(function() { self.carregarMeuPerfil(); }, 100);
     if (id === 'buscaScreen') setTimeout(function() { self.buscarProfissionais(); }, 100);
-    if (id === 'recuperarSenhaScreen') self.abrirRecuperarSenha();
+    if (id === 'recuperarSenhaScreen') {
+        document.getElementById('recPasso1').style.display = 'block';
+        document.getElementById('recPasso2').style.display = 'none';
+        var emailEl = document.getElementById('recEmail');
+        if (emailEl) emailEl.value = '';
+        setTimeout(function() { if (emailEl) emailEl.focus(); }, 500);
+    }
     if (id === 'chatScreen') setTimeout(function() {
         var input = document.getElementById('chatInput');
         if (input) input.focus();
@@ -163,92 +172,150 @@ App.prototype.toggleProfissao = function() {
     if (g) g.style.display = t === 'profissional' ? 'block' : 'none';
 };
 
-// ===== RECUPERAR SENHA (CORRIGIDO) =====
-App.prototype.abrirRecuperarSenha = function() {
-    var emailEl = document.getElementById('recEmail');
-    if (emailEl) emailEl.value = '';
-    var statusEl = document.getElementById('recuperacaoStatus');
-    if (statusEl) statusEl.style.display = 'none';
-    this.mostrarTela('recuperarSenhaScreen');
-    setTimeout(function() { if (emailEl) emailEl.focus(); }, 500);
-};
-
-App.prototype.recuperarSenha = function() {
-    this.abrirRecuperarSenha();
-};
-
-App.prototype.enviarRecuperacao = function() {
+// ===== RECUPERAÇÃO DE SENHA =====
+App.prototype.solicitarCodigo = function() {
     var self = this;
     var email = document.getElementById('recEmail') ? document.getElementById('recEmail').value.trim() : '';
-    var statusEl = document.getElementById('recuperacaoStatus');
-    var iconEl = document.getElementById('recuperacaoIcon');
-    var msgEl = document.getElementById('recuperacaoMensagem');
-    var subEl = document.getElementById('recuperacaoSubtexto');
     
-    if (!email) { self.mostrarToast('❌ Digite seu email!', 'erro'); return; }
-    if (!email.includes('@') || !email.includes('.')) { self.mostrarToast('❌ Email inválido!', 'erro'); return; }
-    
-    if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.style.background = '#E0F2FE';
-        statusEl.style.border = '2px solid #7DD3FC';
-    }
-    if (iconEl) iconEl.textContent = '⏳';
-    if (msgEl) msgEl.textContent = 'Enviando email...';
-    if (subEl) subEl.textContent = 'Aguarde um momento';
-    
-    var btn = document.querySelector('#recuperarSenhaScreen .btn-primary');
-    if (btn) {
-        btn.disabled = true;
-        btn.style.opacity = '0.7';
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENVIANDO...';
+    if (!email || !email.includes('@')) {
+        self.mostrarToast('❌ Digite um email válido!', 'erro');
+        return;
     }
     
-    authService.recuperarSenha(email).then(function(r) {
-        if (statusEl) statusEl.style.display = 'block';
+    var status1 = document.getElementById('recStatus1');
+    var icon1 = document.getElementById('recIcon1');
+    var msg1 = document.getElementById('recMsg1');
+    var sub1 = document.getElementById('recSub1');
+    var codMostrado = document.getElementById('recCodigoMostrado');
+    
+    if (status1) { status1.style.display = 'block'; status1.style.background = '#E0F2FE'; status1.style.border = '2px solid #7DD3FC'; }
+    if (icon1) icon1.textContent = '⏳';
+    if (msg1) msg1.textContent = 'Gerando código...';
+    if (sub1) sub1.textContent = 'Aguarde um momento';
+    if (codMostrado) codMostrado.style.display = 'none';
+    
+    var btn = document.querySelector('#recPasso1 .btn-primary');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENVIANDO...'; }
+    
+    authService.solicitarCodigoRecuperacao(email).then(function(r) {
+        if (status1) status1.style.display = 'block';
         
         if (r.sucesso) {
-            if (statusEl) { statusEl.style.background = '#D1FAE5'; statusEl.style.border = '2px solid #6EE7B7'; }
-            if (iconEl) iconEl.textContent = '✅';
-            if (msgEl) { msgEl.textContent = 'Email enviado com sucesso!'; msgEl.style.color = '#065F46'; }
-            if (subEl) {
-                subEl.innerHTML = '📧 Enviamos para: <strong>' + email + '</strong><br>📋 Verifique sua caixa de entrada<br>📁 Se não encontrar, olhe a pasta SPAM';
-                subEl.style.color = '#065F46';
+            if (status1) { status1.style.background = '#D1FAE5'; status1.style.border = '2px solid #6EE7B7'; }
+            if (icon1) icon1.textContent = '✅';
+            if (msg1) { msg1.textContent = 'Código gerado com sucesso!'; msg1.style.color = '#065F46'; }
+            
+            if (r.codigo) {
+                if (sub1) sub1.textContent = 'O email não pôde ser enviado. Use o código abaixo:';
+                if (codMostrado) { 
+                    codMostrado.style.display = 'block'; 
+                    codMostrado.textContent = r.codigo;
+                }
+            } else {
+                if (sub1) sub1.textContent = '📧 Verifique seu email (e pasta SPAM) para o link de redefinição.';
+                if (codMostrado) codMostrado.style.display = 'none';
             }
-            self.mostrarToast('✅ Email enviado! Verifique também o SPAM', 'sucesso');
+            
+            self.recuperacaoUid = r.uid;
+            self.mostrarToast('✅ Código gerado!', 'sucesso');
             
             if (btn) {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                btn.innerHTML = '<i class="fas fa-check"></i> EMAIL ENVIADO!';
+                btn.innerHTML = '<i class="fas fa-check"></i> CÓDIGO ENVIADO!';
+                btn.style.background = '#10B981';
             }
+            
         } else {
-            if (statusEl) { statusEl.style.background = '#FEE2E2'; statusEl.style.border = '2px solid #FCA5A5'; }
-            if (iconEl) iconEl.textContent = '❌';
-            if (msgEl) { msgEl.textContent = r.erro || 'Erro ao enviar email'; msgEl.style.color = '#991B1B'; }
-            if (subEl) {
-                subEl.innerHTML = '🔍 Verifique se o email está correto<br>📝 ' + email + '<br>🔄 Tente novamente em alguns minutos';
-                subEl.style.color = '#991B1B';
-            }
-            self.mostrarToast('❌ ' + (r.erro || 'Email não encontrado'), 'erro');
+            if (status1) { status1.style.background = '#FEE2E2'; status1.style.border = '2px solid #FCA5A5'; }
+            if (icon1) icon1.textContent = '❌';
+            if (msg1) { msg1.textContent = r.erro; msg1.style.color = '#991B1B'; }
+            if (sub1) sub1.textContent = 'Verifique o email e tente novamente.';
+            self.mostrarToast('❌ ' + r.erro, 'erro');
             
-            if (btn) {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE';
-            }
+            if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE'; }
         }
     }).catch(function(error) {
-        if (statusEl) { statusEl.style.display = 'block'; statusEl.style.background = '#FEE2E2'; statusEl.style.border = '2px solid #FCA5A5'; }
-        if (iconEl) iconEl.textContent = '❌';
-        if (msgEl) { msgEl.textContent = 'Erro de conexão'; msgEl.style.color = '#991B1B'; }
-        if (subEl) { subEl.textContent = 'Verifique sua internet e tente novamente.'; subEl.style.color = '#991B1B'; }
+        if (status1) { status1.style.background = '#FEE2E2'; status1.style.border = '2px solid #FCA5A5'; }
+        if (icon1) icon1.textContent = '❌';
+        if (msg1) msg1.textContent = 'Erro de conexão';
+        if (sub1) sub1.textContent = 'Verifique sua internet.';
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE'; }
+    });
+};
+
+App.prototype.voltarPasso1 = function() {
+    document.getElementById('recPasso1').style.display = 'block';
+    document.getElementById('recPasso2').style.display = 'none';
+};
+
+App.prototype.verificarCodigo = function() {
+    var self = this;
+    var codigo = document.getElementById('recCodigo') ? document.getElementById('recCodigo').value.trim() : '';
+    var novaSenha = document.getElementById('recNovaSenha') ? document.getElementById('recNovaSenha').value : '';
+    
+    if (!codigo || codigo.length !== 6) {
+        self.mostrarToast('❌ Digite o código de 6 dígitos!', 'erro');
+        return;
+    }
+    
+    if (!novaSenha || novaSenha.length < 6) {
+        self.mostrarToast('❌ Senha deve ter no mínimo 6 caracteres!', 'erro');
+        return;
+    }
+    
+    var status2 = document.getElementById('recStatus2');
+    if (status2) { 
+        status2.style.display = 'block'; 
+        status2.style.background = '#E0F2FE';
+        status2.style.border = '2px solid #7DD3FC';
+        status2.style.padding = '16px';
+        status2.style.borderRadius = '12px';
+        status2.style.textAlign = 'center';
+        status2.innerHTML = '<p style="color:#1E40AF;">⏳ Verificando código...</p>';
+    }
+    
+    var btn = document.querySelector('#recPasso2 .btn-primary');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFICANDO...'; }
+    
+    authService.redefinirSenhaComCodigo(self.recuperacaoUid, codigo, novaSenha).then(function(r) {
+        if (status2) status2.style.display = 'block';
         
-        if (btn) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE';
+        if (r.sucesso) {
+            if (status2) { 
+                status2.style.background = '#D1FAE5'; 
+                status2.style.border = '2px solid #6EE7B7';
+                status2.innerHTML = '<div style="font-size:40px;">✅</div><p style="color:#065F46;font-weight:600;">Código verificado!</p><p style="color:#065F46;">Verifique seu email para redefinir sua senha.</p>'; 
+            }
+            self.mostrarToast('✅ Código verificado! Verifique seu email.', 'sucesso');
+            
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-check"></i> VERIFICADO!';
+                btn.style.background = '#10B981';
+            }
+            
+            setTimeout(function() {
+                self.mostrarTela('loginScreen');
+                document.getElementById('recPasso1').style.display = 'block';
+                document.getElementById('recPasso2').style.display = 'none';
+                if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> REDEFINIR SENHA'; btn.style.background = ''; }
+            }, 3000);
+            
+        } else {
+            if (status2) { 
+                status2.style.background = '#FEE2E2'; 
+                status2.style.border = '2px solid #FCA5A5';
+                status2.innerHTML = '<div style="font-size:40px;">❌</div><p style="color:#991B1B;font-weight:600;">' + r.erro + '</p>'; 
+            }
+            self.mostrarToast('❌ ' + r.erro, 'erro');
+            
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> REDEFINIR SENHA'; }
         }
+    }).catch(function(error) {
+        if (status2) { 
+            status2.style.background = '#FEE2E2'; 
+            status2.style.border = '2px solid #FCA5A5';
+            status2.innerHTML = '<p style="color:#991B1B;">Erro de conexão</p>'; 
+        }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> REDEFINIR SENHA'; }
     });
 };
 
