@@ -129,8 +129,8 @@
         
         <p style="text-align:center; font-size:12px; color:#999; margin-top:16px;">
             Ao se cadastrar, você concorda com nossos<br>
-            <a href="termos.html" target="_blank" style="color:#F47920;">Termos de Uso</a> e 
-            <a href="privacidade.html" target="_blank" style="color:#F47920;">Política de Privacidade</a>
+            <a href="#" onclick="app.mostrarTela('termosScreen');return false;" style="color:#F47920;">Termos de Uso</a> e 
+            <a href="#" onclick="app.mostrarTela('privacidadeScreen');return false;" style="color:#F47920;">Política de Privacidade</a>
         </p>
     </div>
 
@@ -141,26 +141,15 @@
             <h2>Recuperar Senha</h2>
         </div>
         
-        <!-- PASSO 1: Solicitar código -->
         <div id="recPasso1">
             <div class="card">
                 <div style="text-align:center; margin-bottom: 24px;">
                     <img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 16px;">
                     <h3 style="color: #1A3A5C;">Esqueceu sua senha?</h3>
-                    <p style="color: #666; font-size: 14px; margin-top: 8px;">
-                        Digite seu email cadastrado para receber um código de recuperação.
-                    </p>
+                    <p style="color: #666; font-size: 14px; margin-top: 8px;">Digite seu email cadastrado para receber um código de recuperação.</p>
                 </div>
-                
-                <div class="input-group">
-                    <label><i class="fas fa-envelope"></i> Email cadastrado</label>
-                    <input type="email" class="input-field" id="recEmail" placeholder="seu@email.com">
-                </div>
-                
-                <button class="btn btn-primary" onclick="app.solicitarCodigo()">
-                    <i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO
-                </button>
-                
+                <div class="input-group"><label><i class="fas fa-envelope"></i> Email cadastrado</label><input type="email" class="input-field" id="recEmail" placeholder="seu@email.com"></div>
+                <button class="btn btn-primary" onclick="app.solicitarCodigo()"><i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO</button>
                 <div id="recStatus1" style="display:none; text-align:center; padding: 16px; margin-top: 16px; border-radius: 12px;">
                     <div id="recIcon1" style="font-size: 40px; margin-bottom: 8px;"></div>
                     <p id="recMsg1" style="font-weight: 600;"></p>
@@ -168,52 +157,28 @@
                     <div id="recCodigoMostrado" style="display:none; background:#1A3A5C; color:white; padding:16px; border-radius:8px; margin-top:12px; font-size:28px; font-weight:900; letter-spacing:8px;"></div>
                 </div>
             </div>
-            
             <div style="background:#E0F2FE;padding:12px;border-radius:8px;margin-top:16px;text-align:left;font-size:13px;color:#1E40AF;">
-                <strong>📋 Dicas:</strong><br>
-                • Verifique a pasta <strong>SPAM</strong> ou <strong>Lixo eletrônico</strong><br>
-                • O código expira em <strong>30 minutos</strong><br>
-                • Se o email não chegar, o código aparecerá na tela
+                <strong>📋 Dicas:</strong><br>• Verifique a pasta <strong>SPAM</strong><br>• O código expira em <strong>30 minutos</strong><br>• Se o email não chegar, o código aparecerá na tela
             </div>
         </div>
         
-        <!-- PASSO 2: Digitar código -->
         <div id="recPasso2" style="display:none;">
             <div class="card">
                 <div style="text-align:center; margin-bottom: 24px;">
                     <i class="fas fa-key" style="font-size: 60px; color: #F47920;"></i>
                     <h3 style="color: #1A3A5C; margin-top: 16px;">Digite o código</h3>
-                    <p style="color: #666; font-size: 14px;">
-                        Digite o código de 6 dígitos e sua nova senha.
-                    </p>
+                    <p style="color: #666; font-size: 14px;">Digite o código de 6 dígitos e sua nova senha.</p>
                 </div>
-                
-                <div class="input-group">
-                    <label><i class="fas fa-hashtag"></i> Código de 6 dígitos</label>
-                    <input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;">
-                </div>
-                
-                <div class="input-group">
-                    <label><i class="fas fa-lock"></i> Nova Senha</label>
-                    <input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres">
-                </div>
-                
-                <button class="btn btn-primary" onclick="app.verificarCodigo()">
-                    <i class="fas fa-check"></i> REDEFINIR SENHA
-                </button>
-                
-                <button class="btn btn-outline" onclick="app.voltarPasso1()">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
-                
+                <div class="input-group"><label><i class="fas fa-hashtag"></i> Código de 6 dígitos</label><input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;"></div>
+                <div class="input-group"><label><i class="fas fa-lock"></i> Nova Senha</label><input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres"></div>
+                <button class="btn btn-primary" onclick="app.verificarCodigo()"><i class="fas fa-check"></i> REDEFINIR SENHA</button>
+                <button class="btn btn-outline" onclick="app.voltarPasso1()"><i class="fas fa-arrow-left"></i> Voltar</button>
                 <div id="recStatus2" style="display:none; text-align:center; padding: 16px; margin-top: 16px; border-radius: 12px;"></div>
             </div>
         </div>
         
         <div style="text-align:center; margin-top: 20px;">
-            <button class="btn btn-outline" onclick="app.mostrarTela('loginScreen')">
-                <i class="fas fa-arrow-left"></i> Voltar para o Login
-            </button>
+            <button class="btn btn-outline" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i> Voltar para o Login</button>
         </div>
     </div>
 
@@ -226,6 +191,11 @@
                     <div id="saudacao" style="color: white; font-size: 18px;">Bem-vindo!</div>
                     <div id="resumoTexto" style="font-size: 13px; opacity: 0.9;">Carregando...</div>
                 </div>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.2);text-align:center;font-size:11px;opacity:0.7;">
+                <a href="#" onclick="app.mostrarTela('termosScreen');return false;" style="color:white;">Termos de Uso</a> | 
+                <a href="#" onclick="app.mostrarTela('privacidadeScreen');return false;" style="color:white;">Privacidade</a> | 
+                <span>© 2026 LPXConstrutor</span>
             </div>
         </div>
         
@@ -349,6 +319,73 @@
         <div style="display:flex; gap:10px; margin-top:10px;">
             <button class="btn btn-outline" onclick="app.mostrarTela('homeScreen')" style="flex:1;">CANCELAR</button>
             <button class="btn btn-primary" onclick="app.publicarVagaApp()" style="flex:1;">PUBLICAR</button>
+        </div>
+    </div>
+
+    <!-- ===== TELA TERMOS DE USO ===== -->
+    <div class="screen" id="termosScreen">
+        <div class="screen-header">
+            <button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+            <h2>Termos de Uso</h2>
+        </div>
+        <div class="termos-content">
+            <div class="card">
+                <div style="background:#E0F2FE;border-left:4px solid #3B82F6;padding:15px;border-radius:8px;margin-bottom:20px;">
+                    <strong>⚠️ LEIA ATENTAMENTE:</strong> Ao se cadastrar e utilizar o aplicativo LPXConstrutor, você concorda integralmente com todos os termos aqui estabelecidos.
+                </div>
+                <h2 style="color:#1A3A5C;font-size:18px;">1. ACEITAÇÃO</h2>
+                <p style="font-size:13px;color:#666;">Ao acessar e usar o LPXConstrutor, você concorda com estes Termos de Uso. A Plataforma conecta Profissionais da Construção Civil com Empreiteiros, não constituindo vínculo empregatício.</p>
+                <h2 style="color:#1A3A5C;font-size:18px;">2. CADASTRO</h2>
+                <ul style="font-size:13px;color:#666;padding-left:20px;"><li>Idade mínima: 18 anos</li><li>Informações verdadeiras e completas</li><li>CPF único por conta</li><li>Responsabilidade pela segurança da senha</li></ul>
+                <h2 style="color:#1A3A5C;font-size:18px;">3. CONDUTAS PROIBIDAS</h2>
+                <ul style="font-size:13px;color:#666;padding-left:20px;"><li>Conteúdo falso ou fraudulento</li><li>Assédio ou discriminação</li><li>Linguagem ofensiva</li><li>Vagas fantasmas</li><li>Uso ilegal da plataforma</li></ul>
+                <h2 style="color:#1A3A5C;font-size:18px;">4. DIREITOS DE IMAGEM</h2>
+                <p style="font-size:13px;color:#666;">Ao enviar fotos, você concede licença gratuita para exibição na plataforma. Suas imagens NÃO são vendidas ou transferidas para terceiros.</p>
+                <h2 style="color:#1A3A5C;font-size:18px;">5. PRIVACIDADE (LGPD)</h2>
+                <p style="font-size:13px;color:#666;">Seus dados são protegidos conforme a Lei 13.709/2018. Você pode solicitar exclusão a qualquer momento. CPF nunca é visível publicamente.</p>
+                <h2 style="color:#1A3A5C;font-size:18px;">6. LIMITAÇÃO DE RESPONSABILIDADE</h2>
+                <p style="font-size:13px;color:#666;">A Plataforma é apenas intermediária. Não nos responsabilizamos por acordos financeiros, qualidade de serviços, acidentes ou relações trabalhistas.</p>
+                <h2 style="color:#1A3A5C;font-size:18px;">7. PENALIDADES</h2>
+                <ul style="font-size:13px;color:#666;padding-left:20px;"><li>Advertência por violações leves</li><li>Suspensão temporária (7 a 30 dias)</li><li>Exclusão permanente da conta</li></ul>
+                <div style="background:#D1FAE5;border-left:4px solid #10B981;padding:15px;border-radius:8px;margin-top:20px;">
+                    <strong>✅ DECLARAÇÃO DE ACEITE:</strong><br><span style="font-size:13px;">AO SE CADASTRAR, VOCÊ DECLARA QUE LEU, ENTENDEU E CONCORDA COM TODOS OS TERMOS ACIMA.</span>
+                </div>
+                <button class="btn btn-primary" onclick="history.back()" style="margin-top:20px;"><i class="fas fa-check"></i> ENTENDI E CONCORDO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TELA POLÍTICA DE PRIVACIDADE ===== -->
+    <div class="screen" id="privacidadeScreen">
+        <div class="screen-header">
+            <button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+            <h2>Política de Privacidade</h2>
+        </div>
+        <div class="termos-content">
+            <div class="card">
+                <div style="background:#D1FAE5;border-left:4px solid #10B981;padding:15px;border-radius:8px;margin-bottom:20px;">
+                    <strong>🔒 SEUS DADOS ESTÃO PROTEGIDOS!</strong><br><span style="font-size:13px;">Em conformidade com a LGPD (Lei 13.709/2018)</span>
+                </div>
+                <h2 style="color:#1A3A5C;font-size:18px;">1. DADOS COLETADOS</h2>
+                <ul style="font-size:13px;color:#666;padding-left:20px;"><li>Nome completo</li><li>Email</li><li>WhatsApp</li><li>CPF (não visível)</li><li>Profissão e experiência</li><li>Foto de perfil (opcional)</li><li>Localização (para o mapa)</li></ul>
+                <h2 style="color:#1A3A5C;font-size:18px;">2. O QUE FICA VISÍVEL</h2>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;margin:10px 0;">
+                    <tr style="background:#f0f0f0;"><td style="padding:8px;">Nome</td><td style="padding:8px;color:#10B981;">✅ Visível</td></tr>
+                    <tr><td style="padding:8px;">Profissão</td><td style="padding:8px;color:#10B981;">✅ Visível</td></tr>
+                    <tr style="background:#f0f0f0;"><td style="padding:8px;">WhatsApp</td><td style="padding:8px;color:#F59E0B;">⚠️ Logados</td></tr>
+                    <tr><td style="padding:8px;">Email</td><td style="padding:8px;color:#F59E0B;">⚠️ Logados</td></tr>
+                    <tr style="background:#f0f0f0;"><td style="padding:8px;">CPF</td><td style="padding:8px;color:#EF4444;">❌ Nunca</td></tr>
+                </table>
+                <h2 style="color:#1A3A5C;font-size:18px;">3. NÃO VENDEMOS DADOS</h2>
+                <p style="font-size:13px;color:#666;">Seus dados NUNCA são vendidos, alugados ou compartilhados com terceiros para fins comerciais.</p>
+                <h2 style="color:#1A3A5C;font-size:18px;">4. SEUS DIREITOS</h2>
+                <ul style="font-size:13px;color:#666;padding-left:20px;"><li>✅ Acessar seus dados</li><li>✅ Corrigir informações</li><li>✅ Solicitar exclusão</li><li>✅ Revogar consentimento</li></ul>
+                <h2 style="color:#1A3A5C;font-size:18px;">5. EXCLUSÃO DE DADOS</h2>
+                <p style="font-size:13px;color:#666;">Envie email para <strong>lpxdesenvolvimento@gmail.com</strong> com assunto "EXCLUSÃO DE DADOS". Prazo: 7 dias úteis.</p>
+                <h2 style="color:#1A3A5C;font-size:18px;">6. SEGURANÇA</h2>
+                <ul style="font-size:13px;color:#666;padding-left:20px;"><li>Firebase (Google Cloud)</li><li>Criptografia HTTPS/SSL</li><li>Senhas com hash</li><li>Backup automático</li></ul>
+                <button class="btn btn-primary" onclick="history.back()" style="margin-top:20px;"><i class="fas fa-check"></i> ENTENDI</button>
+            </div>
         </div>
     </div>
 
