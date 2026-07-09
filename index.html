@@ -16,6 +16,25 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="LPXConstrutor">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                    console.log('Service Worker registrado:', registration.scope);
+                }).catch(function(error) {
+                    console.log('Falha no Service Worker:', error);
+                });
+            });
+        }
+    </script>
 </head>
 <body>
 
@@ -50,7 +69,7 @@
                 </div>
                 <button class="btn btn-primary" onclick="app.fazerLogin()"><i class="fas fa-sign-in-alt"></i> ENTRAR</button>
                 <button class="btn btn-outline" onclick="app.mostrarTela('cadastroScreen')"><i class="fas fa-user-plus"></i> Criar Conta</button>
-                <button class="btn btn-outline" onclick="app.recuperarSenha()"><i class="fas fa-key"></i> Esqueci a Senha</button>
+                <button class="btn btn-outline" onclick="app.mostrarTela('recuperarSenhaScreen')"><i class="fas fa-key"></i> Esqueci a Senha</button>
             </div>
         </div>
     </div>
@@ -81,14 +100,48 @@
                 <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="cadHabilidades" rows="3" placeholder="Suas habilidades..."></textarea></div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-outline" onclick="app.proximaEtapa(1)" style="flex:1;">VOLTAR</button>
-                    <p style="text-align:center; font-size:12px; color:#999; margin-top:16px;">
-                            Ao se cadastrar, você concorda com nossos<br>
-                            <a href="termos.html" target="_blank" style="color:#F47920;">Termos de Uso</a> e 
-                            <a href="privacidade.html" target="_blank" style="color:#F47920;">Política de Privacidade</a>
-                        </p>
                     <button class="btn btn-primary" onclick="app.cadastrar()" style="flex:1;">FINALIZAR</button>
                 </div>
             </div>
+        </div>
+        <p style="text-align:center; font-size:12px; color:#999; margin-top:16px;">
+            Ao se cadastrar, você concorda com nossos<br>
+            <a href="termos.html" target="_blank" style="color:#F47920;">Termos de Uso</a> e 
+            <a href="privacidade.html" target="_blank" style="color:#F47920;">Política de Privacidade</a>
+        </p>
+    </div>
+
+    <!-- RECUPERAR SENHA -->
+    <div class="screen" id="recuperarSenhaScreen">
+        <div class="screen-header">
+            <button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button>
+            <h2>Recuperar Senha</h2>
+        </div>
+        <div class="card">
+            <div style="text-align:center; margin-bottom: 24px;">
+                <i class="fas fa-lock" style="font-size: 60px; color: #F47920;"></i>
+                <h3 style="margin-top: 16px; color: #1A3A5C;">Esqueceu sua senha?</h3>
+                <p style="color: #666; font-size: 14px; margin-top: 8px;">
+                    Digite seu email cadastrado que enviaremos um link para redefinir sua senha.
+                </p>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-envelope"></i> Email cadastrado</label>
+                <input type="email" class="input-field" id="recEmail" placeholder="seu@email.com">
+            </div>
+            <button class="btn btn-primary" onclick="app.enviarRecuperacao()">
+                <i class="fas fa-paper-plane"></i> ENVIAR LINK DE RECUPERAÇÃO
+            </button>
+            <div id="recuperacaoStatus" style="display:none; text-align:center; padding: 16px; margin-top: 16px; border-radius: 12px;">
+                <div id="recuperacaoIcon" style="font-size: 40px; margin-bottom: 8px;"></div>
+                <p id="recuperacaoMensagem" style="font-weight: 600;"></p>
+                <p id="recuperacaoSubtexto" style="font-size: 13px; color: #666; margin-top: 4px;"></p>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top: 20px;">
+            <button class="btn btn-outline" onclick="app.mostrarTela('loginScreen')">
+                <i class="fas fa-arrow-left"></i> Voltar para o Login
+            </button>
         </div>
     </div>
 
