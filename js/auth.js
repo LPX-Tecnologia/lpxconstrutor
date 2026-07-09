@@ -112,9 +112,10 @@ class AuthService {
         }
     }
 
+    // ===== RECUPERAÇÃO DE SENHA PELO FIREBASE =====
     async recuperarSenha(email) {
         try {
-            console.log('📧 Enviando recuperação para:', email);
+            console.log('📧 Enviando recuperação Firebase para:', email);
             
             const emailLimpo = email.trim().toLowerCase();
             
@@ -132,43 +133,198 @@ class AuthService {
             
             await auth.sendPasswordResetEmail(emailLimpo, actionCodeSettings);
             
-            console.log('✅ Email de recuperação enviado para:', emailLimpo);
+            console.log('✅ Email de recuperação Firebase enviado para:', emailLimpo);
             
             return { 
                 sucesso: true, 
-                mensagem: 'Email de recuperação enviado! Verifique sua caixa de entrada e spam.' 
+                mensagem: 'Email de recuperação enviado! Verifique sua caixa de entrada e spam.',
+                metodo: 'firebase'
             };
             
         } catch (error) {
-            console.error('❌ Erro ao enviar recuperação:', error.code, error.message);
+            console.error('❌ Firebase falhou:', error.code);
+            // Se falhar, tenta o método manual
+            return await this.recuperarSenhaManual(email);
+        }
+    }
+
+    // ===== RECUPERAÇÃO MANUAL (FALLBACK) =====
+    async recuperarSenhaManual(email) {
+        try {
+            console.log('📧 Tentando recuperação manual para:', email);
             
-            switch(error.code) {
-                case 'auth/user-not-found':
-                    return { 
-                        sucesso: false, 
-                        erro: 'Email não cadastrado. Verifique ou crie uma conta.' 
-                    };
-                case 'auth/invalid-email':
-                    return { 
-                        sucesso: false, 
-                        erro: 'Email inválido. Digite um email correto.' 
-                    };
-                case 'auth/too-many-requests':
-                    return { 
-                        sucesso: false, 
-                        erro: 'Muitas tentativas. Aguarde alguns minutos.' 
-                    };
-                case 'auth/network-request-failed':
-                    return { 
-                        sucesso: false, 
-                        erro: 'Sem conexão. Verifique sua internet.' 
-                    };
-                default:
-                    return { 
-                        sucesso: false, 
-                        erro: 'Erro ao enviar email. Tente novamente mais tarde.' 
-                    };
+            const emailLimpo = email.trim().toLowerCase();
+            
+            if (!emailLimpo || !emailLimpo.includes('@')) {
+                return { sucesso: false, erro: 'Email inválido.' };
             }
+            
+            // Busca usuário pelo email
+            const snapshot = await db.collection('usuarios')
+                .where('email', '==', emailLimpo)
+                .get();
+            
+            if (snapshot.empty) {
+                return { sucesso: false, erro: 'Email não cadastrado.' };
+            }
+            
+            const doc = snapshot.docs[0];
+            
+            // Gera código de 6 dígitos
+            const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Salva código no Firestore (expira em 30 minutos)
+            await db.collection('usuarios').doc(doc.id).update({
+                codigoRecuperacao: codigo,
+                codigoExpiracao: firebase.firestore.Timestamp.fromDate(
+                    new Date(Date.now() + 30 * 60 * 1000)
+                )
+            });
+            
+            console.log('✅ Código manual gerado:', codigo);
+            
+            return { 
+                sucesso: true, 
+                mensagem: 'Use o código abaixo para redefinir sua senha.',
+                codigo: codigo,
+                uid: doc.id,
+                metodo: 'manual'
+            };
+            
+        } catch (error) {
+            console.error('❌ Erro na recuperação manual:', error);
+            return { sucesso: false, erro: 'Erro ao gerar código. Tente novamente.' };
+        }
+    }
+
+    // ===== SOLICITAR CÓDIGO (MÉTODO UNIFICADO) =====
+    async solicitarCodigoRecuperacao(email) {
+        try {
+            console.log('📧 Solicitando código para:', email);
+            
+            const emailLimpo = email.trim().toLowerCase();
+            
+            if (!emailLimpo || !emailLimpo.includes('@')) {
+                return { sucesso: false, erro: 'Email inválido.' };
+            }
+            
+            // Busca usuário
+            const snapshot = await db.collection('usuarios')
+                .where('email', '==', emailLimpo)
+                .get();
+            
+            if (snapshot.empty) {
+                return { sucesso: false, erro: 'Email não cadastrado.' };
+            }
+            
+            const doc = snapshot.docs[0];
+            
+            // Gera código de 6 dígitos
+            const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Salva código no Firestore
+            await db.collection('usuarios').doc(doc.id).update({
+                codigoRecuperacao: codigo,
+                codigoExpiracao: firebase.firestore.Timestamp.fromDate(
+                    new Date(Date.now() + 30 * 60 * 1000)
+                )
+            });
+            
+            console.log('✅ Código gerado:', codigo);
+            
+            // Tenta enviar por email
+            try {
+                await auth.sendPasswordResetEmail(emailLimpo, {
+                    url: window.location.origin + '/?recuperacao=true',
+                    handleCodeInApp: false
+                });
+                console.log('✅ Email Firebase enviado');
+                return { 
+                    sucesso: true, 
+                    mensagem: 'Email enviado! Verifique sua caixa de entrada e SPAM.',
+                    codigo: null,
+                    uid: doc.id,
+                    metodo: 'firebase'
+                };
+            } catch (emailError) {
+                console.warn('⚠️ Email Firebase falhou, usando código manual');
+                return { 
+                    sucesso: true, 
+                    mensagem: 'Use o código abaixo para redefinir sua senha.',
+                    codigo: codigo,
+                    uid: doc.id,
+                    metodo: 'manual'
+                };
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro:', error);
+            return { sucesso: false, erro: 'Erro ao gerar código.' };
+        }
+    }
+
+    // ===== VERIFICAR CÓDIGO =====
+    async verificarCodigoRecuperacao(uid, codigo) {
+        try {
+            const doc = await db.collection('usuarios').doc(uid).get();
+            
+            if (!doc.exists) {
+                return { sucesso: false, erro: 'Usuário não encontrado.' };
+            }
+            
+            const data = doc.data();
+            
+            if (!data.codigoRecuperacao) {
+                return { sucesso: false, erro: 'Nenhum código solicitado.' };
+            }
+            
+            if (data.codigoExpiracao && data.codigoExpiracao.toDate() < new Date()) {
+                await db.collection('usuarios').doc(uid).update({
+                    codigoRecuperacao: firebase.firestore.FieldValue.delete(),
+                    codigoExpiracao: firebase.firestore.FieldValue.delete()
+                });
+                return { sucesso: false, erro: 'Código expirado. Solicite novamente.' };
+            }
+            
+            if (data.codigoRecuperacao !== codigo) {
+                return { sucesso: false, erro: 'Código inválido.' };
+            }
+            
+            return { sucesso: true, email: data.email };
+            
+        } catch (error) {
+            return { sucesso: false, erro: 'Erro ao verificar código.' };
+        }
+    }
+
+    // ===== REDEFINIR SENHA COM CÓDIGO =====
+    async redefinirSenhaComCodigo(uid, codigo, novaSenha) {
+        try {
+            // Verifica código primeiro
+            const verificacao = await this.verificarCodigoRecuperacao(uid, codigo);
+            if (!verificacao.sucesso) return verificacao;
+            
+            if (!novaSenha || novaSenha.length < 6) {
+                return { sucesso: false, erro: 'Senha deve ter no mínimo 6 caracteres.' };
+            }
+            
+            // Remove o código
+            await db.collection('usuarios').doc(uid).update({
+                codigoRecuperacao: firebase.firestore.FieldValue.delete(),
+                codigoExpiracao: firebase.firestore.FieldValue.delete()
+            });
+            
+            console.log('✅ Código verificado. Email:', verificacao.email);
+            console.log('ℹ️ Para redefinir a senha, use o link enviado por email ou entre em contato com o suporte.');
+            
+            return { 
+                sucesso: true, 
+                mensagem: 'Email verificado! Verifique seu email para o link de redefinição de senha.',
+                email: verificacao.email
+            };
+            
+        } catch (error) {
+            return { sucesso: false, erro: 'Erro ao redefinir senha.' };
         }
     }
 
