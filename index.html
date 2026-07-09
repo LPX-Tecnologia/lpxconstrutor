@@ -35,21 +35,6 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="./imagem/logo-lpxconstrutor.png">
-    
-    <!-- Service Worker -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./service-worker.js', {
-                    scope: './'
-                }).then(function(registration) {
-                    console.log('✅ Service Worker registrado:', registration.scope);
-                }).catch(function(error) {
-                    console.log('⚠️ Falha no Service Worker:', error.message);
-                });
-            });
-        }
-    </script>
 </head>
 <body>
 
