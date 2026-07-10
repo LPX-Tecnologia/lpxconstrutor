@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - APLICAÇÃO PRINCIPAL COM QR CODE =====
+// ===== LPXCONSTRUTOR - APLICAÇÃO PRINCIPAL =====
 // ==========================================================
 
 window.app = {
@@ -57,7 +57,6 @@ App.prototype.init = function() {
             self.mostrarTela('loginScreen');
         }
     });
-    console.log('✅ App inicializado');
 };
 
 App.prototype.atualizarBotaoPublicar = function() {
@@ -140,26 +139,24 @@ App.prototype.solicitarCodigo = function() {
     var email = document.getElementById('recEmail') ? document.getElementById('recEmail').value.trim() : '';
     if (!email || !email.includes('@')) { self.mostrarToast('❌ Digite um email válido!', 'erro'); return; }
     var s1 = document.getElementById('recStatus1'), i1 = document.getElementById('recIcon1'), m1 = document.getElementById('recMsg1'), sub1 = document.getElementById('recSub1'), cm = document.getElementById('recCodigoMostrado');
-    if (s1) { s1.style.display = 'block'; s1.style.background = '#E0F2FE'; s1.style.border = '2px solid #7DD3FC'; }
-    if (i1) i1.textContent = '⏳'; if (m1) m1.textContent = 'Gerando código...'; if (sub1) sub1.textContent = 'Aguarde'; if (cm) cm.style.display = 'none';
+    if (s1) { s1.style.display = 'block'; s1.style.background = '#E0F2FE'; }
+    if (i1) i1.textContent = '⏳'; if (m1) m1.textContent = 'Gerando código...'; if (cm) cm.style.display = 'none';
     var btn = document.querySelector('#recPasso1 .btn-primary');
-    if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GERANDO...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GERANDO...'; }
     authService.solicitarCodigoRecuperacao(email).then(function(r) {
         if (s1) s1.style.display = 'block';
         if (r.sucesso) {
-            if (s1) { s1.style.background = '#D1FAE5'; s1.style.border = '2px solid #6EE7B7'; }
+            if (s1) { s1.style.background = '#D1FAE5'; }
             if (i1) i1.textContent = '🔢'; if (m1) { m1.textContent = 'Código gerado!'; m1.style.color = '#065F46'; }
-            if (sub1) { sub1.textContent = 'Use o código abaixo:'; sub1.style.color = '#065F46'; }
             if (cm) { cm.style.display = 'block'; cm.textContent = r.codigo; cm.style.background = '#1A3A5C'; cm.style.color = 'white'; cm.style.padding = '20px'; cm.style.borderRadius = '12px'; cm.style.fontSize = '36px'; cm.style.fontWeight = '900'; cm.style.letterSpacing = '12px'; }
             self.recuperacaoUid = r.uid; self.mostrarToast('✅ Código gerado!', 'sucesso');
-            if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> CÓDIGO GERADO!'; btn.style.background = '#10B981'; }
-            setTimeout(function() { document.getElementById('recPasso1').style.display = 'none'; document.getElementById('recPasso2').style.display = 'block'; if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO'; btn.style.background = ''; } }, 3000);
+            setTimeout(function() { document.getElementById('recPasso1').style.display = 'none'; document.getElementById('recPasso2').style.display = 'block'; }, 3000);
         } else {
-            if (s1) { s1.style.background = '#FEE2E2'; s1.style.border = '2px solid #FCA5A5'; }
+            if (s1) { s1.style.background = '#FEE2E2'; }
             if (i1) i1.textContent = '❌'; if (m1) { m1.textContent = r.erro; m1.style.color = '#991B1B'; }
             self.mostrarToast('❌ ' + r.erro, 'erro');
-            if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = '<i class="fas fa-paper-plane"></i> TENTAR NOVAMENTE'; }
         }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO'; }
     });
 };
 
@@ -219,7 +216,7 @@ App.prototype.adicionarNaRede = function(amigoId) { var self = this; if (!this.u
 App.prototype.removerDaRede = function(amigoId) { var self = this; if (!confirm('Remover?')) return; db.collection('conexoes').get().then(function(snap) { snap.forEach(function(doc) { var d = doc.data(); if ((d.usuarioId === self.usuarioLogado.id && d.amigoId === amigoId) || (d.usuarioId === amigoId && d.amigoId === self.usuarioLogado.id)) { db.collection('conexoes').doc(doc.id).delete().then(function() { self.mostrarToast('Removido', 'sucesso'); }); } }); }); };
 
 // ===== PERFIL =====
-App.prototype.carregarMeuPerfil = function() { if (!this.usuarioLogado) return; var u = this.usuarioLogado; var n = document.getElementById('meuPerfilNome'); if (n) n.textContent = u.nome || 'Usuário'; var p = document.getElementById('meuPerfilProfissao'); if (p) p.textContent = (u.tipo === 'profissional' ? '👷' : '🏢') + ' ' + (u.profissao || u.tipo); var a = document.getElementById('meuPerfilAvaliacao'); if (a) a.innerHTML = '⭐'.repeat(Math.round(u.score || 0)); var en = document.getElementById('editNome'); if (en) en.value = u.nome || ''; var ec = document.getElementById('editCelular'); if (ec) ec.value = u.celular || ''; var eh = document.getElementById('editHabilidades'); if (eh) eh.value = u.habilidades || ''; };
+App.prototype.carregarMeuPerfil = function() { if (!this.usuarioLogado) return; var u = this.usuarioLogado; var n = document.getElementById('meuPerfilNome'); if (n) n.textContent = u.nome || 'Usuário'; var p = document.getElementById('meuPerfilProfissao'); if (p) p.textContent = (u.tipo === 'profissional' ? '👷' : '🏢') + ' ' + (u.profissao || u.tipo); var en = document.getElementById('editNome'); if (en) en.value = u.nome || ''; var ec = document.getElementById('editCelular'); if (ec) ec.value = u.celular || ''; var eh = document.getElementById('editHabilidades'); if (eh) eh.value = u.habilidades || ''; };
 App.prototype.salvarPerfil = function() { var self = this; var d = { nome: (document.getElementById('editNome') || {}).value || '', celular: (document.getElementById('editCelular') || {}).value || '', habilidades: (document.getElementById('editHabilidades') || {}).value || '' }; if (!d.nome) return; databaseService.atualizarUsuario(this.usuarioLogado.id, d).then(function() { self.usuarioLogado.nome = d.nome; self.mostrarToast('✅ Atualizado!', 'sucesso'); }); };
 App.prototype.uploadFoto = function(e) { var self = this, f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { databaseService.atualizarUsuario(self.usuarioLogado.id, { fotoPerfil: ev.target.result }).then(function() { self.usuarioLogado.fotoPerfil = ev.target.result; self.mostrarToast('✅ Foto atualizada!', 'sucesso'); }); }; r.readAsDataURL(f); };
 
@@ -300,27 +297,14 @@ App.prototype.gerarQRCode = function(uid) {
         self.qrcodeLink = link;
     });
 };
-
 App.prototype.fecharQRCode = function() { document.getElementById('modalQRCode').style.display = 'none'; };
-
 App.prototype.compartilharLink = function() {
     if (!this.qrcodeLink) return;
     if (navigator.share) { navigator.share({ title: 'LPXConstrutor', text: 'Veja este perfil!', url: this.qrcodeLink }).catch(function() {}); }
     else { navigator.clipboard.writeText(this.qrcodeLink).then(function() { app.mostrarToast('✅ Link copiado!', 'sucesso'); }).catch(function() { prompt('Copie:', app.qrcodeLink); }); }
 };
-
-App.prototype.baixarQRCode = function() {
-    var img = document.querySelector('#qrcodeContainer img');
-    if (!img) return;
-    var a = document.createElement('a'); a.download = 'lpxconstrutor-qrcode.png'; a.href = img.src; a.click();
-    this.mostrarToast('✅ QR Code baixado!', 'sucesso');
-};
-
-App.prototype.verificarURLPerfil = function() {
-    var params = new URLSearchParams(window.location.search);
-    var pid = params.get('perfil');
-    if (pid && this.usuarioLogado) { setTimeout(function() { window.app.verPerfil(pid); }, 1000); }
-};
+App.prototype.baixarQRCode = function() { var img = document.querySelector('#qrcodeContainer img'); if (!img) return; var a = document.createElement('a'); a.download = 'lpxconstrutor-qrcode.png'; a.href = img.src; a.click(); this.mostrarToast('✅ QR Code baixado!', 'sucesso'); };
+App.prototype.verificarURLPerfil = function() { var params = new URLSearchParams(window.location.search); var pid = params.get('perfil'); if (pid && this.usuarioLogado) { setTimeout(function() { window.app.verPerfil(pid); }, 1000); } };
 
 // ===== TABS =====
 App.prototype.mudarTab = function(tab) { document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); }); event.target.closest('.tab').classList.add('active'); document.getElementById('feedContainer').style.display = tab === 'feed' ? 'block' : 'none'; document.getElementById('redeContainer').style.display = tab === 'rede' ? 'block' : 'none'; if (tab === 'feed') this.carregarFeed(); if (tab === 'rede') this.carregarRede(); };
