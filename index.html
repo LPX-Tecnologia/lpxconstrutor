@@ -215,6 +215,32 @@
         <button class="nav-item" data-screen="meuPerfilScreen" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-user"></i><span>Perfil</span></button>
     </nav>
 
+                       <!-- ===== MODAL QR CODE ===== -->
+        <div class="modal-overlay" id="modalQRCode" style="display:none;" onclick="app.fecharQRCode()">
+            <div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3><i class="fas fa-qrcode"></i> Compartilhar Perfil</h3>
+                    <button class="modal-close" onclick="app.fecharQRCode()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div id="qrcodeContainer" style="display:flex;justify-content:center;padding:20px;"></div>
+                    <p id="qrcodeNome" style="font-weight:700;color:#1A3A5C;margin-bottom:8px;"></p>
+                    <p id="qrcodeProfissao" style="color:#666;font-size:13px;margin-bottom:16px;"></p>
+                    <p style="font-size:12px;color:#999;">Escaneie o QR Code para ver o perfil</p>
+                    <div style="display:flex;gap:10px;margin-top:16px;">
+                        <button class="btn btn-outline btn-small" onclick="app.compartilharLink()" style="flex:1;">
+                            <i class="fas fa-share-alt"></i> Compartilhar Link
+                        </button>
+                        <button class="btn btn-primary btn-small" onclick="app.baixarQRCode()" style="flex:1;">
+                            <i class="fas fa-download"></i> Baixar QR
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    
+
 </div>
 
 <script src="js/firebase-config.js"></script>
