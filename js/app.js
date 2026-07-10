@@ -249,6 +249,95 @@ App.prototype.buscarProfissionais = function() {
     });
 };
 
+// ===== QR CODE =====
+App.prototype.gerarQRCode = function(uid) {
+    var self = this;
+    
+    // Busca dados do usuário
+    db.collection('usuarios').doc(uid).get().then(function(doc) {
+        if (!doc.exists) return;
+        var u = doc.data();
+        
+        // Link do perfil
+        var linkPerfil = window.location.origin + window.location.pathname + '?perfil=' + uid;
+        
+        // Mostra modal
+        document.getElementById('modalQRCode').style.display = 'flex';
+        document.getElementById('qrcodeNome').textContent = u.nome;
+        document.getElementById('qrcodeProfissao').textContent = (u.profissao || 'Profissional') + ' • ' + (u.experiencia || 0) + ' anos';
+        
+        // Limpa QR anterior
+        document.getElementById('qrcodeContainer').innerHTML = '';
+        
+        // Gera QR Code
+        new QRCode(document.getElementById('qrcodeContainer'), {
+            text: linkPerfil,
+            width: 200,
+            height: 200,
+            colorDark: '#1A3A5C',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        // Salva link para compartilhar
+        self.qrcodeLink = linkPerfil;
+    });
+};
+
+App.prototype.fecharQRCode = function() {
+    document.getElementById('modalQRCode').style.display = 'none';
+};
+
+App.prototype.compartilharLink = function() {
+    if (!this.qrcodeLink) return;
+    
+    if (navigator.share) {
+        // Web Share API (dispositivos móveis)
+        navigator.share({
+            title: 'LPXConstrutor - Perfil Profissional',
+            text: 'Veja este perfil no LPXConstrutor!',
+            url: this.qrcodeLink
+        }).catch(function() {});
+    } else {
+        // Fallback: copiar link
+        navigator.clipboard.writeText(this.qrcodeLink).then(function() {
+            if (window.app) window.app.mostrarToast('✅ Link copiado!', 'sucesso');
+        }).catch(function() {
+            prompt('Copie o link:', this.qrcodeLink);
+        });
+    }
+};
+
+App.prototype.baixarQRCode = function() {
+    var qrContainer = document.getElementById('qrcodeContainer');
+    var qrImg = qrContainer.querySelector('img');
+    
+    if (!qrImg) {
+        this.mostrarToast('QR Code não gerado', 'erro');
+        return;
+    }
+    
+    // Cria link de download
+    var link = document.createElement('a');
+    link.download = 'lpxconstrutor-qrcode.png';
+    link.href = qrImg.src;
+    link.click();
+    
+    this.mostrarToast('✅ QR Code baixado!', 'sucesso');
+};
+
+// ===== VERIFICAR PERFIL POR URL =====
+App.prototype.verificarURLPerfil = function() {
+    var params = new URLSearchParams(window.location.search);
+    var perfilId = params.get('perfil');
+    
+    if (perfilId && this.usuarioLogado) {
+        setTimeout(function() {
+            window.app.verPerfil(perfilId);
+        }, 1000);
+    }
+};
+
 // ===== PERFIL PÚBLICO =====
 App.prototype.verPerfil = function(uid) {
     var self = this;
