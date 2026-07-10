@@ -13,7 +13,7 @@ NotificationsService.prototype.carregarNotificacoes = function(usuarioId) {
     db.collection('notificacoes')
         .where('usuarioId', '==', usuarioId)
         .orderBy('dataCriacao', 'desc')
-        .limit(20)
+        .limit(50)
         .onSnapshot(function(snapshot) {
             self.notificacoes = [];
             snapshot.forEach(function(doc) {
@@ -23,11 +23,25 @@ NotificationsService.prototype.carregarNotificacoes = function(usuarioId) {
                 });
             });
             
-            // Atualiza badge
             self.atualizarBadge();
-            
-            // Atualiza tela se estiver aberta
             self.atualizarTela();
+        }, function(error) {
+            console.log('⚠️ Erro ao carregar notificações:', error);
+            // Fallback: busca sem ordenação
+            db.collection('notificacoes')
+                .where('usuarioId', '==', usuarioId)
+                .get()
+                .then(function(snap) {
+                    self.notificacoes = [];
+                    snap.forEach(function(doc) {
+                        self.notificacoes.push({ id: doc.id, ...doc.data() });
+                    });
+                    self.notificacoes.sort(function(a, b) {
+                        return (b.dataCriacao?.toDate?.() || new Date(0)) - (a.dataCriacao?.toDate?.() || new Date(0));
+                    });
+                    self.atualizarBadge();
+                    self.atualizarTela();
+                });
         });
 };
 
