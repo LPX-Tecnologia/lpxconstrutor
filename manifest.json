@@ -1,7 +1,7 @@
 {
     "name": "LPXConstrutor",
     "short_name": "LPXConstrutor",
-    "description": "Rede Profissional da Construção Civil - Conecte profissionais e empreiteiros",
+    "description": "Rede Profissional da Construção Civil",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
@@ -17,27 +17,32 @@
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "72x72",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "96x96",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "128x128",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "144x144",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "152x152",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "./imagem/logo-lpxconstrutor.png",
@@ -48,55 +53,14 @@
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "384x384",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
-        }
-    ],
-    "screenshots": [
-        {
-            "src": "./prints/tela-login.png",
-            "sizes": "1080x1920",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Tela de Login"
-        },
-        {
-            "src": "./prints/tela-home.png",
-            "sizes": "1080x1920",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Tela Principal"
-        }
-    ],
-    "shortcuts": [
-        {
-            "name": "Buscar Profissionais",
-            "short_name": "Buscar",
-            "description": "Encontre profissionais da construção",
-            "url": "./?tela=busca",
-            "icons": [
-                {
-                    "src": "./imagem/logo-lpxconstrutor.png",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Publicar Vaga",
-            "short_name": "Publicar",
-            "description": "Publique uma vaga de trabalho",
-            "url": "./?tela=publicar",
-            "icons": [
-                {
-                    "src": "./imagem/logo-lpxconstrutor.png",
-                    "sizes": "96x96"
-                }
-            ]
         }
     ]
 }
