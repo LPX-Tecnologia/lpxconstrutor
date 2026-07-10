@@ -19,6 +19,8 @@
     <meta name="apple-mobile-web-app-title" content="LPXConstrutor">
     <link rel="apple-touch-icon" href="./imagem/logo-lpxconstrutor.png">
     <link rel="icon" type="image/png" href="./imagem/logo-lpxconstrutor.png">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -53,8 +55,7 @@
     <div class="screen" id="cadastroScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button><h2>Criar Conta</h2></div>
         <div class="card">
-            <div id="etapa1">
-                <h3><i class="fas fa-user-circle"></i> Dados Pessoais</h3>
+            <div id="etapa1"><h3><i class="fas fa-user-circle"></i> Dados Pessoais</h3>
                 <div class="input-group"><label>Nome Completo</label><input type="text" class="input-field" id="cadNome" placeholder="Seu nome completo"></div>
                 <div class="input-group"><label>Email</label><input type="email" class="input-field" id="cadEmail" placeholder="seu@email.com"></div>
                 <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="cadCelular" placeholder="(11) 99999-9999"></div>
@@ -62,13 +63,12 @@
                 <div class="input-group"><label>Senha</label><input type="password" class="input-field" id="cadSenha" placeholder="Mínimo 6 caracteres"></div>
                 <button class="btn btn-primary" onclick="app.proximaEtapa(2)">PRÓXIMO <i class="fas fa-arrow-right"></i></button>
             </div>
-            <div id="etapa2" style="display:none;">
-                <h3><i class="fas fa-tools"></i> Dados Profissionais</h3>
+            <div id="etapa2" style="display:none;"><h3><i class="fas fa-tools"></i> Dados Profissionais</h3>
                 <div class="input-group"><label>Tipo de Conta</label><select class="input-field" id="cadTipo" onchange="app.toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
                 <div id="grupoProfissao"><div class="input-group"><label>Profissão</label><select class="input-field" id="cadProfissao"><option value="">Selecione...</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="armador">Armador</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div></div>
                 <div class="input-group"><label>Experiência (anos)</label><input type="number" class="input-field" id="cadExperiencia" placeholder="5" value="0"></div>
                 <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="cadHabilidades" rows="3" placeholder="Suas habilidades..."></textarea></div>
-                <div style="display:flex; gap:10px;"><button class="btn btn-outline" onclick="app.proximaEtapa(1)" style="flex:1;">VOLTAR</button><button class="btn btn-primary" onclick="app.cadastrar()" style="flex:1;">FINALIZAR</button></div>
+                <div style="display:flex;gap:10px;"><button class="btn btn-outline" onclick="app.proximaEtapa(1)" style="flex:1;">VOLTAR</button><button class="btn btn-primary" onclick="app.cadastrar()" style="flex:1;">FINALIZAR</button></div>
             </div>
         </div>
         <p style="text-align:center;font-size:12px;color:#999;margin-top:16px;">Ao se cadastrar, você concorda com nossos<br><a href="#" onclick="app.mostrarTela('termosScreen');return false;" style="color:#F47920;">Termos de Uso</a> e <a href="#" onclick="app.mostrarTela('privacidadeScreen');return false;" style="color:#F47920;">Política de Privacidade</a></p>
@@ -77,34 +77,14 @@
     <!-- RECUPERAR SENHA -->
     <div class="screen" id="recuperarSenhaScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i></button><h2>Recuperar Senha</h2></div>
-        <div id="recPasso1">
-            <div class="card">
-                <div style="text-align:center;margin-bottom:24px;"><img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width:80px;height:80px;border-radius:16px;margin-bottom:16px;"><h3 style="color:#1A3A5C;">Esqueceu sua senha?</h3><p style="color:#666;font-size:14px;margin-top:8px;">Digite seu email cadastrado para receber um código de recuperação.</p></div>
-                <div class="input-group"><label><i class="fas fa-envelope"></i> Email cadastrado</label><input type="email" class="input-field" id="recEmail" placeholder="seu@email.com"></div>
-                <button class="btn btn-primary" onclick="app.solicitarCodigo()"><i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO</button>
-                <div id="recStatus1" style="display:none;text-align:center;padding:16px;margin-top:16px;border-radius:12px;"><div id="recIcon1" style="font-size:40px;margin-bottom:8px;"></div><p id="recMsg1" style="font-weight:600;"></p><p id="recSub1" style="font-size:13px;color:#666;margin-top:4px;"></p><div id="recCodigoMostrado" style="display:none;background:#1A3A5C;color:white;padding:16px;border-radius:8px;margin-top:12px;font-size:28px;font-weight:900;letter-spacing:8px;"></div></div>
-            </div>
-            <div style="background:#E0F2FE;padding:12px;border-radius:8px;margin-top:16px;text-align:left;font-size:13px;color:#1E40AF;"><strong>📋 Dicas:</strong><br>• Verifique a pasta <strong>SPAM</strong><br>• O código expira em <strong>30 minutos</strong><br>• Se o email não chegar, o código aparecerá na tela</div>
-        </div>
-        <div id="recPasso2" style="display:none;">
-            <div class="card">
-                <div style="text-align:center;margin-bottom:24px;"><i class="fas fa-key" style="font-size:60px;color:#F47920;"></i><h3 style="color:#1A3A5C;margin-top:16px;">Digite o código</h3><p style="color:#666;font-size:14px;">Digite o código de 6 dígitos e sua nova senha.</p></div>
-                <div class="input-group"><label><i class="fas fa-hashtag"></i> Código de 6 dígitos</label><input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;"></div>
-                <div class="input-group"><label><i class="fas fa-lock"></i> Nova Senha</label><input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres"></div>
-                <button class="btn btn-primary" onclick="app.verificarCodigo()"><i class="fas fa-check"></i> REDEFINIR SENHA</button>
-                <button class="btn btn-outline" onclick="app.voltarPasso1()"><i class="fas fa-arrow-left"></i> Voltar</button>
-                <div id="recStatus2" style="display:none;text-align:center;padding:16px;margin-top:16px;border-radius:12px;"></div>
-            </div>
-        </div>
+        <div id="recPasso1"><div class="card"><div style="text-align:center;margin-bottom:24px;"><img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width:80px;height:80px;border-radius:16px;margin-bottom:16px;"><h3 style="color:#1A3A5C;">Esqueceu sua senha?</h3><p style="color:#666;font-size:14px;margin-top:8px;">Digite seu email cadastrado para receber um código de recuperação.</p></div><div class="input-group"><label><i class="fas fa-envelope"></i> Email cadastrado</label><input type="email" class="input-field" id="recEmail" placeholder="seu@email.com"></div><button class="btn btn-primary" onclick="app.solicitarCodigo()"><i class="fas fa-paper-plane"></i> ENVIAR CÓDIGO</button><div id="recStatus1" style="display:none;text-align:center;padding:16px;margin-top:16px;border-radius:12px;"><div id="recIcon1" style="font-size:40px;margin-bottom:8px;"></div><p id="recMsg1" style="font-weight:600;"></p><p id="recSub1" style="font-size:13px;color:#666;margin-top:4px;"></p><div id="recCodigoMostrado" style="display:none;background:#1A3A5C;color:white;padding:16px;border-radius:8px;margin-top:12px;font-size:28px;font-weight:900;letter-spacing:8px;"></div></div></div><div style="background:#E0F2FE;padding:12px;border-radius:8px;margin-top:16px;text-align:left;font-size:13px;color:#1E40AF;"><strong>📋 Dicas:</strong><br>• Verifique a pasta <strong>SPAM</strong><br>• O código expira em <strong>30 minutos</strong><br>• Se o email não chegar, o código aparecerá na tela</div></div>
+        <div id="recPasso2" style="display:none;"><div class="card"><div style="text-align:center;margin-bottom:24px;"><i class="fas fa-key" style="font-size:60px;color:#F47920;"></i><h3 style="color:#1A3A5C;margin-top:16px;">Digite o código</h3><p style="color:#666;font-size:14px;">Digite o código de 6 dígitos e sua nova senha.</p></div><div class="input-group"><label><i class="fas fa-hashtag"></i> Código de 6 dígitos</label><input type="text" class="input-field" id="recCodigo" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;"></div><div class="input-group"><label><i class="fas fa-lock"></i> Nova Senha</label><input type="password" class="input-field" id="recNovaSenha" placeholder="Mínimo 6 caracteres"></div><button class="btn btn-primary" onclick="app.verificarCodigo()"><i class="fas fa-check"></i> REDEFINIR SENHA</button><button class="btn btn-outline" onclick="app.voltarPasso1()"><i class="fas fa-arrow-left"></i> Voltar</button><div id="recStatus2" style="display:none;text-align:center;padding:16px;margin-top:16px;border-radius:12px;"></div></div></div>
         <div style="text-align:center;margin-top:20px;"><button class="btn btn-outline" onclick="app.mostrarTela('loginScreen')"><i class="fas fa-arrow-left"></i> Voltar para o Login</button></div>
     </div>
 
     <!-- HOME -->
     <div class="screen" id="homeScreen">
-        <div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:12px;"><img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width:50px;height:50px;border-radius:12px;"><div><div id="saudacao" style="color:white;font-size:18px;">Bem-vindo!</div><div id="resumoTexto" style="font-size:13px;opacity:0.9;">Carregando...</div></div></div>
-            <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.2);text-align:center;font-size:11px;opacity:0.7;"><a href="#" onclick="app.mostrarTela('termosScreen');return false;" style="color:white;">Termos de Uso</a> | <a href="#" onclick="app.mostrarTela('privacidadeScreen');return false;" style="color:white;">Privacidade</a> | <span>© 2026 LPXConstrutor</span></div>
-        </div>
+        <div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;margin-bottom:16px;"><div style="display:flex;align-items:center;gap:12px;"><img src="imagem/logo-lpxconstrutor.png" alt="LPXConstrutor" style="width:50px;height:50px;border-radius:12px;"><div><div id="saudacao" style="color:white;font-size:18px;">Bem-vindo!</div><div id="resumoTexto" style="font-size:13px;opacity:0.9;">Carregando...</div></div></div><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.2);text-align:center;font-size:11px;opacity:0.7;"><a href="#" onclick="app.mostrarTela('termosScreen');return false;" style="color:white;">Termos de Uso</a> | <a href="#" onclick="app.mostrarTela('privacidadeScreen');return false;" style="color:white;">Privacidade</a> | <span>© 2026 LPXConstrutor</span></div></div>
         <div class="mapa-container"><div id="map"></div></div>
         <div class="tabs-container"><button class="tab active" onclick="app.mudarTab('feed')"><i class="fas fa-newspaper"></i> Feed</button><button class="tab" onclick="app.mudarTab('rede')"><i class="fas fa-users"></i> Minha Rede</button></div>
         <div id="feedContainer" class="feed-container"><div class="loading">Carregando...</div></div>
@@ -132,115 +112,74 @@
     </div>
 
     <!-- CHAT -->
-    <div class="screen" id="chatScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><div id="chatHeaderInfo" style="flex:1;"></div></div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input-container"><input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')app.enviarMensagem()"><button class="btn-send" onclick="app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button></div>
-    </div>
+    <div class="screen" id="chatScreen"><div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><div id="chatHeaderInfo" style="flex:1;"></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-container"><input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')app.enviarMensagem()"><button class="btn-send" onclick="app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button></div></div>
 
     <!-- NOTIFICAÇÕES -->
     <div class="screen" id="notificacoesScreen"><div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Notificações</h2></div><div id="notificacoesContainer"></div></div>
 
-    <!-- PUBLICAR VAGA (COM FOTO) -->
+    <!-- PUBLICAR VAGA -->
     <div class="screen" id="publicarVagaScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Publicar Vaga</h2></div>
         <div class="card">
             <div class="input-group" style="text-align:center;"><label><i class="fas fa-camera"></i> Foto da Obra</label><div class="foto-obra-container" onclick="document.getElementById('vagaFoto').click()"><img id="vagaFotoPreview" src="imagem/logo-lpxconstrutor.png" style="width:100%;height:200px;object-fit:cover;border-radius:12px;"><div class="foto-obra-overlay"><i class="fas fa-camera"></i> Adicionar Foto</div></div><input type="file" id="vagaFoto" accept="image/*" style="display:none;" onchange="app.previewFotoObra(event)"></div>
-            <div class="input-group"><label><i class="fas fa-heading"></i> Título</label><input type="text" class="input-field" id="vagaTitulo" placeholder="Ex: Preciso de Pedreiro"></div>
-            <div class="input-group"><label><i class="fas fa-align-left"></i> Descrição</label><textarea class="input-field" id="vagaDescricao" rows="4" placeholder="Descreva o serviço..."></textarea></div>
-            <div class="input-group"><label><i class="fas fa-map-marker-alt"></i> Endereço</label><input type="text" class="input-field" id="vagaEndereco" placeholder="Rua, número, bairro"></div>
-            <div class="input-group"><label><i class="fas fa-tools"></i> Profissões</label><div class="profissoes-checkboxes" id="profissoesCheckboxes"><label class="checkbox-item"><input type="checkbox" value="servente"> Servente</label><label class="checkbox-item"><input type="checkbox" value="pedreiro"> Pedreiro</label><label class="checkbox-item"><input type="checkbox" value="carpinteiro"> Carpinteiro</label><label class="checkbox-item"><input type="checkbox" value="armador"> Armador</label><label class="checkbox-item"><input type="checkbox" value="encanador"> Encanador</label><label class="checkbox-item"><input type="checkbox" value="eletricista"> Eletricista</label><label class="checkbox-item"><input type="checkbox" value="pintor"> Pintor</label><label class="checkbox-item"><input type="checkbox" value="gesseiro"> Gesseiro</label><label class="checkbox-item"><input type="checkbox" value="azulejista"> Azulejista</label><label class="checkbox-item"><input type="checkbox" value="soldador"> Soldador</label></div></div>
-            <div style="display:flex;gap:10px;"><div class="input-group" style="flex:1;"><label><i class="fas fa-money-bill-wave"></i> Valor/Hora (R$)</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25" min="1"></div><div class="input-group" style="flex:1;"><label><i class="fas fa-users"></i> Vagas</label><input type="number" class="input-field" id="vagaQuantidade" value="1" min="1"></div></div>
-            <div class="input-group"><label><i class="fas fa-clock"></i> Duração</label><select class="input-field" id="vagaDuracao"><option value="">Selecione...</option><option value="1-semana">1 Semana</option><option value="2-semanas">2 Semanas</option><option value="1-mes">1 Mês</option><option value="3-meses">3 Meses</option><option value="indeterminado">Indeterminado</option></select></div>
+            <div class="input-group"><label>Título</label><input type="text" class="input-field" id="vagaTitulo" placeholder="Ex: Preciso de Pedreiro"></div>
+            <div class="input-group"><label>Descrição</label><textarea class="input-field" id="vagaDescricao" rows="4" placeholder="Descreva o serviço..."></textarea></div>
+            <div class="input-group"><label>Endereço</label><input type="text" class="input-field" id="vagaEndereco" placeholder="Rua, número, bairro"></div>
+            <div class="input-group"><label>Profissões</label><div class="profissoes-checkboxes" id="profissoesCheckboxes"><label class="checkbox-item"><input type="checkbox" value="servente"> Servente</label><label class="checkbox-item"><input type="checkbox" value="pedreiro"> Pedreiro</label><label class="checkbox-item"><input type="checkbox" value="carpinteiro"> Carpinteiro</label><label class="checkbox-item"><input type="checkbox" value="armador"> Armador</label><label class="checkbox-item"><input type="checkbox" value="encanador"> Encanador</label><label class="checkbox-item"><input type="checkbox" value="eletricista"> Eletricista</label><label class="checkbox-item"><input type="checkbox" value="pintor"> Pintor</label><label class="checkbox-item"><input type="checkbox" value="gesseiro"> Gesseiro</label><label class="checkbox-item"><input type="checkbox" value="azulejista"> Azulejista</label><label class="checkbox-item"><input type="checkbox" value="soldador"> Soldador</label></div></div>
+            <div style="display:flex;gap:10px;"><div class="input-group" style="flex:1;"><label>Valor/Hora (R$)</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25" min="1"></div><div class="input-group" style="flex:1;"><label>Vagas</label><input type="number" class="input-field" id="vagaQuantidade" value="1" min="1"></div></div>
+            <div class="input-group"><label>Duração</label><select class="input-field" id="vagaDuracao"><option value="">Selecione...</option><option value="1-semana">1 Semana</option><option value="2-semanas">2 Semanas</option><option value="1-mes">1 Mês</option><option value="3-meses">3 Meses</option><option value="indeterminado">Indeterminado</option></select></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:10px;"><button class="btn btn-outline" onclick="app.mostrarTela('homeScreen')" style="flex:1;">CANCELAR</button><button class="btn btn-primary" onclick="app.publicarVagaApp()" style="flex:1;">PUBLICAR</button></div>
     </div>
 
     <!-- TERMOS DE USO -->
-    <div class="screen" id="termosScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Termos de Uso</h2></div>
-        <div class="termos-content"><div class="card">
-            <div style="background:#E0F2FE;border-left:4px solid #3B82F6;padding:15px;border-radius:8px;margin-bottom:20px;"><strong>⚠️ LEIA ATENTAMENTE:</strong> Ao se cadastrar e utilizar o LPXConstrutor, você concorda com todos os termos.</div>
-            <h2 style="color:#1A3A5C;">1. ACEITAÇÃO</h2><p style="font-size:13px;color:#666;">A Plataforma conecta Profissionais e Empreiteiros, não constituindo vínculo empregatício.</p>
-            <h2 style="color:#1A3A5C;">2. CADASTRO</h2><ul style="font-size:13px;color:#666;padding-left:20px;"><li>Idade mínima: 18 anos</li><li>Informações verdadeiras</li><li>CPF único por conta</li></ul>
-            <h2 style="color:#1A3A5C;">3. CONDUTAS PROIBIDAS</h2><ul style="font-size:13px;color:#666;padding-left:20px;"><li>Conteúdo falso ou fraudulento</li><li>Assédio ou discriminação</li><li>Vagas fantasmas</li></ul>
-            <h2 style="color:#1A3A5C;">4. DIREITOS DE IMAGEM</h2><p style="font-size:13px;color:#666;">Ao enviar fotos, você concede licença para exibição na plataforma. Imagens NÃO são vendidas.</p>
-            <h2 style="color:#1A3A5C;">5. PRIVACIDADE (LGPD)</h2><p style="font-size:13px;color:#666;">Seus dados são protegidos conforme Lei 13.709/2018. CPF nunca é visível publicamente.</p>
-            <div style="background:#D1FAE5;border-left:4px solid #10B981;padding:15px;border-radius:8px;margin-top:20px;"><strong>✅ DECLARAÇÃO DE ACEITE:</strong><br><span style="font-size:13px;">AO SE CADASTRAR, VOCÊ CONCORDA COM TODOS OS TERMOS.</span></div>
-            <button class="btn btn-primary" onclick="history.back()" style="margin-top:20px;"><i class="fas fa-check"></i> ENTENDI E CONCORDO</button>
-        </div></div>
-    </div>
+    <div class="screen" id="termosScreen"><div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Termos de Uso</h2></div><div class="termos-content"><div class="card"><div style="background:#E0F2FE;border-left:4px solid #3B82F6;padding:15px;border-radius:8px;margin-bottom:20px;"><strong>⚠️ LEIA ATENTAMENTE</strong></div><h2 style="color:#1A3A5C;">1. ACEITAÇÃO</h2><p style="font-size:13px;color:#666;">A Plataforma conecta Profissionais e Empreiteiros.</p><h2 style="color:#1A3A5C;">2. CADASTRO</h2><p style="font-size:13px;color:#666;">Idade mínima: 18 anos. Informações verdadeiras.</p><h2 style="color:#1A3A5C;">3. CONDUTAS PROIBIDAS</h2><p style="font-size:13px;color:#666;">Conteúdo falso, assédio, vagas fantasmas.</p><h2 style="color:#1A3A5C;">4. DIREITOS DE IMAGEM</h2><p style="font-size:13px;color:#666;">Imagens não são vendidas a terceiros.</p><h2 style="color:#1A3A5C;">5. PRIVACIDADE (LGPD)</h2><p style="font-size:13px;color:#666;">CPF nunca é visível publicamente.</p><div style="background:#D1FAE5;border-left:4px solid #10B981;padding:15px;border-radius:8px;margin-top:20px;"><strong>✅ AO SE CADASTRAR, VOCÊ CONCORDA COM TODOS OS TERMOS.</strong></div><button class="btn btn-primary" onclick="history.back()" style="margin-top:20px;"><i class="fas fa-check"></i> ENTENDI E CONCORDO</button></div></div></div>
 
     <!-- PRIVACIDADE -->
-    <div class="screen" id="privacidadeScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Política de Privacidade</h2></div>
-        <div class="termos-content"><div class="card">
-            <div style="background:#D1FAE5;border-left:4px solid #10B981;padding:15px;border-radius:8px;margin-bottom:20px;"><strong>🔒 SEUS DADOS ESTÃO PROTEGIDOS!</strong> LGPD (Lei 13.709/2018)</div>
-            <h2 style="color:#1A3A5C;">1. DADOS COLETADOS</h2><ul style="font-size:13px;color:#666;padding-left:20px;"><li>Nome, Email, WhatsApp</li><li>CPF (não visível)</li><li>Profissão e experiência</li></ul>
-            <h2 style="color:#1A3A5C;">2. VISIBILIDADE</h2><table style="width:100%;font-size:13px;border-collapse:collapse;"><tr style="background:#f0f0f0;"><td style="padding:8px;">Nome</td><td style="padding:8px;color:#10B981;">✅ Visível</td></tr><tr><td style="padding:8px;">WhatsApp</td><td style="padding:8px;color:#F59E0B;">⚠️ Logados</td></tr><tr style="background:#f0f0f0;"><td style="padding:8px;">CPF</td><td style="padding:8px;color:#EF4444;">❌ Nunca</td></tr></table>
-            <h2 style="color:#1A3A5C;">3. NÃO VENDEMOS DADOS</h2><p style="font-size:13px;color:#666;">Seus dados NUNCA são vendidos ou compartilhados.</p>
-            <button class="btn btn-primary" onclick="history.back()" style="margin-top:20px;"><i class="fas fa-check"></i> ENTENDI</button>
-        </div></div>
-    </div>
+    <div class="screen" id="privacidadeScreen"><div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Política de Privacidade</h2></div><div class="termos-content"><div class="card"><div style="background:#D1FAE5;border-left:4px solid #10B981;padding:15px;border-radius:8px;margin-bottom:20px;"><strong>🔒 LGPD (Lei 13.709/2018)</strong></div><h2 style="color:#1A3A5C;">1. DADOS COLETADOS</h2><p style="font-size:13px;color:#666;">Nome, Email, WhatsApp, CPF (não visível).</p><h2 style="color:#1A3A5C;">2. VISIBILIDADE</h2><p style="font-size:13px;color:#666;">CPF nunca é visível. WhatsApp visível para logados.</p><h2 style="color:#1A3A5C;">3. NÃO VENDEMOS DADOS</h2><p style="font-size:13px;color:#666;">Seus dados nunca são vendidos.</p><h2 style="color:#1A3A5C;">4. SEUS DIREITOS</h2><p style="font-size:13px;color:#666;">Acessar, corrigir, solicitar exclusão.</p><button class="btn btn-primary" onclick="history.back()" style="margin-top:20px;"><i class="fas fa-check"></i> ENTENDI</button></div></div></div>
 
     <!-- AVALIAÇÕES -->
-    <div class="screen" id="avaliacoesScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Avaliações</h2></div>
-        <div class="card" style="text-align:center;background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;"><div id="avaliacaoScoreGeral" style="font-size:48px;font-weight:900;">0.0</div><div id="avaliacaoEstrelas" style="font-size:24px;">☆☆☆☆☆</div><div id="avaliacaoTotal" style="font-size:13px;opacity:0.9;">0 avaliações</div></div>
-        <div class="tabs-container" style="margin-top:16px;"><button class="tab active" onclick="app.filtrarAvaliacoes('todas',this)">Todas</button><button class="tab" onclick="app.filtrarAvaliacoes('positivas',this)">👍 Positivas</button><button class="tab" onclick="app.filtrarAvaliacoes('melhorar',this)">📝 A Melhorar</button></div>
-        <div class="card" style="margin-top:16px;"><h3><i class="fas fa-briefcase"></i> Histórico de Trabalhos</h3><div id="historicoTrabalhos"><p style="color:#999;text-align:center;">Nenhum trabalho registrado</p></div></div>
-        <div id="avaliacoesLista" class="feed-container" style="margin-top:16px;"></div>
-    </div>
+    <div class="screen" id="avaliacoesScreen"><div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Avaliações</h2></div><div class="card" style="text-align:center;background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;"><div id="avaliacaoScoreGeral" style="font-size:48px;font-weight:900;">0.0</div><div id="avaliacaoEstrelas" style="font-size:24px;">☆☆☆☆☆</div><div id="avaliacaoTotal" style="font-size:13px;opacity:0.9;">0 avaliações</div></div><div class="tabs-container" style="margin-top:16px;"><button class="tab active" onclick="app.filtrarAvaliacoes('todas',this)">Todas</button><button class="tab" onclick="app.filtrarAvaliacoes('positivas',this)">👍 Positivas</button><button class="tab" onclick="app.filtrarAvaliacoes('melhorar',this)">📝 A Melhorar</button></div><div class="card" style="margin-top:16px;"><h3><i class="fas fa-briefcase"></i> Histórico de Trabalhos</h3><div id="historicoTrabalhos"><p style="color:#999;text-align:center;">Nenhum trabalho registrado</p></div></div><div id="avaliacoesLista" class="feed-container" style="margin-top:16px;"></div></div>
 
     <!-- DAR AVALIAÇÃO -->
-    <div class="screen" id="darAvaliacaoScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Avaliar Trabalho</h2></div>
-        <div class="card">
-            <div style="text-align:center;margin-bottom:20px;"><div id="avaliarNome" style="font-size:18px;font-weight:700;color:#1A3A5C;"></div><div id="avaliarProfissao" style="color:#666;font-size:14px;"></div></div>
-            <div class="input-group" style="text-align:center;"><label>Nota Geral</label><div class="estrelas-avaliacao" id="estrelasAvaliar"><i class="far fa-star" onclick="app.setNota(1)"></i><i class="far fa-star" onclick="app.setNota(2)"></i><i class="far fa-star" onclick="app.setNota(3)"></i><i class="far fa-star" onclick="app.setNota(4)"></i><i class="far fa-star" onclick="app.setNota(5)"></i></div></div>
-            <div class="input-group"><label><i class="fas fa-thumbs-up"></i> Pontos Positivos</label><textarea class="input-field" id="avalPositivos" rows="3" placeholder="O que fez bem..."></textarea></div>
-            <div class="input-group"><label><i class="fas fa-lightbulb"></i> A Melhorar</label><textarea class="input-field" id="avalMelhorar" rows="3" placeholder="Sugestões..."></textarea></div>
-            <div class="input-group"><label><i class="fas fa-tools"></i> Serviço Realizado</label><input type="text" class="input-field" id="avalServico" placeholder="Ex: Reforma de banheiro"></div>
-            <div class="input-group"><label><i class="fas fa-clock"></i> Período</label><select class="input-field" id="avalPeriodo"><option value="">Selecione...</option><option value="1-dia">1 Dia</option><option value="1-semana">1 Semana</option><option value="1-mes">1 Mês</option><option value="3-meses">3 Meses</option><option value="1-ano">+1 Ano</option></select></div>
-            <button class="btn btn-primary" onclick="app.enviarAvaliacao()"><i class="fas fa-paper-plane"></i> ENVIAR AVALIAÇÃO</button>
-        </div>
-    </div>
+    <div class="screen" id="darAvaliacaoScreen"><div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Avaliar Trabalho</h2></div><div class="card"><div style="text-align:center;margin-bottom:20px;"><div id="avaliarNome" style="font-size:18px;font-weight:700;color:#1A3A5C;"></div><div id="avaliarProfissao" style="color:#666;font-size:14px;"></div></div><div class="input-group" style="text-align:center;"><label>Nota Geral</label><div class="estrelas-avaliacao" id="estrelasAvaliar"><i class="far fa-star" onclick="app.setNota(1)"></i><i class="far fa-star" onclick="app.setNota(2)"></i><i class="far fa-star" onclick="app.setNota(3)"></i><i class="far fa-star" onclick="app.setNota(4)"></i><i class="far fa-star" onclick="app.setNota(5)"></i></div></div><div class="input-group"><label>👍 Pontos Positivos</label><textarea class="input-field" id="avalPositivos" rows="3" placeholder="O que fez bem..."></textarea></div><div class="input-group"><label>📝 A Melhorar</label><textarea class="input-field" id="avalMelhorar" rows="3" placeholder="Sugestões..."></textarea></div><div class="input-group"><label>🛠️ Serviço Realizado</label><input type="text" class="input-field" id="avalServico" placeholder="Ex: Reforma de banheiro"></div><div class="input-group"><label>⏱️ Período</label><select class="input-field" id="avalPeriodo"><option value="">Selecione...</option><option value="1-dia">1 Dia</option><option value="1-semana">1 Semana</option><option value="1-mes">1 Mês</option><option value="3-meses">3 Meses</option><option value="1-ano">+1 Ano</option></select></div><button class="btn btn-primary" onclick="app.enviarAvaliacao()"><i class="fas fa-paper-plane"></i> ENVIAR AVALIAÇÃO</button></div></div>
+
+    <!-- CONTRATAR -->
+    <div class="screen" id="contratarScreen"><div class="screen-header"><button class="btn-voltar" onclick="history.back()"><i class="fas fa-arrow-left"></i></button><h2>Contratar Profissional</h2></div><div class="card"><div id="contratarInfo" style="text-align:center;margin-bottom:20px;"></div><div class="input-group"><label>🏗️ Selecione a Obra</label><select class="input-field" id="contratarObra"><option value="">Selecione uma obra...</option></select></div><div class="input-group"><label>👷 Função na Obra</label><input type="text" class="input-field" id="contratarFuncao" placeholder="Ex: Pedreiro responsável pelo acabamento"></div><div class="input-group"><label>💰 Valor/Hora (R$)</label><input type="number" class="input-field" id="contratarValor" placeholder="25" min="1"></div><div class="input-group"><label>⏱️ Tipo de Contrato</label><select class="input-field" id="contratarTipo"><option value="diaria">Diária</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="obra">Por Obra</option></select></div><button class="btn btn-primary" onclick="app.confirmarContratacao()"><i class="fas fa-handshake"></i> CONTRATAR PROFISSIONAL</button><div id="contratarStatus" style="display:none;text-align:center;padding:16px;margin-top:16px;border-radius:12px;"></div></div></div>
+
+    <!-- MINHAS OBRAS -->
+    <div class="screen" id="minhasObrasScreen"><div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Minhas Obras</h2><button class="icon-btn" onclick="app.novaObra()" style="background:#10B981;color:white;font-size:16px;">➕</button></div><div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;text-align:center;"><div style="font-size:14px;">Total de Obras</div><div id="totalObras" style="font-size:36px;font-weight:900;">0</div><div style="font-size:12px;opacity:0.8;">Funcionários ativos: <span id="totalFuncionarios">0</span></div></div><div id="listaObrasContainer" class="feed-container" style="margin-top:16px;"><div class="loading">Carregando obras...</div></div></div>
+
+    <!-- DETALHE DA OBRA -->
+    <div class="screen" id="detalheObraScreen"><div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('minhasObrasScreen')"><i class="fas fa-arrow-left"></i></button><h2>Detalhe da Obra</h2></div><div id="detalheObraConteudo"></div></div>
 
     <!-- BOTTOM NAV -->
     <nav class="bottom-nav" id="bottomNav">
         <button class="nav-item active" data-screen="homeScreen" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-home"></i><span>Início</span></button>
         <button class="nav-item" data-screen="buscaScreen" onclick="app.mostrarTela('buscaScreen')"><i class="fas fa-search"></i><span>Buscar</span></button>
         <button class="nav-item" id="btnPublicar" style="display:none;" onclick="app.abrirTelaPublicacao()"><i class="fas fa-plus-circle" style="font-size:28px;color:#10B981;"></i><span>Publicar</span></button>
+        <button class="nav-item" id="btnObras" style="display:none;" onclick="app.mostrarTela('minhasObrasScreen')"><i class="fas fa-building"></i><span>Obras</span></button>
         <button class="nav-item" data-screen="chatScreen" onclick="app.mostrarTela('chatScreen')"><i class="fas fa-comments"></i><span>Chat</span></button>
         <button class="nav-item" data-screen="meuPerfilScreen" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-user"></i><span>Perfil</span></button>
     </nav>
 
-                       <!-- ===== MODAL QR CODE ===== -->
-        <div class="modal-overlay" id="modalQRCode" style="display:none;" onclick="app.fecharQRCode()">
-            <div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h3><i class="fas fa-qrcode"></i> Compartilhar Perfil</h3>
-                    <button class="modal-close" onclick="app.fecharQRCode()"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div id="qrcodeContainer" style="display:flex;justify-content:center;padding:20px;"></div>
-                    <p id="qrcodeNome" style="font-weight:700;color:#1A3A5C;margin-bottom:8px;"></p>
-                    <p id="qrcodeProfissao" style="color:#666;font-size:13px;margin-bottom:16px;"></p>
-                    <p style="font-size:12px;color:#999;">Escaneie o QR Code para ver o perfil</p>
-                    <div style="display:flex;gap:10px;margin-top:16px;">
-                        <button class="btn btn-outline btn-small" onclick="app.compartilharLink()" style="flex:1;">
-                            <i class="fas fa-share-alt"></i> Compartilhar Link
-                        </button>
-                        <button class="btn btn-primary btn-small" onclick="app.baixarQRCode()" style="flex:1;">
-                            <i class="fas fa-download"></i> Baixar QR
-                        </button>
-                    </div>
-                </div>
+</div>
+
+<!-- MODAL QR CODE -->
+<div class="modal-overlay" id="modalQRCode" style="display:none;" onclick="app.fecharQRCode()">
+    <div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3><i class="fas fa-qrcode"></i> Compartilhar Perfil</h3><button class="modal-close" onclick="app.fecharQRCode()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div id="qrcodeContainer" style="display:flex;justify-content:center;padding:20px;"></div>
+            <p id="qrcodeNome" style="font-weight:700;color:#1A3A5C;margin-bottom:8px;"></p>
+            <p id="qrcodeProfissao" style="color:#666;font-size:13px;margin-bottom:16px;"></p>
+            <p style="font-size:12px;color:#999;">Escaneie o QR Code para ver o perfil</p>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn btn-outline btn-small" onclick="app.compartilharLink()" style="flex:1;"><i class="fas fa-share-alt"></i> Compartilhar</button>
+                <button class="btn btn-primary btn-small" onclick="app.baixarQRCode()" style="flex:1;"><i class="fas fa-download"></i> Baixar QR</button>
             </div>
         </div>
-
-    
-
+    </div>
 </div>
 
 <script src="js/firebase-config.js"></script>
