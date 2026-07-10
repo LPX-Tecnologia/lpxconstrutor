@@ -138,3 +138,34 @@ textarea.input-field{resize:vertical;min-height:80px}
     .app-header h1 img{height:36px}
     .login-logo img{width:150px;height:150px}
 }
+
+/* ===== LOGO NA SAUDAÇÃO (MAIOR) ===== */
+#homeScreen .card:first-child {
+    padding: 24px 20px !important;
+}
+
+#homeScreen .card:first-child > div {
+    gap: 16px !important;
+    align-items: center !important;
+}
+
+.logo-saudacao {
+    width: 90px !important;
+    height: 90px !important;
+    object-fit: contain !important;
+    background: rgba(255,255,255,0.15) !important;
+    border-radius: 20px !important;
+    padding: 10px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+}
+
+.texto-saudacao {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+}
+
+.texto-resumo {
+    font-size: 15px !important;
+    opacity: 0.95 !important;
+}
