@@ -25,7 +25,8 @@ var traducoes = {
         publicadoSucesso: 'Vaga publicada!', candidaturaEnviada: 'Candidatura enviada!',
         contratadoSucesso: 'Contratado!', avaliacaoEnviada: 'Avaliação enviada!',
         codigoGerado: 'Código gerado!', senhaRedefinida: 'Senha redefinida!', linkCopiado: 'Link copiado!',
-        adicionadoRede: 'Adicionado na rede!', removidoRede: 'Removido da rede!'
+        adicionadoRede: 'Adicionado na rede!', removidoRede: 'Removido da rede!',
+        desejaSair: 'Deseja sair do LPXConstrutor?'
     },
     es: {
         saudacao: '¡Bienvenido!', carregando: 'Cargando...', nenhumaVaga: 'Sin vacantes',
@@ -47,7 +48,8 @@ var traducoes = {
         cancelar: 'CANCELAR', publicadoSucesso: '¡Vacante publicada!', candidaturaEnviada: '¡Solicitud enviada!',
         contratadoSucesso: '¡Contratado!', avaliacaoEnviada: '¡Evaluación enviada!',
         codigoGerado: '¡Código generado!', senhaRedefinida: '¡Contraseña cambiada!', linkCopiado: '¡Enlace copiado!',
-        adicionadoRede: '¡Agregado a la red!', removidoRede: '¡Eliminado de la red!'
+        adicionadoRede: '¡Agregado a la red!', removidoRede: '¡Eliminado de la red!',
+        desejaSair: '¿Quieres salir de LPXConstrutor?'
     },
     en: {
         saudacao: 'Welcome!', carregando: 'Loading...', nenhumaVaga: 'No jobs available',
@@ -69,7 +71,8 @@ var traducoes = {
         cancelar: 'CANCEL', publicadoSucesso: 'Job posted!', candidaturaEnviada: 'Application sent!',
         contratadoSucesso: 'Hired!', avaliacaoEnviada: 'Review sent!',
         codigoGerado: 'Code generated!', senhaRedefinida: 'Password reset!', linkCopiado: 'Link copied!',
-        adicionadoRede: 'Added to network!', removidoRede: 'Removed from network!'
+        adicionadoRede: 'Added to network!', removidoRede: 'Removed from network!',
+        desejaSair: 'Do you want to leave LPXConstrutor?'
     }
 };
 
@@ -168,6 +171,24 @@ App.prototype.init = function() {
         if (ta) ta.textContent = this.t('temaEscuro');
     }
     
+    // ===== INTERCEPTAR BOTÃO VOLTAR DO CELULAR =====
+    history.pushState(null, '', window.location.href);
+    
+    window.addEventListener('popstate', function(event) {
+        console.log('🔙 Botão voltar pressionado. Tela:', self.telaAtual);
+        
+        if (self.telaAtual === 'homeScreen' || self.telaAtual === 'loginScreen') {
+            if (confirm(self.t('desejaSair'))) {
+                // Deixa fechar
+            } else {
+                history.pushState(null, '', window.location.href);
+            }
+        } else {
+            self.voltarTela();
+            history.pushState(null, '', window.location.href);
+        }
+    });
+    
     authService.onAuthStateChange(function(u) {
         if (u) {
             self.usuarioLogado = u;
@@ -196,7 +217,7 @@ App.prototype.atualizarBotaoObras = function() {
     btn.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
 };
 
-// ===== NAVEGAÇÃO COM HISTÓRICO =====
+// ===== NAVEGAÇÃO =====
 App.prototype.mostrarTela = function(id) {
     var self = this;
     if (self.telaAtual && self.telaAtual !== id && self.telaAtual !== 'loginScreen') {
@@ -226,7 +247,6 @@ App.prototype.voltarTela = function() {
     console.log('🔙 Voltando... Histórico:', this.historicoTelas.length);
     if (this.historicoTelas.length > 0) {
         var anterior = this.historicoTelas.pop();
-        console.log('🔙 Indo para:', anterior);
         document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
         var tela = document.getElementById(anterior);
         if (tela) { tela.classList.add('active'); this.telaAtual = anterior; }
@@ -244,7 +264,6 @@ App.prototype.selecionarTema = function(tema) {
     var temaClaro = document.getElementById('temaClaro');
     var temaEscuro = document.getElementById('temaEscuro');
     var temaAtual = document.getElementById('temaAtual');
-    
     if (tema === 'escuro') {
         body.classList.add('dark-theme');
         if (temaClaro) temaClaro.style.background = '';
@@ -335,14 +354,11 @@ App.prototype.carregarFeed = function() {
 
 // ===== PERFIL =====
 App.prototype.carregarMeuPerfil = function() {
-    console.log('📱 carregarMeuPerfil chamado. usuarioLogado:', this.usuarioLogado);
-    if (!this.usuarioLogado) { console.log('❌ Nenhum usuário logado'); return; }
+    if (!this.usuarioLogado) return;
     var u = this.usuarioLogado;
-    console.log('👤 Dados:', u.nome, u.profissao, u.tipo);
     
     var nomeEl = document.getElementById('meuPerfilNome');
     if (nomeEl) nomeEl.textContent = u.nome || 'Usuário';
-    else console.log('❌ Elemento meuPerfilNome não encontrado');
     
     var profEl = document.getElementById('meuPerfilProfissao');
     if (profEl) profEl.textContent = (u.tipo === 'profissional' ? '👷 ' : '🏢 ') + (u.profissao || u.tipo || this.t('profissional'));
@@ -357,7 +373,6 @@ App.prototype.carregarMeuPerfil = function() {
         var fotoEl = document.getElementById('fotoPerfilPreview');
         if (fotoEl) fotoEl.src = u.fotoPerfil;
     }
-    console.log('✅ Perfil carregado!');
 };
 
 App.prototype.abrirEditarPerfil = function() {
