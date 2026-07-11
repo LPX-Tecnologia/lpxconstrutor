@@ -184,7 +184,6 @@ App.prototype.init = function() {
         if (ta) ta.textContent = this.t('temaEscuro');
     }
     
-    // Interceptar botão voltar
     history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', function() {
         if (self.telaAtual === 'homeScreen' || self.telaAtual === 'loginScreen') {
@@ -347,13 +346,75 @@ App.prototype.carregarFeed = function() {
     }).catch(function(){c.innerHTML='<div class="card">Erro</div>';});
 };
 
+// ===== REDE (ATUALIZADA COM MAIS INFORMAÇÕES) =====
 App.prototype.carregarRede = function() {
-    var self=this,c=document.getElementById('redeContainer');if(!c)return;c.innerHTML='<div class="loading">Carregando...</div>';
-    db.collection('conexoes').get().then(function(snap){
-        var conexoes=[];snap.forEach(function(doc){var d=doc.data();if(d.usuarioId===self.usuarioLogado.id||d.amigoId===self.usuarioLogado.id)conexoes.push({id:doc.id,data:d});});
-        if(conexoes.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3></div>';return;}
-        var proms=[];conexoes.forEach(function(con){var aid=con.data.usuarioId===self.usuarioLogado.id?con.data.amigoId:con.data.usuarioId;proms.push(db.collection('usuarios').doc(aid).get());});
-        Promise.all(proms).then(function(docs){var html='';docs.forEach(function(doc){if(doc.exists){var u=doc.data();html+='<div class="vaga-card" onclick="window.app.verPerfil(\''+doc.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div></div></div></div>';}});c.innerHTML=html||'<div class="card">Nenhum amigo</div>';});
+    var self = this, c = document.getElementById('redeContainer');
+    if (!c) return;
+    c.innerHTML = '<div class="loading">Carregando rede...</div>';
+    
+    db.collection('conexoes').get().then(function(snap) {
+        var conexoes = [];
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            if (d.usuarioId === self.usuarioLogado.id || d.amigoId === self.usuarioLogado.id) {
+                conexoes.push({ id: doc.id, data: d });
+            }
+        });
+        
+        if (conexoes.length === 0) {
+            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-users" style="font-size:60px;color:#ccc;"></i><h3 style="margin-top:16px;">Sua rede está vazia</h3><p style="color:#999;">Busque profissionais e adicione na sua rede!</p><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')" style="margin-top:16px;">🔍 Buscar Profissionais</button></div>';
+            return;
+        }
+        
+        var promessas = [];
+        conexoes.forEach(function(con) {
+            var amigoId = con.data.usuarioId === self.usuarioLogado.id ? con.data.amigoId : con.data.usuarioId;
+            promessas.push(
+                db.collection('usuarios').doc(amigoId).get().then(function(userDoc) {
+                    if (userDoc.exists) {
+                        return { usuario: { id: userDoc.id, ...userDoc.data() }, conexao: con.data };
+                    }
+                    return null;
+                })
+            );
+        });
+        
+        Promise.all(promessas).then(function(resultados) {
+            var html = '';
+            resultados.forEach(function(r) {
+                if (!r) return;
+                var u = r.usuario;
+                var w = u.celular ? u.celular.replace(/\D/g, '') : '';
+                var sc = u.score || 0;
+                var statusConexao = r.conexao.status === 'contratado' ? '🤝 Contratado' : 
+                                   r.conexao.status === 'finalizado' ? '✅ Finalizado' : 
+                                   r.conexao.status === 'demitido' ? '🔴 Encerrado' : '🔗 Conectado';
+                
+                html += '<div class="vaga-card" style="cursor:pointer;">' +
+                    '<div class="vaga-header" onclick="window.app.verPerfil(\'' + u.id + '\')">' +
+                        '<div class="vaga-avatar">' +
+                            (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<i class="fas fa-user"></i>') +
+                        '</div>' +
+                        '<div class="vaga-info">' +
+                            '<div class="vaga-nome">' + u.nome + '</div>' +
+                            '<div class="vaga-data"><i class="fas fa-tools"></i> ' + (u.profissao || 'Profissional') + ' • <i class="fas fa-calendar"></i> ' + (u.experiencia || 0) + ' anos</div>' +
+                            '<div class="vaga-data" style="margin-top:2px;"><span style="color:#F47920;">' + '⭐'.repeat(Math.round(sc)) + ' ' + (sc > 0 ? sc.toFixed(1) : 'Novo') + '</span> • <span style="color:#10B981;">' + statusConexao + '</span></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="vaga-footer" style="justify-content:space-between;">' +
+                        '<div style="display:flex;gap:6px;flex:1;">' +
+                            (w ? '<a href="https://wa.me/55' + w + '?text=' + encodeURIComponent('Olá ' + u.nome.split(' ')[0] + '! Somos conectados no LPXConstrutor. Como vai?') + '" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>' : '') +
+                            '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\'' + u.id + '\')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button>' +
+                        '</div>' +
+                        '<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.gerarQRCode(\'' + u.id + '\')" title="QR Code" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-qrcode"></i></button>' +
+                        '<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.removerDaRede(\'' + u.id + '\')" title="Remover" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;color:#EF4444;"><i class="fas fa-times"></i></button>' +
+                    '</div>' +
+                '</div>';
+            });
+            c.innerHTML = html || '<div class="card" style="text-align:center;">Nenhum amigo encontrado</div>';
+        });
+    }).catch(function(e) {
+        c.innerHTML = '<div class="card" style="text-align:center;">Erro ao carregar rede</div>';
     });
 };
 
