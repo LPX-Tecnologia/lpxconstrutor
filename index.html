@@ -79,7 +79,7 @@
     <!-- RECUPERAR SENHA -->
     <div class="screen" id="recuperarSenhaScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Recuperar Senha</h2></div>
-        <div id="recPasso1"><div class="card"><div style="text-align:center;margin-bottom:20px;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:80px;height:80px;border-radius:0;"><h3>Esqueceu sua senha?</h3></div><div class="input-group"><label>Email</label><input type="email" class="input-field" id="recEmail"></div><button class="btn btn-primary" onclick="window.app.solicitarCodigo()">ENVIAR CÓDIGO</button><div id="recStatus1" style="display:none;"></div></div></div>
+        <div id="recPasso1"><div class="card"><div style="text-align:center;margin-bottom:20px;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:80px;height:80px;border-radius:0;"><h3>Esqueceu sua senha?</h3></div><div class="input-group"><label>Email</label><input type="email" class="input-field" id="recEmail"></div><button class="btn btn-primary" onclick="window.app.solicitarCodigo()">ENVIAR CÓDIGO</button></div></div>
         <div id="recPasso2" style="display:none;"><div class="card"><div style="text-align:center;"><i class="fas fa-key" style="font-size:60px;color:#F47920;"></i><h3>Digite o código</h3></div><div class="input-group"><label>Código</label><input type="text" class="input-field" id="recCodigo" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;"></div><div class="input-group"><label>Nova Senha</label><input type="password" class="input-field" id="recNovaSenha"></div><button class="btn btn-primary" onclick="window.app.verificarCodigo()">REDEFINIR</button><button class="btn btn-outline" onclick="window.app.voltarPasso1()">Voltar</button></div></div>
     </div>
 
@@ -89,14 +89,17 @@
             <div style="display:flex;align-items:center;gap:16px;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" class="logo-saudacao"><div><div id="saudacao" style="font-size:24px;font-weight:700;">Bem-vindo!</div><div id="resumoTexto" style="font-size:15px;opacity:.95;">Carregando...</div></div></div>
         </div>
         <div class="mapa-container"><div id="map"></div></div>
-        <div class="tabs-container"><button class="tab active" onclick="window.app.mudarTab('feed')"><i class="fas fa-newspaper"></i> Feed</button><button class="tab" onclick="window.app.mudarTab('rede')"><i class="fas fa-users"></i> Rede</button></div>
+        <div class="tabs-container">
+            <button class="tab active" onclick="window.app.mudarTab('feed')"><i class="fas fa-newspaper"></i> Feed</button>
+            <button class="tab" onclick="window.app.mudarTab('rede')"><i class="fas fa-users"></i> Rede</button>
+        </div>
         <div id="feedContainer" class="feed-container"><div class="loading">Carregando...</div></div>
         <div id="redeContainer" class="feed-container" style="display:none;"><div class="loading">Carregando...</div></div>
     </div>
 
     <!-- BUSCA -->
     <div class="screen" id="buscaScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Buscar</h2></div>
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Buscar Profissionais</h2></div>
         <div class="search-container"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="buscaInput" placeholder="Nome ou profissão..." oninput="window.app.buscarProfissionais()"></div>
         <div id="buscaResultados" class="feed-container"></div>
     </div>
@@ -204,12 +207,12 @@
     <!-- NOTIFICAÇÕES -->
     <div class="screen" id="notificacoesScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Notificações</h2></div><div id="notificacoesContainer"></div></div>
 
-    <!-- ===== MODAL SAIR DO APP ===== -->
+    <!-- MODAL SAIR -->
     <div class="modal-overlay" id="modalSair" style="display:none;" onclick="window.app.fecharModalSair()">
         <div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()">
             <div class="modal-body" style="padding:30px 20px;">
                 <i class="fas fa-sign-out-alt" style="font-size:60px;color:#F47920;margin-bottom:16px;"></i>
-                <h3 style="color:#1A3A5C;margin-bottom:8px;">Deseja sair do LPXConstrutor?</h3>
+                <h3 style="color:#1A3A5C;">Deseja sair do LPXConstrutor?</h3>
                 <p style="color:#666;font-size:14px;">Você será direcionado para a tela de login.</p>
                 <div style="display:flex;gap:10px;margin-top:24px;">
                     <button class="btn btn-outline" onclick="window.app.fecharModalSair()" style="flex:1;">NÃO</button>
