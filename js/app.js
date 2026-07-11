@@ -113,40 +113,168 @@ App.prototype.voltarPasso1 = function(){document.getElementById('recPasso1').sty
 App.prototype.verificarCodigo = function(){var s=this;s.mostrarToast('✅ Senha redefinida!','sucesso');setTimeout(function(){s.mostrarTela('loginScreen');},1500);};
 App.prototype.carregarHome = function() { if(!this.usuarioLogado)return; var h=new Date().getHours(),sd='Bom dia';if(h>=12&&h<18)sd='Boa tarde';if(h>=18)sd='Boa noite'; document.getElementById('saudacao').textContent='👋 '+sd+', '+this.usuarioLogado.nome+'!'; document.getElementById('resumoTexto').textContent=(this.usuarioLogado.tipo==='empreiteiro'?'🏢 Empreiteiro':'👷 Profissional')+' • '+(this.usuarioLogado.profissao||this.usuarioLogado.tipo); setTimeout(function(){try{if(typeof mapaService!=='undefined')mapaService.initMap()}catch(e){}},500); this.carregarFeed(); };
 
-// ===== FEED COM VÍDEOS =====
+// ===== FEED COM VÍDEOS EDUCATIVOS DE SEGURANÇA E NORMAS =====
 App.prototype.carregarFeed = function() {
     var s = this, c = document.getElementById('feedContainer'); if (!c) return;
     c.innerHTML = '<div class="loading">Carregando feed...</div>';
     
-    var videosDivulgacao = [
-        { tipo: 'tiktok', url: 'https://www.tiktok.com/@lpxconstrutor/video/1234567890', titulo: '🏗️ Obras incríveis com LPXConstrutor', descricao: 'Veja como é fácil encontrar profissionais qualificados!' },
-        { tipo: 'kwai', url: 'https://www.kwai.com/video/1234567890', titulo: '👷 Profissional encontrou trabalho em 1 dia', descricao: 'Usando o LPXConstrutor, o João conseguiu uma obra em menos de 24h!' },
-        { tipo: 'tiktok', url: 'https://www.tiktok.com/@lpxconstrutor/video/0987654321', titulo: '💰 Como contratar os melhores profissionais', descricao: 'Dicas para empreiteiros encontrarem mão de obra qualificada.' }
+    // ===== VÍDEOS EDUCATIVOS DE SEGURANÇA DO TRABALHO =====
+    var videosEducativos = [
+        { 
+            titulo: '🦺 NR-6: Uso Correto de EPIs', 
+            descricao: 'Aprenda sobre Equipamentos de Proteção Individual. Capacete, luvas, botas, óculos - uso obrigatório!', 
+            url: 'https://www.youtube.com/embed/EPI_SEGURANCA', 
+            categoria: 'Segurança' 
+        },
+        { 
+            titulo: '⚠️ NR-18: Segurança na Construção Civil', 
+            descricao: 'Normas de segurança específicas para obras. Prevenção de acidentes em altura e escavações.', 
+            url: 'https://www.youtube.com/embed/NR18_OBRAS', 
+            categoria: 'Normas' 
+        },
+        { 
+            titulo: '🔌 NR-10: Segurança em Eletricidade', 
+            descricao: 'Para eletricistas: procedimentos seguros, desligamento, aterramento e distâncias de segurança.', 
+            url: 'https://www.youtube.com/embed/NR10_ELETRICA', 
+            categoria: 'Eletricista' 
+        },
+        { 
+            titulo: '🏗️ NR-35: Trabalho em Altura', 
+            descricao: 'Uso de cinto de segurança, linha de vida, andaimes e escadas. Obrigatório para obras acima de 2m.', 
+            url: 'https://www.youtube.com/embed/NR35_ALTURA', 
+            categoria: 'Segurança' 
+        },
+        { 
+            titulo: '🎨 Curso de Pintura Profissional', 
+            descricao: 'Técnicas de pintura residencial e industrial. Preparação de superfície, tipos de tinta e acabamentos.', 
+            url: 'https://www.youtube.com/embed/PINTURA_CURSO', 
+            categoria: 'Pintor' 
+        },
+        { 
+            titulo: '🔧 Curso de Encanador Profissional', 
+            descricao: 'Instalações hidráulicas, soldagem de canos, caixa d\'água, esgoto e vazamentos.', 
+            url: 'https://www.youtube.com/embed/ENCANADOR_CURSO', 
+            categoria: 'Encanador' 
+        },
+        { 
+            titulo: '🪚 Curso de Carpintaria', 
+            descricao: 'Técnicas de corte, montagem de formas para concreto, telhados e estruturas de madeira.', 
+            url: 'https://www.youtube.com/embed/CARPINTARIA_CURSO', 
+            categoria: 'Carpinteiro' 
+        },
+        { 
+            titulo: '⚡ Curso de Eletricista Residencial', 
+            descricao: 'Instalações elétricas, disjuntores, tomadas, interruptores e quadro de distribuição.', 
+            url: 'https://www.youtube.com/embed/ELETRICISTA_CURSO', 
+            categoria: 'Eletricista' 
+        },
+        { 
+            titulo: '🧱 Curso de Assentamento de Pisos e Azulejos', 
+            descricao: 'Nivelamento, argamassa, rejunte, paginação e acabamentos perfeitos.', 
+            url: 'https://www.youtube.com/embed/AZULEJO_CURSO', 
+            categoria: 'Pedreiro' 
+        },
+        { 
+            titulo: '📏 NR-12: Segurança com Máquinas', 
+            descricao: 'Proteção de serras, betoneiras, furadeiras. Dispositivos de segurança obrigatórios.', 
+            url: 'https://www.youtube.com/embed/NR12_MAQUINAS', 
+            categoria: 'Segurança' 
+        },
+        { 
+            titulo: '🧯 NR-23: Prevenção de Incêndios', 
+            descricao: 'Uso de extintores, saídas de emergência, classes de fogo e procedimentos de evacuação.', 
+            url: 'https://www.youtube.com/embed/NR23_INCENDIO', 
+            categoria: 'Segurança' 
+        },
+        { 
+            titulo: '📋 NR-1: Disposições Gerais', 
+            descricao: 'Obrigações do empregador e empregado. Comunicação de acidentes, exames médicos e treinamentos.', 
+            url: 'https://www.youtube.com/embed/NR1_GERAL', 
+            categoria: 'Normas' 
+        }
     ];
+    
+    // Seleciona vídeo do dia baseado na data
+    var hoje = new Date();
+    var diaDoAno = Math.floor((hoje - new Date(hoje.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    var videoDoDia = videosEducativos[diaDoAno % videosEducativos.length];
     
     db.collection('vagas').get().then(function(snap) {
         var vagas = []; snap.forEach(function(doc) { var d = doc.data(); if (d.ativa !== false) vagas.push({ id: doc.id, data: d }); });
         var html = '';
         
-        // Vídeo de divulgação
-        if (videosDivulgacao.length > 0) {
-            var video = videosDivulgacao[s.videoIndex % videosDivulgacao.length];
-            html += '<div class="card video-card" style="padding:0;overflow:hidden;background:linear-gradient(135deg,#1A3A5C,#2C5F8A);">' +
-                '<div style="padding:12px 16px;color:white;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><i class="fas fa-play-circle" style="font-size:24px;"></i><strong style="font-size:14px;">' + video.titulo + '</strong></div><p style="font-size:12px;opacity:0.9;margin-bottom:12px;">' + video.descricao + '</p></div>' +
-                '<div class="video-embed-container"><iframe src="' + s.getVideoEmbedUrl(video) + '" style="width:100%;height:400px;border:none;" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>' +
-                '<div style="padding:8px 16px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);"><span style="color:white;font-size:11px;">📱 ' + (video.tipo === 'tiktok' ? 'TikTok' : 'Kwai') + '</span><div style="display:flex;gap:6px;"><button class="btn btn-small" style="background:white;color:#1A3A5C;font-size:10px;padding:4px 10px;" onclick="event.stopPropagation();window.app._app.proximoVideo()">⏭ Próximo</button><button class="btn btn-small" style="background:#F47920;color:white;font-size:10px;padding:4px 10px;" onclick="event.stopPropagation();window.open(\'' + video.url + '\',\'_blank\')">🔗 Ver</button></div></div></div>';
-        }
+        // ===== VÍDEO EDUCATIVO DO DIA (ANTES DAS VAGAS) =====
+        html += '<div class="card video-educativo" style="padding:0;overflow:hidden;border:2px solid #10B981;">' +
+            '<div style="background:linear-gradient(135deg,#059669,#10B981);padding:14px 16px;color:white;">' +
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+                    '<div style="background:white;color:#059669;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">🎓</div>' +
+                    '<div>' +
+                        '<strong style="font-size:15px;">📚 Estudo Diário - ' + videoDoDia.categoria + '</strong>' +
+                        '<div style="font-size:11px;opacity:0.9;">' + hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<p style="font-size:13px;opacity:0.95;margin-top:4px;">' + videoDoDia.descricao + '</p>' +
+            '</div>' +
+            '<div class="video-embed-container">' +
+                '<iframe src="' + videoDoDia.url + '?autoplay=0&rel=0&controls=1" ' +
+                    'style="width:100%;height:250px;border:none;" ' +
+                    'allow="autoplay; encrypted-media" allowfullscreen>' +
+                '</iframe>' +
+            '</div>' +
+            '<div style="padding:10px 16px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #d1fae5;">' +
+                '<span style="font-size:11px;color:#059669;"><i class="fas fa-lightbulb"></i> <strong>Dica:</strong> ' + videoDoDia.titulo + '</span>' +
+                '<div style="display:flex;gap:6px;">' +
+                    '<button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:4px 10px;" onclick="event.stopPropagation();window.app._app.videoAnterior()"><i class="fas fa-backward"></i></button>' +
+                    '<button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:4px 10px;" onclick="event.stopPropagation();window.app._app.videoSeguinte()"><i class="fas fa-forward"></i></button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
         
-        // Vagas
+        // ===== LISTA DE VAGAS =====
         if (vagas.length === 0) {
-            html += '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma vaga publicada</h3>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()" style="margin-top:16px;">📢 PUBLICAR VAGA</button>' : '') + '</div>';
+            html += '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-hard-hat" style="font-size:50px;color:#ccc;"></i><h3 style="margin-top:12px;">Nenhuma vaga publicada</h3><p style="color:#999;font-size:13px;">Enquanto isso, aproveite o estudo diário acima! 📚</p>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()" style="margin-top:12px;">📢 PUBLICAR VAGA</button>' : '') + '</div>';
         } else {
             vagas.forEach(function(v) {
-                html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || '') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + (v.data.fotoObra ? '<img src="' + v.data.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;">' : '') + '</div>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'profissional' ? '<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app.candidatarVaga(\'' + v.id + '\')">✋ QUERO!</button></div>' : '') + '</div>';
+                html += '<div class="vaga-card">' +
+                    '<div class="vaga-header">' +
+                        '<div class="vaga-avatar"><i class="fas fa-user-tie"></i></div>' +
+                        '<div class="vaga-info">' +
+                            '<div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div>' +
+                            '<div class="vaga-data">📍 ' + (v.data.endereco || '') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="vaga-body">' +
+                        '<div class="vaga-tags">' +
+                            '<span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span>' +
+                            '<span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span>' +
+                        '</div>' +
+                        (v.data.fotoObra ? '<img src="' + v.data.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;">' : '') +
+                    '</div>' +
+                    (s.usuarioLogado && s.usuarioLogado.tipo === 'profissional' ? 
+                        '<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app.candidatarVaga(\'' + v.id + '\')" style="flex:1;">✋ QUERO!</button></div>' : '') +
+                '</div>';
             });
         }
-        c.innerHTML = html; s.videoIndex++;
-    }).catch(function() { c.innerHTML = '<div class="card">Erro</div>'; });
+        
+        c.innerHTML = html;
+        
+    }).catch(function() {
+        c.innerHTML = '<div class="card" style="text-align:center;">Erro ao carregar feed</div>';
+    });
+};
+
+// Navegação dos vídeos
+App.prototype.videoAnterior = function() {
+    if (!this.videoIndex) this.videoIndex = 0;
+    this.videoIndex--;
+    if (this.videoIndex < 0) this.videoIndex = 11; // Volta para o último
+    this.carregarFeed();
+};
+
+App.prototype.videoSeguinte = function() {
+    if (!this.videoIndex) this.videoIndex = 0;
+    this.videoIndex++;
+    this.carregarFeed();
 };
 
 App.prototype.getVideoEmbedUrl = function(v) {
