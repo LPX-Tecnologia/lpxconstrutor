@@ -26,7 +26,8 @@ var traducoes = {
         contratadoSucesso: 'Contratado!', avaliacaoEnviada: 'Avaliação enviada!',
         codigoGerado: 'Código gerado!', senhaRedefinida: 'Senha redefinida!', linkCopiado: 'Link copiado!',
         adicionadoRede: 'Adicionado na rede!', removidoRede: 'Removido da rede!',
-        desejaSair: 'Deseja sair do LPXConstrutor?'
+        desejaSair: 'Deseja sair do LPXConstrutor?', descricaoSair: 'Você será direcionado para a tela de login.',
+        simSair: 'SIM, SAIR', naoSair: 'NÃO'
     },
     es: {
         saudacao: '¡Bienvenido!', carregando: 'Cargando...', nenhumaVaga: 'Sin vacantes',
@@ -49,7 +50,8 @@ var traducoes = {
         contratadoSucesso: '¡Contratado!', avaliacaoEnviada: '¡Evaluación enviada!',
         codigoGerado: '¡Código generado!', senhaRedefinida: '¡Contraseña cambiada!', linkCopiado: '¡Enlace copiado!',
         adicionadoRede: '¡Agregado a la red!', removidoRede: '¡Eliminado de la red!',
-        desejaSair: '¿Quieres salir de LPXConstrutor?'
+        desejaSair: '¿Quieres salir de LPXConstrutor?', descricaoSair: 'Serás dirigido a la pantalla de inicio de sesión.',
+        simSair: 'SÍ, SALIR', naoSair: 'NO'
     },
     en: {
         saudacao: 'Welcome!', carregando: 'Loading...', nenhumaVaga: 'No jobs available',
@@ -72,7 +74,8 @@ var traducoes = {
         contratadoSucesso: 'Hired!', avaliacaoEnviada: 'Review sent!',
         codigoGerado: 'Code generated!', senhaRedefinida: 'Password reset!', linkCopiado: 'Link copied!',
         adicionadoRede: 'Added to network!', removidoRede: 'Removed from network!',
-        desejaSair: 'Do you want to leave LPXConstrutor?'
+        desejaSair: 'Do you want to leave LPXConstrutor?', descricaoSair: 'You will be directed to the login screen.',
+        simSair: 'YES, EXIT', naoSair: 'NO'
     }
 };
 
@@ -123,6 +126,9 @@ window.app = {
     selecionarTema: function(t){ if(window.app._app)window.app._app.selecionarTema(t); },
     mostrarInfoVersao: function(){ if(window.app._app)window.app._app.mostrarInfoVersao(); },
     confirmarExclusao: function(){ if(window.app._app)window.app._app.confirmarExclusao(); },
+    mostrarModalSair: function(){ if(window.app._app)window.app._app.mostrarModalSair(); },
+    fecharModalSair: function(){ if(window.app._app)window.app._app.fecharModalSair(); },
+    confirmarSair: function(){ if(window.app._app)window.app._app.confirmarSair(); },
     mostrarNotificacoes: function(){ if(window.app._app)window.app._app.mostrarNotificacoes(); },
     mudarTab: function(t){ if(window.app._app)window.app._app.mudarTab(t); },
     carregarFeed: function(){ if(window.app._app)window.app._app.carregarFeed(); },
@@ -157,13 +163,9 @@ App.prototype.init = function() {
     console.log('🚀 Iniciando LPXConstrutor...');
     window.app._app = this;
     
-    // Carrega idioma salvo
     var idiomaSalvo = localStorage.getItem('idioma');
-    if (idiomaSalvo && traducoes[idiomaSalvo]) {
-        this.idiomaAtual = idiomaSalvo;
-    }
+    if (idiomaSalvo && traducoes[idiomaSalvo]) this.idiomaAtual = idiomaSalvo;
     
-    // Carrega tema salvo
     var temaSalvo = localStorage.getItem('tema');
     if (temaSalvo === 'escuro') {
         document.body.classList.add('dark-theme');
@@ -173,19 +175,12 @@ App.prototype.init = function() {
     
     // ===== INTERCEPTAR BOTÃO VOLTAR DO CELULAR =====
     history.pushState(null, '', window.location.href);
-    
     window.addEventListener('popstate', function(event) {
-        console.log('🔙 Botão voltar pressionado. Tela:', self.telaAtual);
-        
+        console.log('🔙 Botão voltar. Tela:', self.telaAtual);
         if (self.telaAtual === 'homeScreen' || self.telaAtual === 'loginScreen') {
-            if (confirm(self.t('desejaSair'))) {
-                // Deixa fechar
-            } else {
-                history.pushState(null, '', window.location.href);
-            }
+            self.mostrarModalSair();
         } else {
             self.voltarTela();
-            history.pushState(null, '', window.location.href);
         }
     });
     
@@ -194,9 +189,7 @@ App.prototype.init = function() {
             self.usuarioLogado = u;
             self.atualizarBotaoPublicar();
             self.atualizarBotaoObras();
-            if (self.telaAtual === 'loginScreen' || self.telaAtual === 'cadastroScreen') {
-                self.mostrarTela('homeScreen');
-            }
+            if (self.telaAtual === 'loginScreen' || self.telaAtual === 'cadastroScreen') self.mostrarTela('homeScreen');
         } else {
             self.usuarioLogado = null;
             self.mostrarTela('loginScreen');
@@ -244,7 +237,6 @@ App.prototype.mostrarTela = function(id) {
 };
 
 App.prototype.voltarTela = function() {
-    console.log('🔙 Voltando... Histórico:', this.historicoTelas.length);
     if (this.historicoTelas.length > 0) {
         var anterior = this.historicoTelas.pop();
         document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
@@ -256,6 +248,24 @@ App.prototype.voltarTela = function() {
     } else {
         this.mostrarTela('homeScreen');
     }
+};
+
+// ===== MODAL SAIR =====
+App.prototype.mostrarModalSair = function() {
+    document.getElementById('modalSair').style.display = 'flex';
+};
+
+App.prototype.fecharModalSair = function() {
+    document.getElementById('modalSair').style.display = 'none';
+    history.pushState(null, '', window.location.href);
+};
+
+App.prototype.confirmarSair = function() {
+    document.getElementById('modalSair').style.display = 'none';
+    this.usuarioLogado = null;
+    this.historicoTelas = [];
+    this.mostrarTela('loginScreen');
+    this.mostrarToast('👋 ' + this.t('ateLogo'), 'sucesso');
 };
 
 // ===== TEMA =====
@@ -307,7 +317,7 @@ App.prototype.cadastrar = function() {
     if (!d.nome || !d.email || !d.senha) { self.mostrarToast('❌ ' + self.t('preenchaTodos'), 'erro'); return; }
     self.mostrarToast(self.t('criarConta') + '...', 'info');
     authService.cadastrar(d).then(function(r) {
-        if (r.sucesso) { self.usuarioLogado = r.usuario; self.mostrarToast('✅ ' + self.t('criarConta') + ' OK!', 'sucesso'); self.atualizarBotaoPublicar(); self.atualizarBotaoObras(); self.mostrarTela('homeScreen'); }
+        if (r.sucesso) { self.usuarioLogado = r.usuario; self.mostrarToast('✅ OK!', 'sucesso'); self.atualizarBotaoPublicar(); self.atualizarBotaoObras(); self.mostrarTela('homeScreen'); }
         else self.mostrarToast('❌ ' + r.erro, 'erro');
     });
 };
@@ -321,7 +331,6 @@ App.prototype.solicitarCodigo = function() {
     var self=this;
     var email=document.getElementById('recEmail')?document.getElementById('recEmail').value.trim():'';
     if(!email||!email.includes('@')){self.mostrarToast('❌ Email inválido!','erro');return;}
-    self.mostrarToast('Gerando...','info');
     authService.solicitarCodigoRecuperacao(email).then(function(r){
         if(r.sucesso){self.recuperacaoUid=r.uid;self.mostrarToast('✅ '+self.t('codigoGerado')+': '+r.codigo,'sucesso');document.getElementById('recPasso1').style.display='none';document.getElementById('recPasso2').style.display='block';}
         else self.mostrarToast('❌ '+r.erro,'erro');
@@ -343,7 +352,7 @@ App.prototype.carregarHome = function() {
 App.prototype.carregarFeed = function() {
     var self=this,c=document.getElementById('feedContainer');if(!c)return;
     c.innerHTML='<div class="loading">'+self.t('carregando')+'</div>';
-    var timeout=setTimeout(function(){c.innerHTML='<div class="card" style="text-align:center;"><h3>Tempo esgotado</h3></div>';},10000);
+    var timeout=setTimeout(function(){c.innerHTML='<div class="card"><h3>Tempo esgotado</h3></div>';},10000);
     db.collection('vagas').get().then(function(snap){
         clearTimeout(timeout);var vagas=[];snap.forEach(function(doc){var d=doc.data();if(d.ativa!==false)vagas.push({id:doc.id,data:d});});
         if(vagas.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>'+self.t('nenhumaVaga')+'</h3>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()">'+self.t('publicarVaga')+'</button>':'')+'</div>';return;}
@@ -356,23 +365,15 @@ App.prototype.carregarFeed = function() {
 App.prototype.carregarMeuPerfil = function() {
     if (!this.usuarioLogado) return;
     var u = this.usuarioLogado;
-    
     var nomeEl = document.getElementById('meuPerfilNome');
     if (nomeEl) nomeEl.textContent = u.nome || 'Usuário';
-    
     var profEl = document.getElementById('meuPerfilProfissao');
     if (profEl) profEl.textContent = (u.tipo === 'profissional' ? '👷 ' : '🏢 ') + (u.profissao || u.tipo || this.t('profissional'));
-    
     var scoreEl = document.getElementById('meuPerfilScore');
-    if (scoreEl) scoreEl.textContent = '⭐ ' + ((u.score || 0).toFixed(1)) + ' (' + (u.avaliacoesRecebidas || 0) + ' ' + this.t('avaliacoes') + ')';
-    
+    if (scoreEl) scoreEl.textContent = '⭐ ' + ((u.score || 0).toFixed(1)) + ' (' + (u.avaliacoesRecebidas || 0) + ')';
     var qtdEl = document.getElementById('menuQtdAvaliacoes');
     if (qtdEl) qtdEl.textContent = u.avaliacoesRecebidas || 0;
-    
-    if (u.fotoPerfil) {
-        var fotoEl = document.getElementById('fotoPerfilPreview');
-        if (fotoEl) fotoEl.src = u.fotoPerfil;
-    }
+    if (u.fotoPerfil) { var fotoEl = document.getElementById('fotoPerfilPreview'); if (fotoEl) fotoEl.src = u.fotoPerfil; }
 };
 
 App.prototype.abrirEditarPerfil = function() {
@@ -397,7 +398,7 @@ App.prototype.uploadFoto = function(e){var self=this,f=e.target.files[0];if(!f)r
 // ===== OUTROS =====
 App.prototype.mostrarInfoVersao = function(){this.mostrarToast('🏗️ LPXConstrutor v1.0.0','info');};
 App.prototype.verMinhasAvaliacoes = function(){if(this.usuarioLogado)this.verAvaliacoes(this.usuarioLogado.id);};
-App.prototype.confirmarExclusao = function(){var m=document.getElementById('motivoExclusao').value;if(!m){this.mostrarToast('❌ Selecione um motivo!','erro');return;}if(!confirm('⚠️ Tem certeza? Esta ação é IRREVERSÍVEL!'))return;this.mostrarToast('📧 Solicitação enviada!','sucesso');setTimeout(function(){window.app._app.mostrarTela('loginScreen');},2000);};
+App.prototype.confirmarExclusao = function(){var m=document.getElementById('motivoExclusao').value;if(!m){this.mostrarToast('❌ Selecione um motivo!','erro');return;}if(!confirm('⚠️ Tem certeza?'))return;this.mostrarToast('📧 Solicitação enviada!','sucesso');setTimeout(function(){window.app._app.mostrarTela('loginScreen');},2000);};
 
 App.prototype.mostrarToast = function(m,t){var toast=document.getElementById('toast');if(!toast)return;toast.textContent=m;toast.style.background=t==='erro'?'#EF4444':t==='sucesso'?'#10B981':'#1F2937';toast.style.display='block';clearTimeout(this._tt);this._tt=setTimeout(function(){toast.style.display='none';},3000);};
 
