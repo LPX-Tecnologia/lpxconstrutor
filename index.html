@@ -119,14 +119,251 @@
     <!-- PERFIL PÚBLICO -->
     <div class="screen" id="perfilPublicoScreen"><div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Perfil</h2></div><div id="perfilPublicoConteudo"></div></div>
 
-    <!-- MEU PERFIL -->
-    <div class="screen" id="meuPerfilScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Meu Perfil</h2></div>
-        <div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar" onclick="document.getElementById('inputFoto').click()"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" alt="LPXConstrutor" style="width:100%;height:100%;border-radius:50%;object-fit:contain;"></div><input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="app.uploadFoto(event)"></div></div>
-        <div class="profile-info-card"><h2 id="meuPerfilNome">Carregando...</h2><p id="meuPerfilProfissao"></p><div id="meuPerfilAvaliacao" class="stars-container"></div></div>
-        <div class="card"><h3>Editar</h3><div class="input-group"><label>Nome</label><input type="text" class="input-field" id="editNome"></div><div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="editCelular"></div><div class="input-group"><label>Habilidades</label><textarea class="input-field" id="editHabilidades" rows="3"></textarea></div><button class="btn btn-primary" onclick="app.salvarPerfil()">SALVAR</button></div>
-        <button class="btn btn-danger" onclick="app.sair()">SAIR</button>
+   <!-- ===== MEU PERFIL (NOVO) ===== -->
+<div class="screen" id="meuPerfilScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Meu Perfil</h2>
     </div>
+    
+    <!-- Cabeçalho do Perfil -->
+    <div class="card" style="text-align:center;background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;">
+        <div class="profile-avatar-perfil" onclick="document.getElementById('inputFoto').click()">
+            <img src="imagem/logo-sem-fundo-lpxconstrutor.png" alt="Foto" id="fotoPerfilPreview" style="width:100%;height:100%;border-radius:50%;object-fit:contain;">
+        </div>
+        <input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="app.uploadFoto(event)">
+        <h2 id="meuPerfilNome" style="margin-top:12px;">Carregando...</h2>
+        <p id="meuPerfilProfissao" style="opacity:0.9;">Carregando...</p>
+        <div id="meuPerfilScore" style="font-size:14px;margin-top:4px;">⭐ 0.0</div>
+    </div>
+
+    <!-- Menu de Opções -->
+    <div class="card" style="padding:0;overflow:hidden;">
+        
+        <!-- INFORMAÇÕES -->
+        <div class="menu-section">
+            <div class="menu-section-title"><i class="fas fa-info-circle"></i> Informações</div>
+            <div class="menu-item" onclick="app.abrirEditarPerfil()">
+                <i class="fas fa-user-edit"></i> Editar Perfil
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarTela('faqScreen')">
+                <i class="fas fa-question-circle"></i> FAQ - Perguntas Frequentes
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarTela('termosScreen')">
+                <i class="fas fa-file-contract"></i> Termos de Uso
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarTela('privacidadeScreen')">
+                <i class="fas fa-shield-alt"></i> Política de Privacidade
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarInfoVersao()">
+                <i class="fas fa-code-branch"></i> Versão do App
+                <span class="menu-badge">1.0.0</span>
+            </div>
+        </div>
+
+        <!-- CONFIGURAÇÕES -->
+        <div class="menu-section">
+            <div class="menu-section-title"><i class="fas fa-cog"></i> Configurações</div>
+            <div class="menu-item" onclick="app.mostrarTela('idiomasScreen')">
+                <i class="fas fa-language"></i> Idioma
+                <span class="menu-badge">Português</span>
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarTela('aparenciaScreen')">
+                <i class="fas fa-palette"></i> Aparência
+                <span class="menu-badge" id="temaAtual">Claro</span>
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarTela('notificacoesConfigScreen')">
+                <i class="fas fa-bell"></i> Central de Notificações
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+        </div>
+
+        <!-- SEGURANÇA -->
+        <div class="menu-section">
+            <div class="menu-section-title"><i class="fas fa-lock"></i> Segurança</div>
+            <div class="menu-item" onclick="app.mostrarTela('recuperarSenhaScreen')">
+                <i class="fas fa-key"></i> Alterar Senha
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+            <div class="menu-item" onclick="app.mostrarTela('excluirContaScreen')">
+                <i class="fas fa-trash-alt" style="color:#EF4444;"></i> Solicitar Exclusão de Conta
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+        </div>
+
+        <!-- AVALIAÇÕES -->
+        <div class="menu-section">
+            <div class="menu-section-title"><i class="fas fa-star"></i> Avaliações</div>
+            <div class="menu-item" onclick="app.verMinhasAvaliacoes()">
+                <i class="fas fa-star"></i> Minhas Avaliações
+                <span class="menu-badge" id="menuQtdAvaliacoes">0</span>
+                <i class="fas fa-chevron-right menu-arrow"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Sair -->
+    <button class="btn btn-danger" onclick="app.sair()" style="margin-top:8px;">
+        <i class="fas fa-sign-out-alt"></i> SAIR DA CONTA
+    </button>
+</div>
+
+<!-- ===== TELA EDITAR PERFIL ===== -->
+<div class="screen" id="editarPerfilScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Editar Perfil</h2>
+    </div>
+    <div class="card">
+        <div class="input-group"><label>Nome Completo</label><input type="text" class="input-field" id="editNome"></div>
+        <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="editCelular"></div>
+        <div class="input-group"><label>Profissão</label><input type="text" class="input-field" id="editProfissao" readonly></div>
+        <div class="input-group"><label>Experiência (anos)</label><input type="number" class="input-field" id="editExperiencia"></div>
+        <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="editHabilidades" rows="3" placeholder="Suas habilidades..."></textarea></div>
+        <button class="btn btn-primary" onclick="app.salvarPerfil()"><i class="fas fa-save"></i> SALVAR ALTERAÇÕES</button>
+    </div>
+</div>
+
+<!-- ===== TELA FAQ ===== -->
+<div class="screen" id="faqScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>FAQ - Perguntas Frequentes</h2>
+    </div>
+    <div class="termos-content">
+        <div class="card">
+            <h3>❓ Como criar uma conta?</h3>
+            <p style="font-size:13px;color:#666;">Clique em "Criar Conta" na tela de login e preencha seus dados.</p>
+            
+            <h3>❓ Como publicar uma vaga?</h3>
+            <p style="font-size:13px;color:#666;">Apenas empreiteiros podem publicar vagas. Use o botão "+" na barra inferior.</p>
+            
+            <h3>❓ Como me candidatar a uma vaga?</h3>
+            <p style="font-size:13px;color:#666;">No feed de vagas, clique em "QUERO!" na vaga desejada.</p>
+            
+            <h3>❓ Como contratar um profissional?</h3>
+            <p style="font-size:13px;color:#666;">Acesse o perfil do profissional e clique em "CONTRATAR".</p>
+            
+            <h3>❓ Como excluir minha conta?</h3>
+            <p style="font-size:13px;color:#666;">Vá em Meu Perfil > Segurança > Solicitar Exclusão de Conta.</p>
+            
+            <h3>❓ O app é gratuito?</h3>
+            <p style="font-size:13px;color:#666;">Sim! Totalmente gratuito para profissionais e empreiteiros.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TELA IDIOMAS ===== -->
+<div class="screen" id="idiomasScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Idioma</h2>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+        <div class="menu-item" onclick="app.selecionarIdioma('pt')" style="background:#E0F2FE;">
+            🇧🇷 Português (Brasil)
+            <i class="fas fa-check" style="color:#10B981;margin-left:auto;"></i>
+        </div>
+        <div class="menu-item" onclick="app.selecionarIdioma('es')">
+            🇪🇸 Español
+        </div>
+        <div class="menu-item" onclick="app.selecionarIdioma('en')">
+            🇺🇸 English
+        </div>
+    </div>
+</div>
+
+<!-- ===== TELA APARÊNCIA ===== -->
+<div class="screen" id="aparenciaScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Aparência</h2>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+        <div class="menu-item" onclick="app.selecionarTema('claro')" id="temaClaro" style="background:#E0F2FE;">
+            ☀️ Modo Claro
+            <i class="fas fa-check" style="color:#10B981;margin-left:auto;"></i>
+        </div>
+        <div class="menu-item" onclick="app.selecionarTema('escuro')" id="temaEscuro">
+            🌙 Modo Escuro
+        </div>
+    </div>
+</div>
+
+<!-- ===== TELA CONFIG NOTIFICAÇÕES ===== -->
+<div class="screen" id="notificacoesConfigScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Central de Notificações</h2>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+        <div class="menu-item">
+            <i class="fas fa-bell"></i> Notificações Push
+            <label class="switch"><input type="checkbox" checked onchange="app.toggleNotificacoes(this)"><span class="slider"></span></label>
+        </div>
+        <div class="menu-item">
+            <i class="fas fa-envelope"></i> Email de Vagas
+            <label class="switch"><input type="checkbox" checked onchange="app.toggleEmailVagas(this)"><span class="slider"></span></label>
+        </div>
+        <div class="menu-item">
+            <i class="fas fa-comment"></i> Notificar Mensagens
+            <label class="switch"><input type="checkbox" checked onchange="app.toggleNotifMensagens(this)"><span class="slider"></span></label>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TELA EXCLUIR CONTA ===== -->
+<div class="screen" id="excluirContaScreen">
+    <div class="screen-header">
+        <button class="btn-voltar" onclick="app.mostrarTela('meuPerfilScreen')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Excluir Conta</h2>
+    </div>
+    <div class="card">
+        <div style="text-align:center;margin-bottom:20px;">
+            <i class="fas fa-exclamation-triangle" style="font-size:60px;color:#EF4444;"></i>
+            <h3 style="color:#EF4444;margin-top:16px;">Atenção!</h3>
+            <p style="color:#666;font-size:14px;">Esta ação é irreversível. Todos os seus dados serão permanentemente excluídos.</p>
+        </div>
+        
+        <div class="input-group">
+            <label>Por que deseja excluir sua conta?</label>
+            <select class="input-field" id="motivoExclusao">
+                <option value="">Selecione um motivo...</option>
+                <option value="nao-uso">Não uso mais o app</option>
+                <option value="outro-app">Encontrei outro app melhor</option>
+                <option value="privacidade">Preocupação com privacidade</option>
+                <option value="problemas">Problemas técnicos</option>
+                <option value="outro">Outro motivo</option>
+            </select>
+        </div>
+        
+        <div class="input-group" id="grupoOutroMotivo" style="display:none;">
+            <label>Descreva o motivo:</label>
+            <textarea class="input-field" id="outroMotivoTexto" rows="3" placeholder="Conte-nos o motivo..."></textarea>
+        </div>
+        
+        <div style="background:#FEE2E2;padding:12px;border-radius:8px;margin-bottom:16px;">
+            <p style="font-size:12px;color:#991B1B;"><strong>⚠️ Ao excluir sua conta:</strong></p>
+            <ul style="font-size:12px;color:#991B1B;padding-left:16px;">
+                <li>Seu perfil será removido</li>
+                <li>Suas vagas serão excluídas</li>
+                <li>Suas avaliações serão perdidas</li>
+                <li>Suas conexões serão desfeitas</li>
+                <li>Esta ação não pode ser desfeita</li>
+            </ul>
+        </div>
+        
+        <button class="btn btn-danger" onclick="app.confirmarExclusao()">
+            <i class="fas fa-trash-alt"></i> SIM, QUERO EXCLUIR MINHA CONTA
+        </button>
+    </div>
+</div>
 
     <!-- CHAT -->
     <div class="screen" id="chatScreen"><div class="screen-header"><button class="btn-voltar" onclick="app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><div id="chatHeaderInfo" style="flex:1;"></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-container"><input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')app.enviarMensagem()"><button class="btn-send" onclick="app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button></div></div>
