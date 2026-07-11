@@ -254,3 +254,123 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+
+/* ===== TEMA ESCURO ===== */
+body.dark-theme {
+    --primary: #0D1B2A;
+    --secondary: #F47920;
+    --dark: #E5E7EB;
+    --gray: #9CA3AF;
+    --light: #1F2937;
+    --white: #111827;
+    background: #0F172A;
+    color: #E5E7EB;
+}
+
+body.dark-theme .app-container {
+    background: #111827;
+}
+
+body.dark-theme .card {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+body.dark-theme .input-field {
+    background: #374151;
+    border-color: #4B5563;
+    color: #E5E7EB;
+}
+
+body.dark-theme .input-field:focus {
+    background: #374151;
+    border-color: #F47920;
+}
+
+body.dark-theme .vaga-card {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+body.dark-theme .vaga-header {
+    border-color: #374151;
+}
+
+body.dark-theme .vaga-footer {
+    border-color: #374151;
+}
+
+body.dark-theme .vaga-nome {
+    color: #E5E7EB;
+}
+
+body.dark-theme .vaga-data {
+    color: #9CA3AF;
+}
+
+body.dark-theme .vaga-descricao {
+    color: #9CA3AF;
+}
+
+body.dark-theme .vaga-titulo {
+    color: #F3F4F6;
+}
+
+body.dark-theme .bottom-nav {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+body.dark-theme .app-header {
+    background: linear-gradient(135deg, #0D1B2A, #1A3A5C);
+}
+
+body.dark-theme .tab {
+    background: #374151;
+    color: #9CA3AF;
+}
+
+body.dark-theme .tab.active {
+    background: #F47920;
+    color: white;
+}
+
+body.dark-theme .menu-item {
+    color: #E5E7EB;
+}
+
+body.dark-theme .menu-item:hover {
+    background: #374151;
+}
+
+body.dark-theme .menu-section-title {
+    background: #1F2937;
+    color: #9CA3AF;
+}
+
+body.dark-theme .chat-messages {
+    background: #0F172A;
+}
+
+body.dark-theme .message-received {
+    background: #374151;
+    color: #E5E7EB;
+}
+
+body.dark-theme .message-content {
+    color: #E5E7EB;
+}
+
+body.dark-theme .search-input {
+    background: #374151;
+    border-color: #4B5563;
+    color: #E5E7EB;
+}
+
+body.dark-theme .termos-content .card {
+    background: #1F2937;
+}
+
+body.dark-theme .toast {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
