@@ -5,7 +5,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .app-header{background:linear-gradient(135deg,var(--primary),#2C5F8A);color:#fff;padding:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.1)}
 .header-content{display:flex;justify-content:space-between;align-items:center}
 .app-header h1{font-size:20px;font-weight:900;display:flex;align-items:center}
-.app-header h1 img,.header-logo{height:48px;width:auto;object-fit:contain!important;background:transparent!important;border-radius:0!important;margin-right:10px;vertical-align:middle}
+.app-header h1 img{height:48px;width:auto;object-fit:contain!important;background:transparent!important;border-radius:0!important;margin-right:10px;vertical-align:middle}
 .icon-btn{background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;position:relative;transition:.3s}
 .icon-btn:hover{background:rgba(255,255,255,.2)}
 .badge-notification{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;font-size:10px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
@@ -17,7 +17,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .login-container{text-align:center;padding:40px 20px}
 .login-logo{font-size:0;background:transparent;display:flex;justify-content:center;align-items:center;margin-bottom:16px}
-.login-logo img,.logo-login{width:200px;height:200px;object-fit:contain!important;background:transparent!important;border-radius:0!important;padding:0!important;box-shadow:none!important;animation:float 3s ease-in-out infinite}
+.login-logo img{width:200px;height:200px;object-fit:contain!important;background:transparent!important;border-radius:0!important;padding:0!important;box-shadow:none!important;animation:float 3s ease-in-out infinite}
 .login-container h2{font-size:28px;color:var(--primary);margin-top:16px}
 .login-subtitle{color:var(--gray);margin:8px 0 24px}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -129,275 +129,60 @@ textarea.input-field{resize:vertical;min-height:80px}
 .modal-close{background:none;border:none;font-size:20px;color:#999;cursor:pointer;padding:4px 8px;border-radius:50%}
 .modal-body{padding:20px}
 
-/* ===== LOGO NA SAUDAÇÃO (HOME) ===== */
-#homeScreen .card:first-child{padding:24px 20px!important}
-#homeScreen .card:first-child>div{gap:16px!important;align-items:center!important}
-#homeScreen .card:first-child img,.logo-saudacao{width:90px!important;height:90px!important;object-fit:contain!important;background:transparent!important;border-radius:0!important;padding:0!important;box-shadow:none!important}
-#homeScreen #saudacao{font-size:24px!important;font-weight:700!important;margin-bottom:4px!important}
-#homeScreen #resumoTexto{font-size:15px!important;opacity:.95!important}
+/* ===== PERFIL AVATAR ===== */
+.profile-avatar-perfil{width:80px;height:80px;border-radius:50%;background:white;margin:0 auto;cursor:pointer;overflow:hidden;border:3px solid #F47920}
 
-/* ===== LOGO NA RECUPERAÇÃO ===== */
-#recuperarSenhaScreen img[src*="logo"]{background:transparent!important;border-radius:0!important;padding:0!important}
+/* ===== MENU ITEMS ===== */
+.menu-section{border-bottom:1px solid #f0f0f0}
+.menu-section:last-child{border-bottom:none}
+.menu-section-title{padding:12px 16px;font-size:12px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px;background:#f9fafb}
+.menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:.2s;font-size:14px;color:#333}
+.menu-item:hover{background:#f9fafb}
+.menu-item i:first-child{width:24px;text-align:center;font-size:16px;color:#666}
+.menu-arrow{margin-left:auto;color:#ccc;font-size:14px}
+.menu-badge{margin-left:auto;font-size:12px;color:#999;margin-right:4px}
 
-/* ===== RESPONSIVO ===== */
-@media(max-width:480px){.app-container{border-radius:0}.app-header h1 img{height:36px}.login-logo img{width:150px;height:150px}#homeScreen .card:first-child img,.logo-saudacao{width:70px!important;height:70px!important}}
+/* ===== SWITCH TOGGLE ===== */
+.switch{position:relative;display:inline-block;width:44px;height:24px;margin-left:auto}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.3s;border-radius:24px}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.3s;border-radius:50%}
+input:checked+.slider{background-color:#10B981}
+input:checked+.slider:before{transform:translateX(20px)}
 
-
-/* ===== NOVO PERFIL ===== */
-.profile-avatar-perfil {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: white;
-    margin: 0 auto;
-    cursor: pointer;
-    overflow: hidden;
-    border: 3px solid #F47920;
-}
-
-.menu-section {
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.menu-section:last-child {
-    border-bottom: none;
-}
-
-.menu-section-title {
-    padding: 12px 16px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #999;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    background: #f9fafb;
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: 0.2s;
-    font-size: 14px;
-    color: #333;
-}
-
-.menu-item:hover {
-    background: #f9fafb;
-}
-
-.menu-item i:first-child {
-    width: 24px;
-    text-align: center;
-    font-size: 16px;
-    color: #666;
-}
-
-.menu-arrow {
-    margin-left: auto;
-    color: #ccc;
-    font-size: 14px;
-}
-
-.menu-badge {
-    margin-left: auto;
-    font-size: 12px;
-    color: #999;
-    margin-right: 4px;
-}
-
-/* Switch Toggle */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-    margin-left: auto;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.3s;
-    border-radius: 24px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.3s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #10B981;
-}
-
-input:checked + .slider:before {
-    transform: translateX(20px);
-}
+/* ===== SPLASH / ANIMAÇÕES ===== */
+@keyframes aparecer{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
 /* ===== TEMA ESCURO ===== */
-body.dark-theme {
-    --primary: #0D1B2A;
-    --secondary: #F47920;
-    --dark: #E5E7EB;
-    --gray: #9CA3AF;
-    --light: #1F2937;
-    --white: #111827;
-    background: #0F172A;
-    color: #E5E7EB;
-}
+body.dark-theme{--primary:#0D1B2A;--dark:#E5E7EB;--gray:#9CA3AF;--light:#1F2937;--white:#111827;background:#0F172A;color:#E5E7EB}
+body.dark-theme .app-container{background:#111827}
+body.dark-theme .card{background:#1F2937;border-color:#374151}
+body.dark-theme .input-field{background:#374151;border-color:#4B5563;color:#E5E7EB}
+body.dark-theme .input-field:focus{background:#374151;border-color:#F47920}
+body.dark-theme .vaga-card{background:#1F2937;border-color:#374151}
+body.dark-theme .vaga-header{border-color:#374151}
+body.dark-theme .vaga-footer{border-color:#374151}
+body.dark-theme .vaga-nome{color:#E5E7EB}
+body.dark-theme .vaga-data{color:#9CA3AF}
+body.dark-theme .vaga-descricao{color:#9CA3AF}
+body.dark-theme .vaga-titulo{color:#F3F4F6}
+body.dark-theme .bottom-nav{background:#1F2937;border-color:#374151}
+body.dark-theme .app-header{background:linear-gradient(135deg,#0D1B2A,#1A3A5C)}
+body.dark-theme .tab{background:#374151;color:#9CA3AF}
+body.dark-theme .tab.active{background:#F47920;color:white}
+body.dark-theme .menu-item{color:#E5E7EB}
+body.dark-theme .menu-item:hover{background:#374151}
+body.dark-theme .menu-section-title{background:#1F2937;color:#9CA3AF}
+body.dark-theme .chat-messages{background:#0F172A}
+body.dark-theme .message-received{background:#374151;color:#E5E7EB}
+body.dark-theme .message-content{color:#E5E7EB}
+body.dark-theme .search-input{background:#374151;border-color:#4B5563;color:#E5E7EB}
+body.dark-theme .toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
 
-body.dark-theme .app-container {
-    background: #111827;
-}
-
-body.dark-theme .card {
-    background: #1F2937;
-    border-color: #374151;
-}
-
-body.dark-theme .input-field {
-    background: #374151;
-    border-color: #4B5563;
-    color: #E5E7EB;
-}
-
-body.dark-theme .input-field:focus {
-    background: #374151;
-    border-color: #F47920;
-}
-
-body.dark-theme .vaga-card {
-    background: #1F2937;
-    border-color: #374151;
-}
-
-body.dark-theme .vaga-header {
-    border-color: #374151;
-}
-
-body.dark-theme .vaga-footer {
-    border-color: #374151;
-}
-
-body.dark-theme .vaga-nome {
-    color: #E5E7EB;
-}
-
-body.dark-theme .vaga-data {
-    color: #9CA3AF;
-}
-
-body.dark-theme .vaga-descricao {
-    color: #9CA3AF;
-}
-
-body.dark-theme .vaga-titulo {
-    color: #F3F4F6;
-}
-
-body.dark-theme .bottom-nav {
-    background: #1F2937;
-    border-color: #374151;
-}
-
-body.dark-theme .app-header {
-    background: linear-gradient(135deg, #0D1B2A, #1A3A5C);
-}
-
-body.dark-theme .tab {
-    background: #374151;
-    color: #9CA3AF;
-}
-
-body.dark-theme .tab.active {
-    background: #F47920;
-    color: white;
-}
-
-body.dark-theme .menu-item {
-    color: #E5E7EB;
-}
-
-body.dark-theme .menu-item:hover {
-    background: #374151;
-}
-
-body.dark-theme .menu-section-title {
-    background: #1F2937;
-    color: #9CA3AF;
-}
-
-body.dark-theme .chat-messages {
-    background: #0F172A;
-}
-
-body.dark-theme .message-received {
-    background: #374151;
-    color: #E5E7EB;
-}
-
-body.dark-theme .message-content {
-    color: #E5E7EB;
-}
-
-body.dark-theme .search-input {
-    background: #374151;
-    border-color: #4B5563;
-    color: #E5E7EB;
-}
-
-body.dark-theme .termos-content .card {
-    background: #1F2937;
-}
-
-body.dark-theme .toast {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-}
-
-/* ===== CARD DE VÍDEO ===== */
-.video-card {
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    margin-bottom: 16px;
-}
-
-.video-embed-container {
-    position: relative;
-    width: 100%;
-    background: #000;
-}
-
-.video-embed-container iframe {
-    display: block;
-    width: 100%;
-    height: 400px;
-    border: none;
-}
-
-@media (max-width: 480px) {
-    .video-embed-container iframe {
-        height: 300px;
-    }
+/* ===== RESPONSIVO ===== */
+@media(max-width:480px){
+    .app-container{border-radius:0}
+    .app-header h1 img{height:36px}
+    .login-logo img{width:150px;height:150px}
 }
