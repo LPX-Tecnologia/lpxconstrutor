@@ -346,75 +346,33 @@ App.prototype.carregarFeed = function() {
     }).catch(function(){c.innerHTML='<div class="card">Erro</div>';});
 };
 
-// ===== REDE (ATUALIZADA COM MAIS INFORMAÇÕES) =====
+// ===== REDE =====
 App.prototype.carregarRede = function() {
     var self = this, c = document.getElementById('redeContainer');
     if (!c) return;
     c.innerHTML = '<div class="loading">Carregando rede...</div>';
-    
     db.collection('conexoes').get().then(function(snap) {
         var conexoes = [];
-        snap.forEach(function(doc) {
-            var d = doc.data();
-            if (d.usuarioId === self.usuarioLogado.id || d.amigoId === self.usuarioLogado.id) {
-                conexoes.push({ id: doc.id, data: d });
-            }
-        });
-        
-        if (conexoes.length === 0) {
-            c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-users" style="font-size:60px;color:#ccc;"></i><h3 style="margin-top:16px;">Sua rede está vazia</h3><p style="color:#999;">Busque profissionais e adicione na sua rede!</p><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')" style="margin-top:16px;">🔍 Buscar Profissionais</button></div>';
-            return;
-        }
-        
+        snap.forEach(function(doc) { var d = doc.data(); if (d.usuarioId === self.usuarioLogado.id || d.amigoId === self.usuarioLogado.id) conexoes.push({ id: doc.id, data: d }); });
+        if (conexoes.length === 0) { c.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><i class="fas fa-users" style="font-size:60px;color:#ccc;"></i><h3>Sua rede está vazia</h3><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')">🔍 Buscar Profissionais</button></div>'; return; }
         var promessas = [];
         conexoes.forEach(function(con) {
             var amigoId = con.data.usuarioId === self.usuarioLogado.id ? con.data.amigoId : con.data.usuarioId;
-            promessas.push(
-                db.collection('usuarios').doc(amigoId).get().then(function(userDoc) {
-                    if (userDoc.exists) {
-                        return { usuario: { id: userDoc.id, ...userDoc.data() }, conexao: con.data };
-                    }
-                    return null;
-                })
-            );
+            promessas.push(db.collection('usuarios').doc(amigoId).get().then(function(userDoc) {
+                if (userDoc.exists) return { usuario: { id: userDoc.id, ...userDoc.data() }, conexao: con.data };
+                return null;
+            }));
         });
-        
         Promise.all(promessas).then(function(resultados) {
             var html = '';
             resultados.forEach(function(r) {
                 if (!r) return;
-                var u = r.usuario;
-                var w = u.celular ? u.celular.replace(/\D/g, '') : '';
-                var sc = u.score || 0;
-                var statusConexao = r.conexao.status === 'contratado' ? '🤝 Contratado' : 
-                                   r.conexao.status === 'finalizado' ? '✅ Finalizado' : 
-                                   r.conexao.status === 'demitido' ? '🔴 Encerrado' : '🔗 Conectado';
-                
-                html += '<div class="vaga-card" style="cursor:pointer;">' +
-                    '<div class="vaga-header" onclick="window.app.verPerfil(\'' + u.id + '\')">' +
-                        '<div class="vaga-avatar">' +
-                            (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<i class="fas fa-user"></i>') +
-                        '</div>' +
-                        '<div class="vaga-info">' +
-                            '<div class="vaga-nome">' + u.nome + '</div>' +
-                            '<div class="vaga-data"><i class="fas fa-tools"></i> ' + (u.profissao || 'Profissional') + ' • <i class="fas fa-calendar"></i> ' + (u.experiencia || 0) + ' anos</div>' +
-                            '<div class="vaga-data" style="margin-top:2px;"><span style="color:#F47920;">' + '⭐'.repeat(Math.round(sc)) + ' ' + (sc > 0 ? sc.toFixed(1) : 'Novo') + '</span> • <span style="color:#10B981;">' + statusConexao + '</span></div>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="vaga-footer" style="justify-content:space-between;">' +
-                        '<div style="display:flex;gap:6px;flex:1;">' +
-                            (w ? '<a href="https://wa.me/55' + w + '?text=' + encodeURIComponent('Olá ' + u.nome.split(' ')[0] + '! Somos conectados no LPXConstrutor. Como vai?') + '" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>' : '') +
-                            '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\'' + u.id + '\')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button>' +
-                        '</div>' +
-                        '<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.gerarQRCode(\'' + u.id + '\')" title="QR Code" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-qrcode"></i></button>' +
-                        '<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.removerDaRede(\'' + u.id + '\')" title="Remover" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;color:#EF4444;"><i class="fas fa-times"></i></button>' +
-                    '</div>' +
-                '</div>';
+                var u = r.usuario, w = u.celular ? u.celular.replace(/\D/g, '') : '', sc = u.score || 0;
+                var statusConexao = r.conexao.status === 'contratado' ? '🤝 Contratado' : r.conexao.status === 'finalizado' ? '✅ Finalizado' : r.conexao.status === 'demitido' ? '🔴 Encerrado' : '🔗 Conectado';
+                html += '<div class="vaga-card"><div class="vaga-header" onclick="window.app.verPerfil(\'' + u.id + '\')"><div class="vaga-avatar">' + (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<i class="fas fa-user"></i>') + '</div><div class="vaga-info"><div class="vaga-nome">' + u.nome + '</div><div class="vaga-data"><i class="fas fa-tools"></i> ' + (u.profissao || 'Profissional') + ' • <i class="fas fa-calendar"></i> ' + (u.experiencia || 0) + ' anos</div><div class="vaga-data"><span style="color:#F47920;">' + '⭐'.repeat(Math.round(sc)) + ' ' + (sc > 0 ? sc.toFixed(1) : 'Novo') + '</span> • <span style="color:#10B981;">' + statusConexao + '</span></div></div></div><div class="vaga-footer"><div style="display:flex;gap:6px;flex:1;">' + (w ? '<a href="https://wa.me/55' + w + '" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>' : '') + '<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\'' + u.id + '\')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button></div><button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.removerDaRede(\'' + u.id + '\')" title="Remover"><i class="fas fa-times"></i></button></div></div>';
             });
-            c.innerHTML = html || '<div class="card" style="text-align:center;">Nenhum amigo encontrado</div>';
+            c.innerHTML = html || '<div class="card" style="text-align:center;">Nenhum amigo</div>';
         });
-    }).catch(function(e) {
-        c.innerHTML = '<div class="card" style="text-align:center;">Erro ao carregar rede</div>';
     });
 };
 
@@ -454,14 +412,73 @@ App.prototype.verPerfil = function(uid) {
     });
 };
 
-// ===== CHAT =====
-App.prototype.iniciarChat = function(uid) { var self=this; db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;self.usuarioSelecionado={id:doc.id,data:doc.data()};var h=document.getElementById('chatHeaderInfo');if(h)h.innerHTML='<div><strong>'+doc.data().nome+'</strong></div>';self.mostrarTela('chatScreen');}); };
-App.prototype.enviarMensagem = function() { var self=this,i=document.getElementById('chatInput'),ct=i?i.value.trim():'';if(!ct||!this.usuarioSelecionado)return;db.collection('mensagens').add({remetenteId:this.usuarioLogado.id,destinatarioId:this.usuarioSelecionado.id,participantes:[this.usuarioLogado.id,this.usuarioSelecionado.id],conteudo:ct,dataEnvio:firebase.firestore.FieldValue.serverTimestamp(),lida:false}).then(function(){i.value='';}); };
+// ===== CHAT (CORRIGIDO) =====
+App.prototype.iniciarChat = function(uid) {
+    var self = this;
+    db.collection('usuarios').doc(uid).get().then(function(doc) {
+        if (!doc.exists) return;
+        self.usuarioSelecionado = { id: doc.id, data: doc.data() };
+        var h = document.getElementById('chatHeaderInfo');
+        if (h) h.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div style="width:40px;height:40px;border-radius:50%;background:#F47920;display:flex;align-items:center;justify-content:center;color:white;"><i class="fas fa-user"></i></div><div><strong>' + doc.data().nome + '</strong><div style="font-size:12px;color:#10B981;">Online</div></div></div>';
+        self.carregarMensagens();
+        self.mostrarTela('chatScreen');
+    });
+};
+
+App.prototype.carregarMensagens = function() {
+    var self = this, c = document.getElementById('chatMessages');
+    if (!c || !this.usuarioSelecionado) return;
+    c.innerHTML = '<div class="loading">Carregando...</div>';
+    db.collection('mensagens').get().then(function(snap) {
+        var msgs = [];
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            if (d.participantes && d.participantes.indexOf(self.usuarioLogado.id) >= 0 && d.participantes.indexOf(self.usuarioSelecionado.id) >= 0) {
+                msgs.push({ id: doc.id, data: d });
+            }
+        });
+        msgs.sort(function(a, b) { return (a.data.dataEnvio ? a.data.dataEnvio.toDate() : new Date(0)) - (b.data.dataEnvio ? b.data.dataEnvio.toDate() : new Date(0)); });
+        if (msgs.length === 0) { c.innerHTML = '<div style="text-align:center;padding:60px;color:#999;"><i class="fas fa-comments" style="font-size:60px;"></i><p style="margin-top:16px;">Nenhuma mensagem</p></div>'; return; }
+        var html = '';
+        msgs.forEach(function(m) {
+            var isMine = m.data.remetenteId === self.usuarioLogado.id;
+            var hora = m.data.dataEnvio ? new Date(m.data.dataEnvio.toDate()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+            html += '<div class="message ' + (isMine ? 'message-sent' : 'message-received') + '"><div class="message-content">' + m.data.conteudo + '</div><div class="message-footer"><span class="message-time">' + hora + '</span>' + (isMine ? '<span class="message-status">' + (m.data.lida ? '✓✓' : '✓') + '</span>' : '') + '</div></div>';
+        });
+        c.innerHTML = html;
+        setTimeout(function() { c.scrollTop = c.scrollHeight; }, 100);
+    });
+};
+
+App.prototype.enviarMensagem = function() {
+    var self = this, i = document.getElementById('chatInput'), ct = i ? i.value.trim() : '';
+    console.log('📤 Enviando:', ct);
+    if (!ct) { this.mostrarToast('Digite uma mensagem!', 'erro'); return; }
+    if (!this.usuarioSelecionado) { this.mostrarToast('Selecione um contato!', 'erro'); return; }
+    if (!this.usuarioLogado) { this.mostrarToast('Faça login!', 'erro'); return; }
+    var msg = { remetenteId: this.usuarioLogado.id, destinatarioId: this.usuarioSelecionado.id, participantes: [this.usuarioLogado.id, this.usuarioSelecionado.id], conteudo: ct, dataEnvio: firebase.firestore.FieldValue.serverTimestamp(), lida: false };
+    db.collection('mensagens').add(msg).then(function(docRef) {
+        console.log('✅ Enviada! ID:', docRef.id);
+        if (i) i.value = '';
+        self.carregarMensagens();
+        self.mostrarToast('✅ Enviada!', 'sucesso');
+    }).catch(function(error) {
+        console.error('❌ Erro:', error);
+        self.mostrarToast('❌ Erro ao enviar. Verifique as regras do Firestore.', 'erro');
+    });
+};
+
+// Enviar com Enter
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && document.getElementById('chatInput') === document.activeElement) {
+        if (window.app._app) window.app._app.enviarMensagem();
+    }
+});
 
 // ===== PUBLICAÇÃO =====
 App.prototype.abrirTelaPublicacao = function() { if(!this.usuarioLogado||this.usuarioLogado.tipo!=='empreiteiro')return;['vagaTitulo','vagaDescricao','vagaEndereco'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('vagaFotoPreview').src='imagem/logo-sem-fundo-lpxconstrutor.png';this.vagaFotoBase64=null;document.querySelectorAll('#profissoesCheckboxes input').forEach(function(cb){cb.checked=false;});this.mostrarTela('publicarVagaScreen'); };
 App.prototype.previewFotoObra = function(e) { var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){document.getElementById('vagaFotoPreview').src=ev.target.result;};r.readAsDataURL(f);var self=this;var r2=new FileReader();r2.onload=function(ev){self.vagaFotoBase64=ev.target.result;};r2.readAsDataURL(f); };
-App.prototype.publicarVagaApp = function() { var self=this;var t=(document.getElementById('vagaTitulo')||{}).value||'',e=(document.getElementById('vagaEndereco')||{}).value||'';if(!t||!e)return;var ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb){ps.push(cb.value);});db.collection('vagas').add({titulo:t,descricao:(document.getElementById('vagaDescricao')||{}).value||'',endereco:e,profissoes:ps.join(', '),valorHora:parseFloat((document.getElementById('vagaValorHora')||{}).value)||0,fotoObra:self.vagaFotoBase64||'',usuarioId:this.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true}).then(function(){self.mostrarToast('✅ Vaga publicada!','sucesso');self.vagaFotoBase64=null;setTimeout(function(){self.mostrarTela('homeScreen');},1000);}); };
+App.prototype.publicarVagaApp = function() { var self=this;var t=(document.getElementById('vagaTitulo')||{}).value||'',e=(document.getElementById('vagaEndereco')||{}).value||'';if(!t||!e)return;var ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb){ps.push(cb.value);});db.collection('vagas').add({titulo:t,descricao:(document.getElementById('vagaDescricao')||{}).value||'',endereco:e,profissoes:ps.join(', '),valorHora:parseFloat((document.getElementById('vagaValorHora')||{}).value)||0,fotoObra:self.vagaFotoBase64||'',usuarioId:this.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true}).then(function(){self.mostrarToast('✅ Vaga publicada!','sucesso');setTimeout(function(){self.mostrarTela('homeScreen');},1000);}); };
 App.prototype.candidatarVaga = function(vid) { var self=this;if(!this.usuarioLogado||this.usuarioLogado.tipo!=='profissional')return;db.collection('vagas').doc(vid).get().then(function(doc){if(!doc.exists)return;var v=doc.data();if(!v.interessados)v.interessados=[];if(v.interessados.indexOf(self.usuarioLogado.id)>=0)return;v.interessados.push(self.usuarioLogado.id);db.collection('vagas').doc(vid).update({interessados:v.interessados}).then(function(){self.mostrarToast('✅ Candidatura enviada!','sucesso');});}); };
 
 // ===== CONTRATAÇÃO =====
