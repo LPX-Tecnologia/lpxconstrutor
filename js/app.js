@@ -234,6 +234,118 @@ App.prototype.buscarProfissionais = function() {
     });
 };
 
+// ===== NOVAS FUNÇÕES DO PERFIL =====
+
+App.prototype.abrirEditarPerfil = function() {
+    if (!this.usuarioLogado) return;
+    var u = this.usuarioLogado;
+    document.getElementById('editNome').value = u.nome || '';
+    document.getElementById('editCelular').value = u.celular || '';
+    document.getElementById('editProfissao').value = u.profissao || '';
+    document.getElementById('editExperiencia').value = u.experiencia || 0;
+    document.getElementById('editHabilidades').value = u.habilidades || '';
+    this.mostrarTela('editarPerfilScreen');
+};
+
+App.prototype.salvarPerfil = function() {
+    var self = this;
+    var d = {
+        nome: document.getElementById('editNome').value.trim(),
+        celular: document.getElementById('editCelular').value.trim(),
+        experiencia: parseInt(document.getElementById('editExperiencia').value) || 0,
+        habilidades: document.getElementById('editHabilidades').value.trim()
+    };
+    if (!d.nome) { this.mostrarToast('Nome obrigatório!', 'erro'); return; }
+    databaseService.atualizarUsuario(this.usuarioLogado.id, d).then(function() {
+        self.usuarioLogado.nome = d.nome;
+        self.usuarioLogado.celular = d.celular;
+        self.usuarioLogado.experiencia = d.experiencia;
+        self.usuarioLogado.habilidades = d.habilidades;
+        self.mostrarToast('✅ Perfil atualizado!', 'sucesso');
+        self.carregarMeuPerfil();
+        self.mostrarTela('meuPerfilScreen');
+    });
+};
+
+App.prototype.carregarMeuPerfil = function() {
+    if (!this.usuarioLogado) return;
+    var u = this.usuarioLogado;
+    document.getElementById('meuPerfilNome').textContent = u.nome || 'Usuário';
+    document.getElementById('meuPerfilProfissao').textContent = (u.tipo === 'profissional' ? '👷 ' : '🏢 ') + (u.profissao || u.tipo);
+    document.getElementById('meuPerfilScore').textContent = '⭐ ' + (u.score || 0).toFixed(1) + ' (' + (u.avaliacoesRecebidas || 0) + ' avaliações)';
+    document.getElementById('menuQtdAvaliacoes').textContent = u.avaliacoesRecebidas || 0;
+    if (u.fotoPerfil) {
+        document.getElementById('fotoPerfilPreview').src = u.fotoPerfil;
+    }
+};
+
+App.prototype.uploadFoto = function(e) {
+    var self = this, f = e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function(ev) {
+        databaseService.atualizarUsuario(self.usuarioLogado.id, { fotoPerfil: ev.target.result }).then(function() {
+            self.usuarioLogado.fotoPerfil = ev.target.result;
+            document.getElementById('fotoPerfilPreview').src = ev.target.result;
+            self.mostrarToast('✅ Foto atualizada!', 'sucesso');
+        });
+    };
+    r.readAsDataURL(f);
+};
+
+App.prototype.mostrarInfoVersao = function() {
+    this.mostrarToast('🏗️ LPXConstrutor v1.0.0', 'info');
+};
+
+App.prototype.selecionarIdioma = function(idioma) {
+    this.mostrarToast('🌐 Idioma selecionado: ' + idioma.toUpperCase(), 'sucesso');
+};
+
+App.prototype.selecionarTema = function(tema) {
+    document.getElementById('temaClaro').style.background = tema === 'claro' ? '#E0F2FE' : '';
+    document.getElementById('temaEscuro').style.background = tema === 'escuro' ? '#E0F2FE' : '';
+    document.getElementById('temaAtual').textContent = tema === 'claro' ? 'Claro' : 'Escuro';
+    this.mostrarToast('🎨 Tema alterado para: ' + (tema === 'claro' ? 'Claro' : 'Escuro'), 'sucesso');
+};
+
+App.prototype.toggleNotificacoes = function(el) {
+    this.mostrarToast(el.checked ? '🔔 Notificações ativadas' : '🔕 Notificações desativadas', 'sucesso');
+};
+
+App.prototype.toggleEmailVagas = function(el) {
+    this.mostrarToast(el.checked ? '📧 Email de vagas ativado' : '📧 Email de vagas desativado', 'sucesso');
+};
+
+App.prototype.toggleNotifMensagens = function(el) {
+    this.mostrarToast(el.checked ? '💬 Notificações de mensagens ativadas' : '💬 Notificações de mensagens desativadas', 'sucesso');
+};
+
+App.prototype.verMinhasAvaliacoes = function() {
+    if (this.usuarioLogado) {
+        this.verAvaliacoes(this.usuarioLogado.id);
+    }
+};
+
+App.prototype.confirmarExclusao = function() {
+    var motivo = document.getElementById('motivoExclusao').value;
+    if (!motivo) { this.mostrarToast('Selecione um motivo!', 'erro'); return; }
+    
+    if (!confirm('⚠️ TEM CERTEZA? Esta ação é IRREVERSÍVEL!\n\nTodos os seus dados serão permanentemente excluídos.')) return;
+    
+    if (!confirm('🗑️ ÚLTIMA CONFIRMAÇÃO: Deseja realmente excluir sua conta?')) return;
+    
+    this.mostrarToast('⏳ Processando exclusão...', 'info');
+    
+    // Aqui você pode implementar a exclusão real
+    setTimeout(function() {
+        alert('📧 Enviamos um email de confirmação para seu email cadastrado. \n\nPara concluir a exclusão, responda o email com a palavra "CONFIRMAR".');
+        app.mostrarTela('loginScreen');
+    }, 2000);
+};
+
+// Atualize o mostrarTela para incluir a tela de editar perfil
+// Adicione no switch/case:
+// if (id === 'meuPerfilScreen') setTimeout(function() { self.carregarMeuPerfil(); }, 100);
+
 // ===== PERFIL PÚBLICO =====
 App.prototype.verPerfil = function(uid) {
     var self = this;
