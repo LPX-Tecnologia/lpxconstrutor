@@ -2,6 +2,12 @@
 // ===== LPXCONSTRUTOR - APLICAÇÃO PRINCIPAL COMPLETA =====
 // ==========================================================
 
+// Garantir que o placeholder não seja sobrescrito
+if (!window.app || !window.app._app) {
+    window.app = window.app || {};
+    window.app._app = window.app._app || null;
+}
+
 // ===== SISTEMA DE TRADUÇÃO =====
 var traducoes = {
     pt: {
@@ -84,6 +90,62 @@ var traducoes = {
     }
 };
 
+// ===== PLACEHOLDER GLOBAL =====
+window.app = {
+    _app: null,
+    fazerLogin: function(){ if(window.app._app)window.app._app.fazerLogin(); },
+    mostrarTela: function(id){ if(window.app._app)window.app._app.mostrarTela(id); },
+    voltarTela: function(){ if(window.app._app)window.app._app.voltarTela(); },
+    cadastrar: function(){ if(window.app._app)window.app._app.cadastrar(); },
+    proximaEtapa: function(e){ if(window.app._app)window.app._app.proximaEtapa(e); },
+    toggleProfissao: function(){ if(window.app._app)window.app._app.toggleProfissao(); },
+    solicitarCodigo: function(){ if(window.app._app)window.app._app.solicitarCodigo(); },
+    verificarCodigo: function(){ if(window.app._app)window.app._app.verificarCodigo(); },
+    voltarPasso1: function(){ if(window.app._app)window.app._app.voltarPasso1(); },
+    sair: function(){ if(window.app._app)window.app._app.sair(); },
+    buscarProfissionais: function(){ if(window.app._app)window.app._app.buscarProfissionais(); },
+    verPerfil: function(uid){ if(window.app._app)window.app._app.verPerfil(uid); },
+    iniciarChat: function(uid){ if(window.app._app)window.app._app.iniciarChat(uid); },
+    enviarMensagem: function(){ if(window.app._app)window.app._app.enviarMensagem(); },
+    abrirEditarPerfil: function(){ if(window.app._app)window.app._app.abrirEditarPerfil(); },
+    salvarPerfil: function(){ if(window.app._app)window.app._app.salvarPerfil(); },
+    uploadFoto: function(e){ if(window.app._app)window.app._app.uploadFoto(e); },
+    abrirTelaPublicacao: function(){ if(window.app._app)window.app._app.abrirTelaPublicacao(); },
+    publicarVagaApp: function(){ if(window.app._app)window.app._app.publicarVagaApp(); },
+    previewFotoObra: function(e){ if(window.app._app)window.app._app.previewFotoObra(e); },
+    candidatarVaga: function(vid){ if(window.app._app)window.app._app.candidatarVaga(vid); },
+    abrirContratacao: function(uid){ if(window.app._app)window.app._app.abrirContratacao(uid); },
+    confirmarContratacao: function(){ if(window.app._app)window.app._app.confirmarContratacao(); },
+    novaObra: function(){ if(window.app._app)window.app._app.novaObra(); },
+    carregarMinhasObras: function(){ if(window.app._app)window.app._app.carregarMinhasObras(); },
+    verDetalheObra: function(oid){ if(window.app._app)window.app._app.verDetalheObra(oid); },
+    demitirFuncionario: function(cid){ if(window.app._app)window.app._app.demitirFuncionario(cid); },
+    finalizarContrato: function(cid){ if(window.app._app)window.app._app.finalizarContrato(cid); },
+    adicionarNaRede: function(aid){ if(window.app._app)window.app._app.adicionarNaRede(aid); },
+    removerDaRede: function(aid){ if(window.app._app)window.app._app.removerDaRede(aid); },
+    verAvaliacoes: function(uid){ if(window.app._app)window.app._app.verAvaliacoes(uid); },
+    filtrarAvaliacoes: function(f,b){ if(window.app._app)window.app._app.filtrarAvaliacoes(f,b); },
+    verMinhasAvaliacoes: function(){ if(window.app._app)window.app._app.verMinhasAvaliacoes(); },
+    abrirDarAvaliacao: function(uid){ if(window.app._app)window.app._app.abrirDarAvaliacao(uid); },
+    setNota: function(n){ if(window.app._app)window.app._app.setNota(n); },
+    enviarAvaliacao: function(){ if(window.app._app)window.app._app.enviarAvaliacao(); },
+    gerarQRCode: function(uid){ if(window.app._app)window.app._app.gerarQRCode(uid); },
+    fecharQRCode: function(){ if(window.app._app)window.app._app.fecharQRCode(); },
+    compartilharLink: function(){ if(window.app._app)window.app._app.compartilharLink(); },
+    baixarQRCode: function(){ if(window.app._app)window.app._app.baixarQRCode(); },
+    selecionarIdioma: function(i){ if(window.app._app)window.app._app.selecionarIdioma(i); },
+    selecionarTema: function(t){ if(window.app._app)window.app._app.selecionarTema(t); },
+    mostrarInfoVersao: function(){ if(window.app._app)window.app._app.mostrarInfoVersao(); },
+    confirmarExclusao: function(){ if(window.app._app)window.app._app.confirmarExclusao(); },
+    mostrarModalSair: function(){ if(window.app._app)window.app._app.mostrarModalSair(); },
+    fecharModalSair: function(){ if(window.app._app)window.app._app.fecharModalSair(); },
+    confirmarSair: function(){ if(window.app._app)window.app._app.confirmarSair(); },
+    mostrarNotificacoes: function(){ if(window.app._app)window.app._app.mostrarNotificacoes(); },
+    mudarTab: function(t){ if(window.app._app)window.app._app.mudarTab(t); },
+    carregarFeed: function(){ if(window.app._app)window.app._app.carregarFeed(); },
+    carregarRede: function(){ if(window.app._app)window.app._app.carregarRede(); }
+};
+
 // ===== CLASSE PRINCIPAL =====
 var App = function() {
     this.usuarioLogado = null;
@@ -110,6 +172,7 @@ App.prototype.t = function(chave) {
 App.prototype.init = function() {
     var self = this;
     console.log('🚀 Iniciando LPXConstrutor...');
+    window.app._app = this;
     
     var idiomaSalvo = localStorage.getItem('idioma');
     if (idiomaSalvo && traducoes[idiomaSalvo]) this.idiomaAtual = idiomaSalvo;
@@ -142,6 +205,7 @@ App.prototype.init = function() {
             self.mostrarTela('loginScreen');
         }
     });
+    console.log('✅ App iniciado. Idioma:', this.idiomaAtual);
 };
 
 App.prototype.atualizarBotaoPublicar = function() {
@@ -218,11 +282,11 @@ App.prototype.selecionarTema = function(tema) {
         if (ta) ta.textContent = this.t('temaClaro');
         localStorage.setItem('tema', 'claro');
     }
-    this.mostrarToast('🎨 ' + this.t('temaAlterado') + ' ' + this.t(tema === 'claro' ? 'temaClaro' : 'temaEscuro'), 'sucesso');
+    this.mostrarToast('🎨 Tema: ' + this.t(tema === 'claro' ? 'temaClaro' : 'temaEscuro'), 'sucesso');
 };
 
 // ===== IDIOMA =====
-App.prototype.selecionarIdioma = function(idioma) { this.idiomaAtual = idioma; localStorage.setItem('idioma', idioma); this.mostrarToast('🌐 ' + this.t('idiomaAlterado') + ' ' + idioma.toUpperCase(), 'sucesso'); this.voltarTela(); };
+App.prototype.selecionarIdioma = function(idioma) { this.idiomaAtual = idioma; localStorage.setItem('idioma', idioma); this.mostrarToast('🌐 Idioma: ' + idioma.toUpperCase(), 'sucesso'); this.voltarTela(); };
 
 // ===== AUTENTICAÇÃO =====
 App.prototype.fazerLogin = function() {
@@ -247,7 +311,7 @@ App.prototype.cadastrar = function() {
 
 App.prototype.proximaEtapa = function(e) { var e1=document.getElementById('etapa1'),e2=document.getElementById('etapa2'); if(!e1||!e2)return; e1.style.display=e===1?'block':'none'; e2.style.display=e===2?'block':'none'; };
 App.prototype.toggleProfissao = function() { var g=document.getElementById('grupoProfissao'); if(g)g.style.display=(document.getElementById('cadTipo')||{}).value==='profissional'?'block':'none'; };
-App.prototype.sair = function() { var self=this; authService.logout().then(function(){self.usuarioLogado=null;self.mostrarTela('loginScreen');}); };
+App.prototype.sair = function() { var self=this; authService.logout().then(function(){self.usuarioLogado=null;self.mostrarTela('loginScreen');self.mostrarToast('👋 Até logo!','sucesso');}); };
 
 // ===== RECUPERAÇÃO =====
 App.prototype.solicitarCodigo = function() {
@@ -267,7 +331,7 @@ App.prototype.carregarHome = function() {
     if(!this.usuarioLogado)return;
     var h=new Date().getHours(),s='Bom dia';if(h>=12&&h<18)s='Boa tarde';if(h>=18)s='Boa noite';
     document.getElementById('saudacao').textContent='👋 '+s+', '+this.usuarioLogado.nome+'!';
-    document.getElementById('resumoTexto').textContent=(this.usuarioLogado.tipo==='empreiteiro'?this.t('empreiteiro'):this.t('profissional'))+' • '+(this.usuarioLogado.profissao||this.usuarioLogado.tipo);
+    document.getElementById('resumoTexto').textContent=(this.usuarioLogado.tipo==='empreiteiro'?'🏢 Empreiteiro':'👷 Profissional')+' • '+(this.usuarioLogado.profissao||this.usuarioLogado.tipo);
     setTimeout(function(){try{if(typeof mapaService!=='undefined')mapaService.initMap()}catch(e){}},500);
     this.carregarFeed();
 };
@@ -277,8 +341,8 @@ App.prototype.carregarFeed = function() {
     c.innerHTML='<div class="loading">Carregando...</div>';
     db.collection('vagas').get().then(function(snap){
         var vagas=[];snap.forEach(function(doc){var d=doc.data();if(d.ativa!==false)vagas.push({id:doc.id,data:d});});
-        if(vagas.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma vaga</h3>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-primary" onclick="window.app._app.abrirTelaPublicacao()">PUBLICAR VAGA</button>':'')+'</div>';return;}
-        var html='';vagas.forEach(function(v){html+='<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">'+(v.data.titulo||'Vaga')+'</div><div class="vaga-data">📍 '+(v.data.endereco||'')+'</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.data.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.data.profissoes||'Todas')+'</span></div></div>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='profissional'?'<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app._app.candidatarVaga(\''+v.id+'\')">✋ QUERO!</button></div>':'')+'</div>';});
+        if(vagas.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma vaga</h3>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()">PUBLICAR VAGA</button>':'')+'</div>';return;}
+        var html='';vagas.forEach(function(v){html+='<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">'+(v.data.titulo||'Vaga')+'</div><div class="vaga-data">📍 '+(v.data.endereco||'')+'</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.data.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.data.profissoes||'Todas')+'</span></div></div>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='profissional'?'<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app.candidatarVaga(\''+v.id+'\')">✋ QUERO!</button></div>':'')+'</div>';});
         c.innerHTML=html;
     }).catch(function(){c.innerHTML='<div class="card">Erro</div>';});
 };
@@ -289,7 +353,7 @@ App.prototype.carregarRede = function() {
         var conexoes=[];snap.forEach(function(doc){var d=doc.data();if(d.usuarioId===self.usuarioLogado.id||d.amigoId===self.usuarioLogado.id)conexoes.push({id:doc.id,data:d});});
         if(conexoes.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3></div>';return;}
         var proms=[];conexoes.forEach(function(con){var aid=con.data.usuarioId===self.usuarioLogado.id?con.data.amigoId:con.data.usuarioId;proms.push(db.collection('usuarios').doc(aid).get());});
-        Promise.all(proms).then(function(docs){var html='';docs.forEach(function(doc){if(doc.exists){var u=doc.data();html+='<div class="vaga-card" onclick="window.app._app.verPerfil(\''+doc.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div></div></div></div>';}});c.innerHTML=html||'<div class="card">Nenhum amigo</div>';});
+        Promise.all(proms).then(function(docs){var html='';docs.forEach(function(doc){if(doc.exists){var u=doc.data();html+='<div class="vaga-card" onclick="window.app.verPerfil(\''+doc.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div></div></div></div>';}});c.innerHTML=html||'<div class="card">Nenhum amigo</div>';});
     });
 };
 
@@ -305,7 +369,7 @@ App.prototype.buscarProfissionais = function() {
         var termo=(document.getElementById('buscaInput')||{}).value||'';
         var filtrados=termo?profs.filter(function(u){return(u.data.nome||'').toLowerCase().indexOf(termo.toLowerCase())>=0||(u.data.profissao||'').toLowerCase().indexOf(termo.toLowerCase())>=0;}):profs;
         if(filtrados.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhum profissional</h3></div>';return;}
-        var html='';filtrados.forEach(function(u){var w=u.data.celular?u.data.celular.replace(/\D/g,''):'';html+='<div class="vaga-card" onclick="window.app._app.verPerfil(\''+u.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-hard-hat"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.data.nome+'</div><div class="vaga-data">'+(u.data.profissao||'Profissional')+' • '+(u.data.experiencia||0)+' anos</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app._app.iniciarChat(\''+u.id+'\')">Chat</button></div></div>';});
+        var html='';filtrados.forEach(function(u){var w=u.data.celular?u.data.celular.replace(/\D/g,''):'';html+='<div class="vaga-card" onclick="window.app.verPerfil(\''+u.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-hard-hat"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.data.nome+'</div><div class="vaga-data">'+(u.data.profissao||'Profissional')+' • '+(u.data.experiencia||0)+' anos</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\''+u.id+'\')">Chat</button></div></div>';});
         c.innerHTML=html;
     });
 };
@@ -320,10 +384,10 @@ App.prototype.verPerfil = function(uid) {
         if(self.usuarioLogado&&self.usuarioLogado.id!==uid){
             html+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">';
             if(w)html+='<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success">WhatsApp</a>';
-            html+='<button class="btn btn-primary" onclick="window.app._app.iniciarChat(\''+uid+'\')">💬 Chat</button>';
-            if(self.usuarioLogado.tipo==='empreiteiro')html+='<button class="btn btn-outline" onclick="window.app._app.abrirContratacao(\''+uid+'\')" style="background:#1A3A5C;color:white;">🤝 CONTRATAR</button>';
-            html+='<button class="btn btn-outline" onclick="window.app._app.verAvaliacoes(\''+uid+'\')">📊 Avaliações</button>';
-            html+='<button class="btn btn-outline" onclick="window.app._app.gerarQRCode(\''+uid+'\')">📱 QR Code</button></div>';
+            html+='<button class="btn btn-primary" onclick="window.app.iniciarChat(\''+uid+'\')">💬 Chat</button>';
+            if(self.usuarioLogado.tipo==='empreiteiro')html+='<button class="btn btn-outline" onclick="window.app.abrirContratacao(\''+uid+'\')" style="background:#1A3A5C;color:white;">🤝 CONTRATAR</button>';
+            html+='<button class="btn btn-outline" onclick="window.app.verAvaliacoes(\''+uid+'\')">📊 Avaliações</button>';
+            html+='<button class="btn btn-outline" onclick="window.app.gerarQRCode(\''+uid+'\')">📱 QR Code</button></div>';
         }
         c.innerHTML=html;self.mostrarTela('perfilPublicoScreen');
     });
@@ -345,8 +409,8 @@ App.prototype.confirmarContratacao = function() { var self=this;var oid=document
 
 // ===== OBRAS =====
 App.prototype.novaObra = function() { var n=prompt('Nome da obra:'),e=prompt('Endereço:');if(!n||!e)return;var self=this;db.collection('obras').add({nome:n,endereco:e,usuarioId:this.usuarioLogado.id,ativa:true,dataCriacao:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){self.carregarMinhasObras();}); };
-App.prototype.carregarMinhasObras = function() { var self=this,c=document.getElementById('listaObrasContainer');if(!c)return;db.collection('obras').where('usuarioId','==',this.usuarioLogado.id).where('ativa','==',true).get().then(function(snap){var obras=[];snap.forEach(function(doc){obras.push({id:doc.id,data:doc.data()});});document.getElementById('totalObras').textContent=obras.length;if(obras.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhuma obra</h3></div>';return;}var html='';obras.forEach(function(o){html+='<div class="card" style="cursor:pointer;border-left:4px solid #10B981;" onclick="window.app._app.verDetalheObra(\''+o.id+'\')"><h3>🏗️ '+o.data.nome+'</h3><p>📍 '+o.data.endereco+'</p></div>';});c.innerHTML=html;}); };
-App.prototype.verDetalheObra = function(oid) { var self=this;this.obraSelecionada=oid;var c=document.getElementById('detalheObraConteudo');if(!c)return;db.collection('obras').doc(oid).get().then(function(doc){var o=doc.data();var html='<div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;"><h2>🏗️ '+o.nome+'</h2><p>📍 '+o.endereco+'</p></div>';db.collection('conexoes').where('obraId','==',oid).get().then(function(snap){if(snap.empty){html+='<div class="card"><p>Nenhum funcionário</p></div>';c.innerHTML=html;return;}html+='<h3>👷 Funcionários</h3>';var proms=[];snap.forEach(function(doc){var con=doc.data();con.id=doc.id;proms.push(db.collection('usuarios').doc(con.amigoId).get().then(function(ud){if(ud.exists){var u=ud.data();return'<div class="card"><strong>'+u.nome+'</strong><br>'+(con.funcao||'')+' • R$ '+(con.valorHora||'0')+'/h<br>'+(con.status==='contratado'?'<button class="btn btn-danger btn-small" onclick="window.app._app.demitirFuncionario(\''+con.id+'\')">Demitir</button> <button class="btn btn-outline btn-small" onclick="window.app._app.finalizarContrato(\''+con.id+'\')">Finalizar</button>':'<span>'+con.status+'</span>')+'</div>';}return'';}));});Promise.all(proms).then(function(r){html+=r.join('');c.innerHTML=html;});});});this.mostrarTela('detalheObraScreen'); };
+App.prototype.carregarMinhasObras = function() { var self=this,c=document.getElementById('listaObrasContainer');if(!c)return;db.collection('obras').where('usuarioId','==',this.usuarioLogado.id).where('ativa','==',true).get().then(function(snap){var obras=[];snap.forEach(function(doc){obras.push({id:doc.id,data:doc.data()});});document.getElementById('totalObras').textContent=obras.length;if(obras.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhuma obra</h3></div>';return;}var html='';obras.forEach(function(o){html+='<div class="card" style="cursor:pointer;border-left:4px solid #10B981;" onclick="window.app.verDetalheObra(\''+o.id+'\')"><h3>🏗️ '+o.data.nome+'</h3><p>📍 '+o.data.endereco+'</p></div>';});c.innerHTML=html;}); };
+App.prototype.verDetalheObra = function(oid) { var self=this;this.obraSelecionada=oid;var c=document.getElementById('detalheObraConteudo');if(!c)return;db.collection('obras').doc(oid).get().then(function(doc){var o=doc.data();var html='<div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;"><h2>🏗️ '+o.nome+'</h2><p>📍 '+o.endereco+'</p></div>';db.collection('conexoes').where('obraId','==',oid).get().then(function(snap){if(snap.empty){html+='<div class="card"><p>Nenhum funcionário</p></div>';c.innerHTML=html;return;}html+='<h3>👷 Funcionários</h3>';var proms=[];snap.forEach(function(doc){var con=doc.data();con.id=doc.id;proms.push(db.collection('usuarios').doc(con.amigoId).get().then(function(ud){if(ud.exists){var u=ud.data();return'<div class="card"><strong>'+u.nome+'</strong><br>'+(con.funcao||'')+' • R$ '+(con.valorHora||'0')+'/h<br>'+(con.status==='contratado'?'<button class="btn btn-danger btn-small" onclick="window.app.demitirFuncionario(\''+con.id+'\')">Demitir</button> <button class="btn btn-outline btn-small" onclick="window.app.finalizarContrato(\''+con.id+'\')">Finalizar</button>':'<span>'+con.status+'</span>')+'</div>';}return'';}));});Promise.all(proms).then(function(r){html+=r.join('');c.innerHTML=html;});});});this.mostrarTela('detalheObraScreen'); };
 App.prototype.demitirFuncionario = function(cid) { if(!confirm('Demitir?'))return;var self=this;db.collection('conexoes').doc(cid).update({status:'demitido'}).then(function(){self.verDetalheObra(self.obraSelecionada);}); };
 App.prototype.finalizarContrato = function(cid) { if(!confirm('Finalizar?'))return;var self=this;db.collection('conexoes').doc(cid).update({status:'finalizado'}).then(function(){self.verDetalheObra(self.obraSelecionada);}); };
 
@@ -360,7 +424,6 @@ App.prototype.enviarAvaliacao = function() { if(!this.avaliarNota)return;var sel
 // ===== QR CODE =====
 App.prototype.gerarQRCode = function(uid) { var self=this;db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;var u=doc.data();var link=window.location.origin+window.location.pathname+'?perfil='+uid;document.getElementById('modalQRCode').style.display='flex';document.getElementById('qrcodeNome').textContent=u.nome;document.getElementById('qrcodeContainer').innerHTML='';new QRCode(document.getElementById('qrcodeContainer'),{text:link,width:200,height:200,colorDark:'#1A3A5C',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});self.qrcodeLink=link;}); };
 App.prototype.fecharQRCode = function() { document.getElementById('modalQRCode').style.display='none'; };
-App.prototype.compartilharLink = function() { if(!this.qrcodeLink)return;if(navigator.share){navigator.share({title:'LPXConstrutor',text:'Veja este perfil!',url:this.qrcodeLink}).catch(function(){});}else{navigator.clipboard.writeText(this.qrcodeLink).then(function(){window.app._app.mostrarToast('✅ Link copiado!','sucesso');});} };
 App.prototype.baixarQRCode = function() { var img=document.querySelector('#qrcodeContainer img');if(!img)return;var a=document.createElement('a');a.download='lpxconstrutor-qrcode.png';a.href=img.src;a.click();this.mostrarToast('✅ QR baixado!','sucesso'); };
 
 // ===== PERFIL =====
@@ -379,7 +442,7 @@ App.prototype.uploadFoto = function(e){var self=this,f=e.target.files[0];if(!f)r
 // ===== OUTROS =====
 App.prototype.mostrarInfoVersao = function(){this.mostrarToast('🏗️ LPXConstrutor v1.0.0','info');};
 App.prototype.verMinhasAvaliacoes = function(){if(this.usuarioLogado)this.verAvaliacoes(this.usuarioLogado.id);};
-App.prototype.confirmarExclusao = function(){var m=document.getElementById('motivoExclusao').value;if(!m){this.mostrarToast('❌ Selecione um motivo!','erro');return;}if(!confirm('⚠️ Tem certeza?'))return;this.mostrarToast('📧 Solicitação enviada!','sucesso');setTimeout(function(){window.app._app.mostrarTela('loginScreen');},2000);};
+App.prototype.confirmarExclusao = function(){var m=document.getElementById('motivoExclusao').value;if(!m){this.mostrarToast('❌ Selecione um motivo!','erro');return;}if(!confirm('⚠️ Tem certeza?'))return;this.mostrarToast('📧 Solicitação enviada!','sucesso');setTimeout(function(){window.app.mostrarTela('loginScreen');},2000);};
 App.prototype.mudarTab = function(tab) { document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});event.target.closest('.tab').classList.add('active');document.getElementById('feedContainer').style.display=tab==='feed'?'block':'none';document.getElementById('redeContainer').style.display=tab==='rede'?'block':'none';if(tab==='feed')this.carregarFeed();if(tab==='rede')this.carregarRede(); };
 App.prototype.mostrarNotificacoes = function(){this.mostrarTela('notificacoesScreen');};
 
