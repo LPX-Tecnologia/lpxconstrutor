@@ -1,388 +1,251 @@
-// ==========================================================
-// ===== LPXCONSTRUTOR - APLICAÇÃO PRINCIPAL COMPLETA =====
-// ==========================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1A3A5C">
+    <meta name="description" content="LPXConstrutor - Rede Profissional da Construção Civil">
+    <title>🏗️ LPXConstrutor</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnSISQpOEO0jcPYkzFySU8BFYtNNhYwSM&libraries=places&loading=async" async defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="LPXConstrutor">
+    <link rel="shortcut icon" href="./imagem/logo-sem-fundo-lpxconstrutor.png">
+    <link rel="apple-touch-icon" href="./imagem/logo-sem-fundo-lpxconstrutor.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./imagem/logo-sem-fundo-lpxconstrutor.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./imagem/logo-sem-fundo-lpxconstrutor.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./imagem/logo-sem-fundo-lpxconstrutor.png">
+</head>
+<body>
 
-// ===== SISTEMA DE TRADUÇÃO =====
-var traducoes = {
-    pt: {
-        saudacao: 'Bem-vindo!', carregando: 'Carregando...', nenhumaVaga: 'Nenhuma vaga publicada',
-        publicarVaga: 'PUBLICAR VAGA', buscar: 'Buscar Profissionais', feed: 'Feed', rede: 'Minha Rede',
-        inicio: 'Início', perfil: 'Perfil', chat: 'Chat', obras: 'Obras', publicar: 'Publicar',
-        editarPerfil: 'Editar Perfil', faq: 'FAQ', termos: 'Termos de Uso', privacidade: 'Privacidade',
-        versao: 'Versão do App', idioma: 'Idioma', aparencia: 'Aparência', notificacoes: 'Central de Notificações',
-        seguranca: 'Segurança', alterarSenha: 'Alterar Senha', excluirConta: 'Excluir Conta',
-        avaliacoes: 'Minhas Avaliações', sair: 'SAIR DA CONTA', informacoes: 'Informações',
-        configuracoes: 'Configurações', temaClaro: 'Claro', temaEscuro: 'Escuro',
-        portugues: 'Português', espanhol: 'Espanhol', ingles: 'Inglês', nome: 'Nome Completo',
-        whatsapp: 'WhatsApp', profissao: 'Profissão', experiencia: 'Experiência (anos)',
-        habilidades: 'Habilidades', salvar: 'SALVAR', email: 'Email', senha: 'Senha',
-        entrar: 'ENTRAR', criarConta: 'Criar Conta', esqueciSenha: 'Esqueci a Senha',
-        bemVindo: 'Bem-vindo!', ateLogo: 'Até logo!', preenchaTodos: 'Preencha todos os campos!',
-        nomeObrigatorio: 'Nome obrigatório!', perfilAtualizado: 'Perfil atualizado!',
-        fotoAtualizada: 'Foto atualizada!', temaAlterado: 'Tema alterado para:',
-        idiomaAlterado: 'Idioma alterado para:', empreiteiro: 'Empreiteiro', profissional: 'Profissional',
-        contratar: 'CONTRATAR', whatsappBtn: 'WhatsApp', chatBtn: 'Chat',
-        verAvaliacoes: 'Ver Avaliações', cancelar: 'CANCELAR', publicadoSucesso: 'Vaga publicada!',
-        candidaturaEnviada: 'Candidatura enviada!', contratadoSucesso: 'Contratado!',
-        avaliacaoEnviada: 'Avaliação enviada!', codigoGerado: 'Código gerado!',
-        senhaRedefinida: 'Senha redefinida!', linkCopiado: 'Link copiado!',
-        adicionadoRede: 'Adicionado na rede!', removidoRede: 'Removido da rede!',
-        desejaSair: 'Deseja sair do LPXConstrutor?', descricaoSair: 'Você será direcionado para a tela de login.',
-        simSair: 'SIM, SAIR', naoSair: 'NÃO'
-    },
-    es: {
-        saudacao: '¡Bienvenido!', carregando: 'Cargando...', nenhumaVaga: 'Sin vacantes',
-        publicarVaga: 'PUBLICAR VACANTE', buscar: 'Buscar', feed: 'Feed', rede: 'Mi Red',
-        inicio: 'Inicio', perfil: 'Perfil', chat: 'Chat', obras: 'Obras', publicar: 'Publicar',
-        editarPerfil: 'Editar Perfil', faq: 'FAQ', termos: 'Términos', privacidade: 'Privacidad',
-        versao: 'Versión', idioma: 'Idioma', aparencia: 'Apariencia', notificacoes: 'Notificaciones',
-        seguranca: 'Seguridad', alterarSenha: 'Cambiar Contraseña', excluirConta: 'Eliminar Cuenta',
-        avaliacoes: 'Evaluaciones', sair: 'CERRAR SESIÓN', informacoes: 'Información',
-        configuracoes: 'Configuración', temaClaro: 'Claro', temaEscuro: 'Oscuro',
-        portugues: 'Portugués', espanhol: 'Español', ingles: 'Inglés', nome: 'Nombre',
-        whatsapp: 'WhatsApp', profissao: 'Profesión', experiencia: 'Experiencia',
-        habilidades: 'Habilidades', salvar: 'GUARDAR', email: 'Email', senha: 'Contraseña',
-        entrar: 'ENTRAR', criarConta: 'Crear Cuenta', esqueciSenha: 'Olvidé Contraseña',
-        bemVindo: '¡Bienvenido!', ateLogo: '¡Hasta luego!', preenchaTodos: '¡Rellena todos los campos!',
-        nomeObrigatorio: '¡Nombre obligatorio!', perfilAtualizado: '¡Perfil actualizado!',
-        fotoAtualizada: '¡Foto actualizada!', temaAlterado: 'Tema cambiado a:',
-        idiomaAlterado: 'Idioma cambiado a:', empreiteiro: 'Contratista', profissional: 'Profesional',
-        contratar: 'CONTRATAR', whatsappBtn: 'WhatsApp', chatBtn: 'Chat',
-        verAvaliacoes: 'Ver Evaluaciones', cancelar: 'CANCELAR', publicadoSucesso: '¡Vacante publicada!',
-        candidaturaEnviada: '¡Solicitud enviada!', contratadoSucesso: '¡Contratado!',
-        avaliacaoEnviada: '¡Evaluación enviada!', codigoGerado: '¡Código generado!',
-        senhaRedefinida: '¡Contraseña cambiada!', linkCopiado: '¡Enlace copiado!',
-        adicionadoRede: '¡Agregado a la red!', removidoRede: '¡Eliminado de la red!',
-        desejaSair: '¿Quieres salir de LPXConstrutor?', descricaoSair: 'Serás dirigido a la pantalla de inicio de sesión.',
-        simSair: 'SÍ, SALIR', naoSair: 'NO'
-    },
-    en: {
-        saudacao: 'Welcome!', carregando: 'Loading...', nenhumaVaga: 'No jobs available',
-        publicarVaga: 'POST JOB', buscar: 'Search', feed: 'Feed', rede: 'My Network',
-        inicio: 'Home', perfil: 'Profile', chat: 'Chat', obras: 'Projects', publicar: 'Post',
-        editarPerfil: 'Edit Profile', faq: 'FAQ', termos: 'Terms', privacidade: 'Privacy',
-        versao: 'Version', idioma: 'Language', aparencia: 'Appearance', notificacoes: 'Notifications',
-        seguranca: 'Security', alterarSenha: 'Change Password', excluirConta: 'Delete Account',
-        avaliacoes: 'My Reviews', sair: 'SIGN OUT', informacoes: 'Information',
-        configuracoes: 'Settings', temaClaro: 'Light', temaEscuro: 'Dark',
-        portugues: 'Portuguese', espanhol: 'Spanish', ingles: 'English', nome: 'Full Name',
-        whatsapp: 'WhatsApp', profissao: 'Profession', experiencia: 'Experience',
-        habilidades: 'Skills', salvar: 'SAVE', email: 'Email', senha: 'Password',
-        entrar: 'SIGN IN', criarConta: 'Create Account', esqueciSenha: 'Forgot Password',
-        bemVindo: 'Welcome!', ateLogo: 'Goodbye!', preenchaTodos: 'Fill in all fields!',
-        nomeObrigatorio: 'Name required!', perfilAtualizado: 'Profile updated!',
-        fotoAtualizada: 'Photo updated!', temaAlterado: 'Theme changed to:',
-        idiomaAlterado: 'Language changed to:', empreiteiro: 'Contractor', profissional: 'Professional',
-        contratar: 'HIRE', whatsappBtn: 'WhatsApp', chatBtn: 'Chat',
-        verAvaliacoes: 'View Reviews', cancelar: 'CANCEL', publicadoSucesso: 'Job posted!',
-        candidaturaEnviada: 'Application sent!', contratadoSucesso: 'Hired!',
-        avaliacaoEnviada: 'Review sent!', codigoGerado: 'Code generated!',
-        senhaRedefinida: 'Password reset!', linkCopiado: 'Link copied!',
-        adicionadoRede: 'Added to network!', removidoRede: 'Removed from network!',
-        desejaSair: 'Do you want to leave LPXConstrutor?', descricaoSair: 'You will be directed to the login screen.',
-        simSair: 'YES, EXIT', naoSair: 'NO'
-    }
-};
-
-// ===== CLASSE PRINCIPAL =====
-var App = function() {
-    this.usuarioLogado = null;
-    this.usuarioSelecionado = null;
-    this.telaAtual = 'loginScreen';
-    this.historicoTelas = [];
-    this.recuperacaoUid = null;
-    this.avaliacoesUid = null;
-    this.avaliarUid = null;
-    this.avaliarNota = 0;
-    this.vagaFotoBase64 = null;
-    this.contratarProfId = null;
-    this.obraSelecionada = null;
-    this.qrcodeLink = null;
-    this.idiomaAtual = 'pt';
-    this.init();
-};
-
-App.prototype.t = function(chave) {
-    var trad = traducoes[this.idiomaAtual] || traducoes.pt;
-    return trad[chave] || traducoes.pt[chave] || chave;
-};
-
-App.prototype.init = function() {
-    var self = this;
-    console.log('🚀 Iniciando LPXConstrutor...');
+<div class="app-container">
     
-    var idiomaSalvo = localStorage.getItem('idioma');
-    if (idiomaSalvo && traducoes[idiomaSalvo]) this.idiomaAtual = idiomaSalvo;
-    
-    var temaSalvo = localStorage.getItem('tema');
-    if (temaSalvo === 'escuro') {
-        document.body.classList.add('dark-theme');
-        var ta = document.getElementById('temaAtual');
-        if (ta) ta.textContent = this.t('temaEscuro');
-    }
-    
-    // Interceptar botão voltar
-    history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', function() {
-        if (self.telaAtual === 'homeScreen' || self.telaAtual === 'loginScreen') {
-            self.mostrarModalSair();
-        } else {
-            self.voltarTela();
-        }
-    });
-    
-    authService.onAuthStateChange(function(u) {
-        if (u) {
-            self.usuarioLogado = u;
-            self.atualizarBotaoPublicar();
-            self.atualizarBotaoObras();
-            if (self.telaAtual === 'loginScreen' || self.telaAtual === 'cadastroScreen') self.mostrarTela('homeScreen');
-        } else {
-            self.usuarioLogado = null;
-            self.mostrarTela('loginScreen');
-        }
-    });
-};
+    <header class="app-header">
+        <div class="header-content">
+            <h1><img src="imagem/logo-sem-fundo-lpxconstrutor.png" alt="LPXConstrutor" class="header-logo">LPXCONSTRUTOR</h1>
+            <button class="icon-btn" onclick="window.app.mostrarNotificacoes()"><i class="fas fa-bell"></i><span class="badge-notification" id="badgeNotificacoes" style="display:none;">0</span></button>
+        </div>
+    </header>
 
-App.prototype.atualizarBotaoPublicar = function() {
-    var btn = document.getElementById('btnPublicar');
-    if (!btn) return;
-    btn.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
-};
+    <div class="toast" id="toast"></div>
 
-App.prototype.atualizarBotaoObras = function() {
-    var btn = document.getElementById('btnObras');
-    if (!btn) return;
-    btn.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
-};
+    <!-- LOGIN -->
+    <div class="screen active" id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" alt="LPXConstrutor" class="logo-login"></div>
+            <h2>LPXConstrutor</h2>
+            <p class="login-subtitle">Rede Profissional da Construção</p>
+            <div class="card">
+                <div class="input-group"><label><i class="fas fa-envelope"></i> Email</label><input type="email" class="input-field" id="loginEmail" placeholder="seu@email.com"></div>
+                <div class="input-group"><label><i class="fas fa-lock"></i> Senha</label><input type="password" class="input-field" id="loginSenha" placeholder="Sua senha"></div>
+                <button class="btn btn-primary" onclick="window.app.fazerLogin()"><i class="fas fa-sign-in-alt"></i> ENTRAR</button>
+                <button class="btn btn-outline" onclick="window.app.mostrarTela('cadastroScreen')"><i class="fas fa-user-plus"></i> Criar Conta</button>
+                <button class="btn btn-outline" onclick="window.app.mostrarTela('recuperarSenhaScreen')"><i class="fas fa-key"></i> Esqueci a Senha</button>
+            </div>
+        </div>
+    </div>
 
-// ===== NAVEGAÇÃO =====
-App.prototype.mostrarTela = function(id) {
-    var self = this;
-    if (self.telaAtual && self.telaAtual !== id && self.telaAtual !== 'loginScreen') {
-        self.historicoTelas.push(self.telaAtual);
-    }
-    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-    var tela = document.getElementById(id);
-    if (!tela) return;
-    tela.classList.add('active');
-    self.telaAtual = id;
-    var nav = document.getElementById('bottomNav');
-    if (nav) {
-        var tn = ['homeScreen','buscaScreen','meuPerfilScreen','chatScreen','publicarVagaScreen','minhasObrasScreen'];
-        nav.style.display = tn.indexOf(id) >= 0 ? 'flex' : 'none';
-    }
-    if (id === 'homeScreen') setTimeout(function() { self.carregarHome(); }, 100);
-    if (id === 'meuPerfilScreen') setTimeout(function() { self.carregarMeuPerfil(); }, 100);
-    if (id === 'buscaScreen') setTimeout(function() { self.buscarProfissionais(); }, 100);
-    if (id === 'minhasObrasScreen') setTimeout(function() { self.carregarMinhasObras(); }, 100);
-    if (id === 'recuperarSenhaScreen') {
-        document.getElementById('recPasso1').style.display = 'block';
-        document.getElementById('recPasso2').style.display = 'none';
-    }
-};
+    <!-- CADASTRO -->
+    <div class="screen" id="cadastroScreen">
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Criar Conta</h2></div>
+        <div class="card">
+            <div id="etapa1"><h3><i class="fas fa-user-circle"></i> Dados Pessoais</h3>
+                <div class="input-group"><label>Nome</label><input type="text" class="input-field" id="cadNome"></div>
+                <div class="input-group"><label>Email</label><input type="email" class="input-field" id="cadEmail"></div>
+                <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="cadCelular"></div>
+                <div class="input-group"><label>CPF</label><input type="text" class="input-field" id="cadCPF" maxlength="14"></div>
+                <div class="input-group"><label>Senha</label><input type="password" class="input-field" id="cadSenha"></div>
+                <button class="btn btn-primary" onclick="window.app.proximaEtapa(2)">PRÓXIMO</button>
+            </div>
+            <div id="etapa2" style="display:none;"><h3><i class="fas fa-tools"></i> Dados Profissionais</h3>
+                <div class="input-group"><label>Tipo</label><select class="input-field" id="cadTipo" onchange="window.app.toggleProfissao()"><option value="profissional">👷 Profissional</option><option value="empreiteiro">🏢 Empreiteiro</option></select></div>
+                <div id="grupoProfissao"><div class="input-group"><label>Profissão</label><select class="input-field" id="cadProfissao"><option value="">Selecione...</option><option value="servente">Servente</option><option value="pedreiro">Pedreiro</option><option value="carpinteiro">Carpinteiro</option><option value="encanador">Encanador</option><option value="eletricista">Eletricista</option><option value="pintor">Pintor</option><option value="gesseiro">Gesseiro</option></select></div></div>
+                <div class="input-group"><label>Experiência</label><input type="number" class="input-field" id="cadExperiencia" value="0"></div>
+                <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="cadHabilidades" rows="3"></textarea></div>
+                <div style="display:flex;gap:10px;"><button class="btn btn-outline" onclick="window.app.proximaEtapa(1)" style="flex:1;">VOLTAR</button><button class="btn btn-primary" onclick="window.app.cadastrar()" style="flex:1;">FINALIZAR</button></div>
+            </div>
+        </div>
+        <p style="text-align:center;font-size:12px;color:#999;margin-top:16px;">Ao se cadastrar, concorda com nossos<br><a href="#" onclick="window.app.mostrarTela('termosScreen');return false;" style="color:#F47920;">Termos de Uso</a> e <a href="#" onclick="window.app.mostrarTela('privacidadeScreen');return false;" style="color:#F47920;">Privacidade</a></p>
+    </div>
 
-App.prototype.voltarTela = function() {
-    if (this.historicoTelas.length > 0) {
-        var anterior = this.historicoTelas.pop();
-        document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-        var tela = document.getElementById(anterior);
-        if (tela) { tela.classList.add('active'); this.telaAtual = anterior; }
-        if (anterior === 'meuPerfilScreen') this.carregarMeuPerfil();
-        if (anterior === 'homeScreen') this.carregarHome();
-        if (anterior === 'buscaScreen') this.buscarProfissionais();
-    } else {
-        this.mostrarTela('homeScreen');
-    }
-};
+    <!-- RECUPERAR SENHA -->
+    <div class="screen" id="recuperarSenhaScreen">
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Recuperar Senha</h2></div>
+        <div id="recPasso1"><div class="card"><div style="text-align:center;margin-bottom:20px;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:80px;height:80px;border-radius:0;"><h3>Esqueceu sua senha?</h3></div><div class="input-group"><label>Email</label><input type="email" class="input-field" id="recEmail"></div><button class="btn btn-primary" onclick="window.app.solicitarCodigo()">ENVIAR CÓDIGO</button><div id="recStatus1" style="display:none;"></div></div></div>
+        <div id="recPasso2" style="display:none;"><div class="card"><div style="text-align:center;"><i class="fas fa-key" style="font-size:60px;color:#F47920;"></i><h3>Digite o código</h3></div><div class="input-group"><label>Código</label><input type="text" class="input-field" id="recCodigo" maxlength="6" style="text-align:center;font-size:24px;letter-spacing:8px;"></div><div class="input-group"><label>Nova Senha</label><input type="password" class="input-field" id="recNovaSenha"></div><button class="btn btn-primary" onclick="window.app.verificarCodigo()">REDEFINIR</button><button class="btn btn-outline" onclick="window.app.voltarPasso1()">Voltar</button></div></div>
+    </div>
 
-// ===== MODAL SAIR =====
-App.prototype.mostrarModalSair = function() { document.getElementById('modalSair').style.display = 'flex'; };
-App.prototype.fecharModalSair = function() { document.getElementById('modalSair').style.display = 'none'; history.pushState(null, '', window.location.href); };
-App.prototype.confirmarSair = function() { document.getElementById('modalSair').style.display = 'none'; this.usuarioLogado = null; this.historicoTelas = []; this.mostrarTela('loginScreen'); };
+    <!-- HOME -->
+    <div class="screen" id="homeScreen">
+        <div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;margin-bottom:16px;padding:24px 20px;">
+            <div style="display:flex;align-items:center;gap:16px;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" class="logo-saudacao"><div><div id="saudacao" style="font-size:24px;font-weight:700;">Bem-vindo!</div><div id="resumoTexto" style="font-size:15px;opacity:.95;">Carregando...</div></div></div>
+        </div>
+        <div class="mapa-container"><div id="map"></div></div>
+        <div class="tabs-container"><button class="tab active" onclick="window.app.mudarTab('feed')"><i class="fas fa-newspaper"></i> Feed</button><button class="tab" onclick="window.app.mudarTab('rede')"><i class="fas fa-users"></i> Rede</button></div>
+        <div id="feedContainer" class="feed-container"><div class="loading">Carregando...</div></div>
+        <div id="redeContainer" class="feed-container" style="display:none;"><div class="loading">Carregando...</div></div>
+    </div>
 
-// ===== TEMA =====
-App.prototype.selecionarTema = function(tema) {
-    var body = document.body;
-    var tc = document.getElementById('temaClaro'), te = document.getElementById('temaEscuro'), ta = document.getElementById('temaAtual');
-    if (tema === 'escuro') {
-        body.classList.add('dark-theme');
-        if (tc) tc.style.background = '';
-        if (te) te.style.background = '#E0F2FE';
-        if (ta) ta.textContent = this.t('temaEscuro');
-        localStorage.setItem('tema', 'escuro');
-    } else {
-        body.classList.remove('dark-theme');
-        if (tc) tc.style.background = '#E0F2FE';
-        if (te) te.style.background = '';
-        if (ta) ta.textContent = this.t('temaClaro');
-        localStorage.setItem('tema', 'claro');
-    }
-    this.mostrarToast('🎨 ' + this.t('temaAlterado') + ' ' + this.t(tema === 'claro' ? 'temaClaro' : 'temaEscuro'), 'sucesso');
-};
+    <!-- BUSCA -->
+    <div class="screen" id="buscaScreen">
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Buscar</h2></div>
+        <div class="search-container"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="buscaInput" placeholder="Nome ou profissão..." oninput="window.app.buscarProfissionais()"></div>
+        <div id="buscaResultados" class="feed-container"></div>
+    </div>
 
-// ===== IDIOMA =====
-App.prototype.selecionarIdioma = function(idioma) { this.idiomaAtual = idioma; localStorage.setItem('idioma', idioma); this.mostrarToast('🌐 ' + this.t('idiomaAlterado') + ' ' + idioma.toUpperCase(), 'sucesso'); this.voltarTela(); };
+    <!-- PERFIL PÚBLICO -->
+    <div class="screen" id="perfilPublicoScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Perfil</h2></div><div id="perfilPublicoConteudo"></div></div>
 
-// ===== AUTENTICAÇÃO =====
-App.prototype.fazerLogin = function() {
-    var self = this;
-    var e = (document.getElementById('loginEmail')||{}).value||'', s = (document.getElementById('loginSenha')||{}).value||'';
-    if (!e || !s) { self.mostrarToast('❌ Preencha todos!', 'erro'); return; }
-    authService.login(e, s).then(function(r) {
-        if (r.sucesso) { self.usuarioLogado = r.usuario; self.mostrarToast('✅ Bem-vindo!', 'sucesso'); self.atualizarBotaoPublicar(); self.atualizarBotaoObras(); self.mostrarTela('homeScreen'); }
-        else self.mostrarToast('❌ ' + r.erro, 'erro');
-    });
-};
+    <!-- MEU PERFIL -->
+    <div class="screen" id="meuPerfilScreen">
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Meu Perfil</h2></div>
+        <div class="card" style="text-align:center;background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;">
+            <div class="profile-avatar-perfil" onclick="document.getElementById('inputFoto').click()"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" id="fotoPerfilPreview" style="width:100%;height:100%;border-radius:50%;object-fit:contain;"></div>
+            <input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="window.app.uploadFoto(event)">
+            <h2 id="meuPerfilNome">Carregando...</h2>
+            <p id="meuPerfilProfissao">Carregando...</p>
+            <div id="meuPerfilScore">⭐ 0.0</div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;">
+            <div class="menu-section"><div class="menu-section-title">Informações</div>
+                <div class="menu-item" onclick="window.app.abrirEditarPerfil()"><i class="fas fa-user-edit"></i> Editar Perfil<i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarTela('faqScreen')"><i class="fas fa-question-circle"></i> FAQ<i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarTela('termosScreen')"><i class="fas fa-file-contract"></i> Termos<i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarTela('privacidadeScreen')"><i class="fas fa-shield-alt"></i> Privacidade<i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarInfoVersao()"><i class="fas fa-code-branch"></i> Versão<span class="menu-badge">1.0.0</span></div>
+            </div>
+            <div class="menu-section"><div class="menu-section-title">Configurações</div>
+                <div class="menu-item" onclick="window.app.mostrarTela('idiomasScreen')"><i class="fas fa-language"></i> Idioma<span class="menu-badge">Português</span><i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarTela('aparenciaScreen')"><i class="fas fa-palette"></i> Aparência<span class="menu-badge" id="temaAtual">Claro</span><i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarTela('notificacoesConfigScreen')"><i class="fas fa-bell"></i> Notificações<i class="fas fa-chevron-right menu-arrow"></i></div>
+            </div>
+            <div class="menu-section"><div class="menu-section-title">Segurança</div>
+                <div class="menu-item" onclick="window.app.mostrarTela('recuperarSenhaScreen')"><i class="fas fa-key"></i> Alterar Senha<i class="fas fa-chevron-right menu-arrow"></i></div>
+                <div class="menu-item" onclick="window.app.mostrarTela('excluirContaScreen')"><i class="fas fa-trash-alt" style="color:#EF4444;"></i> Excluir Conta<i class="fas fa-chevron-right menu-arrow"></i></div>
+            </div>
+            <div class="menu-section"><div class="menu-section-title">Avaliações</div>
+                <div class="menu-item" onclick="window.app.verMinhasAvaliacoes()"><i class="fas fa-star"></i> Minhas Avaliações<span class="menu-badge" id="menuQtdAvaliacoes">0</span><i class="fas fa-chevron-right menu-arrow"></i></div>
+            </div>
+        </div>
+        <button class="btn btn-danger" onclick="window.app.sair()" style="margin-top:8px;">SAIR</button>
+    </div>
 
-App.prototype.cadastrar = function() {
-    var self = this;
-    var d = { nome: (document.getElementById('cadNome')||{}).value||'', email: (document.getElementById('cadEmail')||{}).value||'', senha: (document.getElementById('cadSenha')||{}).value||'', tipo: (document.getElementById('cadTipo')||{}).value||'profissional', celular: (document.getElementById('cadCelular')||{}).value||'', cpf: ((document.getElementById('cadCPF')||{}).value||'').replace(/\D/g,''), profissao: (document.getElementById('cadProfissao')||{}).value||'', experiencia: (document.getElementById('cadExperiencia')||{}).value||'0', habilidades: (document.getElementById('cadHabilidades')||{}).value||'' };
-    if (!d.nome || !d.email || !d.senha) { self.mostrarToast('❌ Preencha todos!', 'erro'); return; }
-    authService.cadastrar(d).then(function(r) {
-        if (r.sucesso) { self.usuarioLogado = r.usuario; self.mostrarToast('✅ OK!', 'sucesso'); self.atualizarBotaoPublicar(); self.atualizarBotaoObras(); self.mostrarTela('homeScreen'); }
-        else self.mostrarToast('❌ ' + r.erro, 'erro');
-    });
-};
+    <!-- EDITAR PERFIL -->
+    <div class="screen" id="editarPerfilScreen">
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Editar Perfil</h2></div>
+        <div class="card">
+            <div class="input-group"><label>Nome</label><input type="text" class="input-field" id="editNome"></div>
+            <div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="editCelular"></div>
+            <div class="input-group"><label>Profissão</label><input type="text" class="input-field" id="editProfissao" readonly></div>
+            <div class="input-group"><label>Experiência</label><input type="number" class="input-field" id="editExperiencia"></div>
+            <div class="input-group"><label>Habilidades</label><textarea class="input-field" id="editHabilidades" rows="3"></textarea></div>
+            <button class="btn btn-primary" onclick="window.app.salvarPerfil()">SALVAR</button>
+        </div>
+    </div>
 
-App.prototype.proximaEtapa = function(e) { var e1=document.getElementById('etapa1'),e2=document.getElementById('etapa2'); if(!e1||!e2)return; e1.style.display=e===1?'block':'none'; e2.style.display=e===2?'block':'none'; };
-App.prototype.toggleProfissao = function() { var g=document.getElementById('grupoProfissao'); if(g)g.style.display=(document.getElementById('cadTipo')||{}).value==='profissional'?'block':'none'; };
-App.prototype.sair = function() { var self=this; authService.logout().then(function(){self.usuarioLogado=null;self.mostrarTela('loginScreen');}); };
+    <!-- FAQ -->
+    <div class="screen" id="faqScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>FAQ</h2></div><div class="card"><h3>Como criar conta?</h3><p style="font-size:13px;color:#666;">Clique em "Criar Conta" na tela de login.</p><h3>É gratuito?</h3><p style="font-size:13px;color:#666;">Sim! 100% gratuito.</p></div></div>
 
-// ===== RECUPERAÇÃO =====
-App.prototype.solicitarCodigo = function() {
-    var self=this;
-    var email=document.getElementById('recEmail')?document.getElementById('recEmail').value.trim():'';
-    if(!email||!email.includes('@')){self.mostrarToast('❌ Email inválido!','erro');return;}
-    authService.solicitarCodigoRecuperacao(email).then(function(r){
-        if(r.sucesso){self.recuperacaoUid=r.uid;self.mostrarToast('✅ Código: '+r.codigo,'sucesso');document.getElementById('recPasso1').style.display='none';document.getElementById('recPasso2').style.display='block';}
-        else self.mostrarToast('❌ '+r.erro,'erro');
-    });
-};
-App.prototype.voltarPasso1 = function(){document.getElementById('recPasso1').style.display='block';document.getElementById('recPasso2').style.display='none';};
-App.prototype.verificarCodigo = function(){var self=this;self.mostrarToast('✅ Senha redefinida!','sucesso');setTimeout(function(){self.mostrarTela('loginScreen');},1500);};
+    <!-- IDIOMAS -->
+    <div class="screen" id="idiomasScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Idioma</h2></div><div class="card" style="padding:0;"><div class="menu-item" onclick="window.app.selecionarIdioma('pt')" style="background:#E0F2FE;">🇧🇷 Português<i class="fas fa-check" style="color:#10B981;margin-left:auto;"></i></div><div class="menu-item" onclick="window.app.selecionarIdioma('es')">🇪🇸 Español</div><div class="menu-item" onclick="window.app.selecionarIdioma('en')">🇺🇸 English</div></div></div>
 
-// ===== HOME =====
-App.prototype.carregarHome = function() {
-    if(!this.usuarioLogado)return;
-    var h=new Date().getHours(),s='Bom dia';if(h>=12&&h<18)s='Boa tarde';if(h>=18)s='Boa noite';
-    document.getElementById('saudacao').textContent='👋 '+s+', '+this.usuarioLogado.nome+'!';
-    document.getElementById('resumoTexto').textContent=(this.usuarioLogado.tipo==='empreiteiro'?this.t('empreiteiro'):this.t('profissional'))+' • '+(this.usuarioLogado.profissao||this.usuarioLogado.tipo);
-    setTimeout(function(){try{if(typeof mapaService!=='undefined')mapaService.initMap()}catch(e){}},500);
-    this.carregarFeed();
-};
+    <!-- APARÊNCIA -->
+    <div class="screen" id="aparenciaScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Aparência</h2></div><div class="card" style="padding:0;"><div class="menu-item" onclick="window.app.selecionarTema('claro')" id="temaClaro">☀️ Modo Claro<i class="fas fa-check" style="color:#10B981;margin-left:auto;"></i></div><div class="menu-item" onclick="window.app.selecionarTema('escuro')" id="temaEscuro">🌙 Modo Escuro</div></div></div>
 
-App.prototype.carregarFeed = function() {
-    var self=this,c=document.getElementById('feedContainer');if(!c)return;
-    c.innerHTML='<div class="loading">Carregando...</div>';
-    db.collection('vagas').get().then(function(snap){
-        var vagas=[];snap.forEach(function(doc){var d=doc.data();if(d.ativa!==false)vagas.push({id:doc.id,data:d});});
-        if(vagas.length===0){c.innerHTML='<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma vaga</h3>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-primary" onclick="window.app._app.abrirTelaPublicacao()">PUBLICAR VAGA</button>':'')+'</div>';return;}
-        var html='';vagas.forEach(function(v){html+='<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">'+(v.data.titulo||'Vaga')+'</div><div class="vaga-data">📍 '+(v.data.endereco||'')+'</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.data.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.data.profissoes||'Todas')+'</span></div></div>'+(self.usuarioLogado&&self.usuarioLogado.tipo==='profissional'?'<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app._app.candidatarVaga(\''+v.id+'\')">✋ QUERO!</button></div>':'')+'</div>';});
-        c.innerHTML=html;
-    }).catch(function(){c.innerHTML='<div class="card">Erro</div>';});
-};
+    <!-- NOTIFICAÇÕES CONFIG -->
+    <div class="screen" id="notificacoesConfigScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Notificações</h2></div><div class="card" style="padding:0;"><div class="menu-item"><i class="fas fa-bell"></i> Push<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div><div class="menu-item"><i class="fas fa-envelope"></i> Email<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div><div class="menu-item"><i class="fas fa-comment"></i> Mensagens<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div></div></div>
 
-App.prototype.carregarRede = function() {
-    var self=this,c=document.getElementById('redeContainer');if(!c)return;c.innerHTML='<div class="loading">Carregando...</div>';
-    db.collection('conexoes').get().then(function(snap){
-        var conexoes=[];snap.forEach(function(doc){var d=doc.data();if(d.usuarioId===self.usuarioLogado.id||d.amigoId===self.usuarioLogado.id)conexoes.push({id:doc.id,data:d});});
-        if(conexoes.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3></div>';return;}
-        var proms=[];conexoes.forEach(function(con){var aid=con.data.usuarioId===self.usuarioLogado.id?con.data.amigoId:con.data.usuarioId;proms.push(db.collection('usuarios').doc(aid).get());});
-        Promise.all(proms).then(function(docs){var html='';docs.forEach(function(doc){if(doc.exists){var u=doc.data();html+='<div class="vaga-card" onclick="window.app._app.verPerfil(\''+doc.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div></div></div></div>';}});c.innerHTML=html||'<div class="card">Nenhum amigo</div>';});
-    });
-};
+    <!-- EXCLUIR CONTA -->
+    <div class="screen" id="excluirContaScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Excluir Conta</h2></div><div class="card"><div style="text-align:center;margin-bottom:20px;"><i class="fas fa-exclamation-triangle" style="font-size:60px;color:#EF4444;"></i><h3 style="color:#EF4444;">Atenção!</h3></div><div class="input-group"><label>Motivo</label><select class="input-field" id="motivoExclusao"><option value="">Selecione...</option><option value="nao-uso">Não uso mais</option><option value="outro">Outro</option></select></div><button class="btn btn-danger" onclick="window.app.confirmarExclusao()">🗑️ EXCLUIR CONTA</button></div></div>
 
-App.prototype.adicionarNaRede = function(aid) { var self=this; if(!this.usuarioLogado||this.usuarioLogado.id===aid)return; db.collection('conexoes').get().then(function(snap){var ex=false;snap.forEach(function(doc){var d=doc.data();if((d.usuarioId===self.usuarioLogado.id&&d.amigoId===aid)||(d.usuarioId===aid&&d.amigoId===self.usuarioLogado.id))ex=true;});if(ex){self.mostrarToast('Já está na rede!','erro');return;}db.collection('conexoes').add({usuarioId:self.usuarioLogado.id,amigoId:aid,status:'ativo',dataCriacao:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){self.mostrarToast('✅ Adicionado!','sucesso');});}); };
-App.prototype.removerDaRede = function(aid) { var self=this; if(!confirm('Remover?'))return; db.collection('conexoes').get().then(function(snap){snap.forEach(function(doc){var d=doc.data();if((d.usuarioId===self.usuarioLogado.id&&d.amigoId===aid)||(d.usuarioId===aid&&d.amigoId===self.usuarioLogado.id)){db.collection('conexoes').doc(doc.id).delete().then(function(){self.mostrarToast('Removido','sucesso');});}});}); };
+    <!-- TERMOS -->
+    <div class="screen" id="termosScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Termos</h2></div><div class="card"><h3>Termos de Uso</h3><p style="font-size:13px;">Ao usar o LPXConstrutor você concorda com os termos.</p><button class="btn btn-primary" onclick="window.app.voltarTela()">ENTENDI</button></div></div>
 
-// ===== BUSCA =====
-App.prototype.buscarProfissionais = function() {
-    var self=this,c=document.getElementById('buscaResultados');if(!c)return;c.innerHTML='<div class="loading">Buscando...</div>';
-    db.collection('usuarios').get().then(function(snap){
-        var todos=[];snap.forEach(function(doc){todos.push({id:doc.id,data:doc.data()});});
-        var profs=todos.filter(function(u){return u.data.tipo==='profissional'&&u.data.ativo!==false;});
-        var termo=(document.getElementById('buscaInput')||{}).value||'';
-        var filtrados=termo?profs.filter(function(u){return(u.data.nome||'').toLowerCase().indexOf(termo.toLowerCase())>=0||(u.data.profissao||'').toLowerCase().indexOf(termo.toLowerCase())>=0;}):profs;
-        if(filtrados.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhum profissional</h3></div>';return;}
-        var html='';filtrados.forEach(function(u){var w=u.data.celular?u.data.celular.replace(/\D/g,''):'';html+='<div class="vaga-card" onclick="window.app._app.verPerfil(\''+u.id+'\')"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-hard-hat"></i></div><div class="vaga-info"><div class="vaga-nome">'+u.data.nome+'</div><div class="vaga-data">'+(u.data.profissao||'Profissional')+' • '+(u.data.experiencia||0)+' anos</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app._app.iniciarChat(\''+u.id+'\')">Chat</button></div></div>';});
-        c.innerHTML=html;
-    });
-};
+    <!-- PRIVACIDADE -->
+    <div class="screen" id="privacidadeScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Privacidade</h2></div><div class="card"><h3>Política de Privacidade</h3><p style="font-size:13px;">Seus dados são protegidos conforme LGPD.</p><button class="btn btn-primary" onclick="window.app.voltarTela()">ENTENDI</button></div></div>
 
-// ===== PERFIL PÚBLICO =====
-App.prototype.verPerfil = function(uid) {
-    var self=this;
-    db.collection('usuarios').doc(uid).get().then(function(doc){
-        if(!doc.exists)return;
-        var u=doc.data(),w=u.celular?u.celular.replace(/\D/g,''):'',c=document.getElementById('perfilPublicoConteudo');if(!c)return;
-        var html='<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar"><i class="fas fa-user"></i></div></div></div><div class="profile-info-card"><h2>'+u.nome+'</h2><p>'+(u.profissao||'Profissional')+' • '+(u.experiencia||0)+' anos</p><div>'+'⭐'.repeat(Math.round(u.score||0))+'</div></div><div class="card"><h3>Habilidades</h3><p>'+(u.habilidades||'Não informado')+'</p></div><div class="card"><h3>Contato</h3><p>📱 '+(u.celular||'Não informado')+'</p><p>📧 '+u.email+'</p></div>';
-        if(self.usuarioLogado&&self.usuarioLogado.id!==uid){
-            html+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">';
-            if(w)html+='<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success">WhatsApp</a>';
-            html+='<button class="btn btn-primary" onclick="window.app._app.iniciarChat(\''+uid+'\')">💬 Chat</button>';
-            if(self.usuarioLogado.tipo==='empreiteiro')html+='<button class="btn btn-outline" onclick="window.app._app.abrirContratacao(\''+uid+'\')" style="background:#1A3A5C;color:white;">🤝 CONTRATAR</button>';
-            html+='<button class="btn btn-outline" onclick="window.app._app.verAvaliacoes(\''+uid+'\')">📊 Avaliações</button>';
-            html+='<button class="btn btn-outline" onclick="window.app._app.gerarQRCode(\''+uid+'\')">📱 QR Code</button></div>';
-        }
-        c.innerHTML=html;self.mostrarTela('perfilPublicoScreen');
-    });
-};
+    <!-- AVALIAÇÕES -->
+    <div class="screen" id="avaliacoesScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Avaliações</h2></div><div class="card" style="text-align:center;background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;"><div id="avaliacaoScoreGeral" style="font-size:48px;font-weight:900;">0.0</div><div id="avaliacaoEstrelas">☆☆☆☆☆</div></div><div class="tabs-container" style="margin-top:16px;"><button class="tab active" onclick="window.app.filtrarAvaliacoes('todas',this)">Todas</button><button class="tab" onclick="window.app.filtrarAvaliacoes('positivas',this)">👍 Positivas</button><button class="tab" onclick="window.app.filtrarAvaliacoes('melhorar',this)">📝 A Melhorar</button></div><div id="avaliacoesLista" class="feed-container" style="margin-top:16px;"></div></div>
 
-// ===== CHAT =====
-App.prototype.iniciarChat = function(uid) { var self=this; db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;self.usuarioSelecionado={id:doc.id,data:doc.data()};var h=document.getElementById('chatHeaderInfo');if(h)h.innerHTML='<div><strong>'+doc.data().nome+'</strong></div>';self.mostrarTela('chatScreen');}); };
-App.prototype.enviarMensagem = function() { var self=this,i=document.getElementById('chatInput'),ct=i?i.value.trim():'';if(!ct||!this.usuarioSelecionado)return;db.collection('mensagens').add({remetenteId:this.usuarioLogado.id,destinatarioId:this.usuarioSelecionado.id,participantes:[this.usuarioLogado.id,this.usuarioSelecionado.id],conteudo:ct,dataEnvio:firebase.firestore.FieldValue.serverTimestamp(),lida:false}).then(function(){i.value='';}); };
+    <!-- DAR AVALIAÇÃO -->
+    <div class="screen" id="darAvaliacaoScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Avaliar</h2></div><div class="card"><div style="text-align:center;"><div id="avaliarNome" style="font-size:18px;font-weight:700;"></div></div><div class="input-group" style="text-align:center;"><label>Nota</label><div class="estrelas-avaliacao" id="estrelasAvaliar"><i class="far fa-star" onclick="window.app.setNota(1)"></i><i class="far fa-star" onclick="window.app.setNota(2)"></i><i class="far fa-star" onclick="window.app.setNota(3)"></i><i class="far fa-star" onclick="window.app.setNota(4)"></i><i class="far fa-star" onclick="window.app.setNota(5)"></i></div></div><div class="input-group"><label>👍 Positivos</label><textarea class="input-field" id="avalPositivos" rows="3"></textarea></div><div class="input-group"><label>📝 A Melhorar</label><textarea class="input-field" id="avalMelhorar" rows="3"></textarea></div><div class="input-group"><label>🛠️ Serviço</label><input type="text" class="input-field" id="avalServico"></div><div class="input-group"><label>⏱️ Período</label><select class="input-field" id="avalPeriodo"><option value="">Selecione...</option><option value="1-dia">1 Dia</option><option value="1-semana">1 Semana</option><option value="1-mes">1 Mês</option><option value="3-meses">3 Meses</option><option value="1-ano">+1 Ano</option></select></div><button class="btn btn-primary" onclick="window.app.enviarAvaliacao()">ENVIAR</button></div></div>
 
-// ===== PUBLICAÇÃO =====
-App.prototype.abrirTelaPublicacao = function() { if(!this.usuarioLogado||this.usuarioLogado.tipo!=='empreiteiro')return;['vagaTitulo','vagaDescricao','vagaEndereco'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('vagaFotoPreview').src='imagem/logo-sem-fundo-lpxconstrutor.png';this.vagaFotoBase64=null;document.querySelectorAll('#profissoesCheckboxes input').forEach(function(cb){cb.checked=false;});this.mostrarTela('publicarVagaScreen'); };
-App.prototype.previewFotoObra = function(e) { var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){document.getElementById('vagaFotoPreview').src=ev.target.result;};r.readAsDataURL(f);var self=this;var r2=new FileReader();r2.onload=function(ev){self.vagaFotoBase64=ev.target.result;};r2.readAsDataURL(f); };
-App.prototype.publicarVagaApp = function() { var self=this;var t=(document.getElementById('vagaTitulo')||{}).value||'',e=(document.getElementById('vagaEndereco')||{}).value||'';if(!t||!e)return;var ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb){ps.push(cb.value);});db.collection('vagas').add({titulo:t,descricao:(document.getElementById('vagaDescricao')||{}).value||'',endereco:e,profissoes:ps.join(', '),valorHora:parseFloat((document.getElementById('vagaValorHora')||{}).value)||0,fotoObra:self.vagaFotoBase64||'',usuarioId:this.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true}).then(function(){self.mostrarToast('✅ Vaga publicada!','sucesso');self.vagaFotoBase64=null;setTimeout(function(){self.mostrarTela('homeScreen');},1000);}); };
-App.prototype.candidatarVaga = function(vid) { var self=this;if(!this.usuarioLogado||this.usuarioLogado.tipo!=='profissional')return;db.collection('vagas').doc(vid).get().then(function(doc){if(!doc.exists)return;var v=doc.data();if(!v.interessados)v.interessados=[];if(v.interessados.indexOf(self.usuarioLogado.id)>=0)return;v.interessados.push(self.usuarioLogado.id);db.collection('vagas').doc(vid).update({interessados:v.interessados}).then(function(){self.mostrarToast('✅ Candidatura enviada!','sucesso');});}); };
+    <!-- CONTRATAR -->
+    <div class="screen" id="contratarScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Contratar</h2></div><div class="card"><div id="contratarInfo" style="text-align:center;"></div><div class="input-group"><label>🏗️ Obra</label><select class="input-field" id="contratarObra"><option value="">Selecione...</option></select></div><div class="input-group"><label>👷 Função</label><input type="text" class="input-field" id="contratarFuncao"></div><div class="input-group"><label>💰 Valor/Hora</label><input type="number" class="input-field" id="contratarValor" placeholder="25"></div><div class="input-group"><label>⏱️ Tipo</label><select class="input-field" id="contratarTipo"><option value="diaria">Diária</option><option value="semanal">Semanal</option><option value="mensal">Mensal</option><option value="obra">Por Obra</option></select></div><button class="btn btn-primary" onclick="window.app.confirmarContratacao()">🤝 CONTRATAR</button></div></div>
 
-// ===== CONTRATAÇÃO =====
-App.prototype.abrirContratacao = function(profId) { var self=this;this.contratarProfId=profId;db.collection('usuarios').doc(profId).get().then(function(doc){if(!doc.exists)return;var u=doc.data();document.getElementById('contratarInfo').innerHTML='<div style="font-size:40px;">👷</div><h3>'+u.nome+'</h3>';});db.collection('obras').where('usuarioId','==',this.usuarioLogado.id).where('ativa','==',true).get().then(function(snap){var s=document.getElementById('contratarObra');s.innerHTML='<option value="">Selecione...</option>';snap.forEach(function(doc){var o=doc.data();s.innerHTML+='<option value="'+doc.id+'">🏗️ '+o.nome+'</option>';});});this.mostrarTela('contratarScreen'); };
-App.prototype.confirmarContratacao = function() { var self=this;var oid=document.getElementById('contratarObra').value,func=document.getElementById('contratarFuncao').value||'',val=document.getElementById('contratarValor').value||'0';if(!oid||!func)return;db.collection('conexoes').add({usuarioId:this.usuarioLogado.id,amigoId:this.contratarProfId,obraId:oid,funcao:func,valorHora:parseFloat(val),tipoContrato:document.getElementById('contratarTipo').value,status:'contratado',dataContratacao:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){self.mostrarToast('✅ Contratado!','sucesso');setTimeout(function(){self.voltarTela();},1500);}); };
+    <!-- MINHAS OBRAS -->
+    <div class="screen" id="minhasObrasScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Minhas Obras</h2><button class="icon-btn" onclick="window.app.novaObra()" style="background:#10B981;color:white;">➕</button></div><div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;text-align:center;"><div style="font-size:36px;font-weight:900;" id="totalObras">0</div><div>Total de Obras</div></div><div id="listaObrasContainer" class="feed-container" style="margin-top:16px;"></div></div>
 
-// ===== OBRAS =====
-App.prototype.novaObra = function() { var n=prompt('Nome da obra:'),e=prompt('Endereço:');if(!n||!e)return;var self=this;db.collection('obras').add({nome:n,endereco:e,usuarioId:this.usuarioLogado.id,ativa:true,dataCriacao:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){self.carregarMinhasObras();}); };
-App.prototype.carregarMinhasObras = function() { var self=this,c=document.getElementById('listaObrasContainer');if(!c)return;db.collection('obras').where('usuarioId','==',this.usuarioLogado.id).where('ativa','==',true).get().then(function(snap){var obras=[];snap.forEach(function(doc){obras.push({id:doc.id,data:doc.data()});});document.getElementById('totalObras').textContent=obras.length;if(obras.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhuma obra</h3></div>';return;}var html='';obras.forEach(function(o){html+='<div class="card" style="cursor:pointer;border-left:4px solid #10B981;" onclick="window.app._app.verDetalheObra(\''+o.id+'\')"><h3>🏗️ '+o.data.nome+'</h3><p>📍 '+o.data.endereco+'</p></div>';});c.innerHTML=html;}); };
-App.prototype.verDetalheObra = function(oid) { var self=this;this.obraSelecionada=oid;var c=document.getElementById('detalheObraConteudo');if(!c)return;db.collection('obras').doc(oid).get().then(function(doc){var o=doc.data();var html='<div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;"><h2>🏗️ '+o.nome+'</h2><p>📍 '+o.endereco+'</p></div>';db.collection('conexoes').where('obraId','==',oid).get().then(function(snap){if(snap.empty){html+='<div class="card"><p>Nenhum funcionário</p></div>';c.innerHTML=html;return;}html+='<h3>👷 Funcionários</h3>';var proms=[];snap.forEach(function(doc){var con=doc.data();con.id=doc.id;proms.push(db.collection('usuarios').doc(con.amigoId).get().then(function(ud){if(ud.exists){var u=ud.data();return'<div class="card"><strong>'+u.nome+'</strong><br>'+(con.funcao||'')+' • R$ '+(con.valorHora||'0')+'/h<br>'+(con.status==='contratado'?'<button class="btn btn-danger btn-small" onclick="window.app._app.demitirFuncionario(\''+con.id+'\')">Demitir</button> <button class="btn btn-outline btn-small" onclick="window.app._app.finalizarContrato(\''+con.id+'\')">Finalizar</button>':'<span>'+con.status+'</span>')+'</div>';}return'';}));});Promise.all(proms).then(function(r){html+=r.join('');c.innerHTML=html;});});});this.mostrarTela('detalheObraScreen'); };
-App.prototype.demitirFuncionario = function(cid) { if(!confirm('Demitir?'))return;var self=this;db.collection('conexoes').doc(cid).update({status:'demitido'}).then(function(){self.verDetalheObra(self.obraSelecionada);}); };
-App.prototype.finalizarContrato = function(cid) { if(!confirm('Finalizar?'))return;var self=this;db.collection('conexoes').doc(cid).update({status:'finalizado'}).then(function(){self.verDetalheObra(self.obraSelecionada);}); };
+    <!-- DETALHE OBRA -->
+    <div class="screen" id="detalheObraScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.mostrarTela('minhasObrasScreen')"><i class="fas fa-arrow-left"></i></button><h2>Detalhe</h2></div><div id="detalheObraConteudo"></div></div>
 
-// ===== AVALIAÇÕES =====
-App.prototype.verAvaliacoes = function(uid) { var self=this;this.avaliacoesUid=uid;db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;var u=doc.data();document.getElementById('avaliacaoScoreGeral').textContent=(u.score||0).toFixed(1);document.getElementById('avaliacaoEstrelas').innerHTML='⭐'.repeat(Math.round(u.score||0));self.filtrarAvaliacoes('todas');self.mostrarTela('avaliacoesScreen');}); };
-App.prototype.filtrarAvaliacoes = function(f,btn) { this.avaliacaoFiltro=f;if(btn){document.querySelectorAll('#avaliacoesScreen .tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');}var self=this,c=document.getElementById('avaliacoesLista');if(!c)return;db.collection('avaliacoes').get().then(function(snap){var avs=[];snap.forEach(function(doc){var d=doc.data();if(d.avaliadoId===self.avaliacoesUid)avs.push({id:doc.id,data:d});});if(f==='positivas')avs=avs.filter(function(a){return a.data.nota>=4;});if(f==='melhorar')avs=avs.filter(function(a){return a.data.nota<=3;});if(avs.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhuma avaliação</h3></div>';return;}var html='';avs.forEach(function(a){html+='<div class="avaliacao-card"><div>'+'⭐'.repeat(a.data.nota)+'</div><p>'+(a.data.positivos||'')+'</p></div>';});c.innerHTML=html;}); };
-App.prototype.abrirDarAvaliacao = function(uid) { var self=this;this.avaliarUid=uid;db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;document.getElementById('avaliarNome').textContent=doc.data().nome;self.mostrarTela('darAvaliacaoScreen');}); };
-App.prototype.setNota = function(n) { this.avaliarNota=n;document.querySelectorAll('#estrelasAvaliar i').forEach(function(s,i){s.className=i<n?'fas fa-star':'far fa-star';}); };
-App.prototype.enviarAvaliacao = function() { if(!this.avaliarNota)return;var self=this;var d={avaliadorId:this.usuarioLogado.id,avaliadoId:this.avaliarUid,nota:this.avaliarNota,positivos:document.getElementById('avalPositivos').value||'',melhorar:document.getElementById('avalMelhorar').value||'',servico:document.getElementById('avalServico').value||'',periodo:document.getElementById('avalPeriodo').value||'',dataCriacao:firebase.firestore.FieldValue.serverTimestamp()};databaseService.avaliarUsuarioCompleto(d).then(function(){self.mostrarToast('✅ Avaliação enviada!','sucesso');setTimeout(function(){self.voltarTela();},1500);}); };
+    <!-- CHAT -->
+    <div class="screen" id="chatScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><div id="chatHeaderInfo"></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-container"><input type="text" class="chat-input" id="chatInput" placeholder="Mensagem..."><button class="btn-send" onclick="window.app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button></div></div>
 
-// ===== QR CODE =====
-App.prototype.gerarQRCode = function(uid) { var self=this;db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;var u=doc.data();var link=window.location.origin+window.location.pathname+'?perfil='+uid;document.getElementById('modalQRCode').style.display='flex';document.getElementById('qrcodeNome').textContent=u.nome;document.getElementById('qrcodeContainer').innerHTML='';new QRCode(document.getElementById('qrcodeContainer'),{text:link,width:200,height:200,colorDark:'#1A3A5C',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});self.qrcodeLink=link;}); };
-App.prototype.fecharQRCode = function() { document.getElementById('modalQRCode').style.display='none'; };
-App.prototype.compartilharLink = function() { if(!this.qrcodeLink)return;if(navigator.share){navigator.share({title:'LPXConstrutor',text:'Veja este perfil!',url:this.qrcodeLink}).catch(function(){});}else{navigator.clipboard.writeText(this.qrcodeLink).then(function(){window.app._app.mostrarToast('✅ Link copiado!','sucesso');});} };
-App.prototype.baixarQRCode = function() { var img=document.querySelector('#qrcodeContainer img');if(!img)return;var a=document.createElement('a');a.download='lpxconstrutor-qrcode.png';a.href=img.src;a.click();this.mostrarToast('✅ QR baixado!','sucesso'); };
+    <!-- PUBLICAR VAGA -->
+    <div class="screen" id="publicarVagaScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.mostrarTela('homeScreen')"><i class="fas fa-arrow-left"></i></button><h2>Publicar Vaga</h2></div><div class="card">
+        <div class="input-group" style="text-align:center;"><label>Foto da Obra</label><div class="foto-obra-container" onclick="document.getElementById('vagaFoto').click()"><img id="vagaFotoPreview" src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:200px;object-fit:cover;border-radius:12px;"><div class="foto-obra-overlay"><i class="fas fa-camera"></i> Adicionar Foto</div></div><input type="file" id="vagaFoto" accept="image/*" style="display:none;" onchange="window.app.previewFotoObra(event)"></div>
+        <div class="input-group"><label>Título</label><input type="text" class="input-field" id="vagaTitulo"></div>
+        <div class="input-group"><label>Descrição</label><textarea class="input-field" id="vagaDescricao" rows="4"></textarea></div>
+        <div class="input-group"><label>Endereço</label><input type="text" class="input-field" id="vagaEndereco"></div>
+        <div class="input-group"><label>Profissões</label><div class="profissoes-checkboxes" id="profissoesCheckboxes"><label class="checkbox-item"><input type="checkbox" value="servente"> Servente</label><label class="checkbox-item"><input type="checkbox" value="pedreiro"> Pedreiro</label><label class="checkbox-item"><input type="checkbox" value="carpinteiro"> Carpinteiro</label><label class="checkbox-item"><input type="checkbox" value="encanador"> Encanador</label><label class="checkbox-item"><input type="checkbox" value="eletricista"> Eletricista</label><label class="checkbox-item"><input type="checkbox" value="pintor"> Pintor</label><label class="checkbox-item"><input type="checkbox" value="gesseiro"> Gesseiro</label></div></div>
+        <div style="display:flex;gap:10px;"><div class="input-group" style="flex:1;"><label>Valor/Hora</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25"></div><div class="input-group" style="flex:1;"><label>Vagas</label><input type="number" class="input-field" id="vagaQuantidade" value="1"></div></div>
+        <div style="display:flex;gap:10px;"><button class="btn btn-outline" onclick="window.app.mostrarTela('homeScreen')" style="flex:1;">CANCELAR</button><button class="btn btn-primary" onclick="window.app.publicarVagaApp()" style="flex:1;">PUBLICAR</button></div>
+    </div></div>
 
-// ===== PERFIL =====
-App.prototype.carregarMeuPerfil = function() {
-    if(!this.usuarioLogado)return;var u=this.usuarioLogado;
-    var n=document.getElementById('meuPerfilNome');if(n)n.textContent=u.nome||'Usuário';
-    var p=document.getElementById('meuPerfilProfissao');if(p)p.textContent=(u.tipo==='profissional'?'👷 ':'🏢 ')+(u.profissao||u.tipo);
-    var s=document.getElementById('meuPerfilScore');if(s)s.textContent='⭐ '+((u.score||0).toFixed(1));
-    var q=document.getElementById('menuQtdAvaliacoes');if(q)q.textContent=u.avaliacoesRecebidas||0;
-    if(u.fotoPerfil){var f=document.getElementById('fotoPerfilPreview');if(f)f.src=u.fotoPerfil;}
-};
-App.prototype.abrirEditarPerfil = function() { if(!this.usuarioLogado)return;var u=this.usuarioLogado;document.getElementById('editNome').value=u.nome||'';document.getElementById('editCelular').value=u.celular||'';document.getElementById('editProfissao').value=u.profissao||'';document.getElementById('editExperiencia').value=u.experiencia||0;document.getElementById('editHabilidades').value=u.habilidades||'';this.mostrarTela('editarPerfilScreen'); };
-App.prototype.salvarPerfil = function() { var self=this;var d={nome:document.getElementById('editNome').value.trim(),celular:document.getElementById('editCelular').value.trim(),experiencia:parseInt(document.getElementById('editExperiencia').value)||0,habilidades:document.getElementById('editHabilidades').value.trim()};if(!d.nome){this.mostrarToast('❌ Nome obrigatório!','erro');return;}databaseService.atualizarUsuario(this.usuarioLogado.id,d).then(function(){self.usuarioLogado.nome=d.nome;self.mostrarToast('✅ Perfil atualizado!','sucesso');self.carregarMeuPerfil();self.voltarTela();}); };
-App.prototype.uploadFoto = function(e){var self=this,f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){databaseService.atualizarUsuario(self.usuarioLogado.id,{fotoPerfil:ev.target.result}).then(function(){self.usuarioLogado.fotoPerfil=ev.target.result;document.getElementById('fotoPerfilPreview').src=ev.target.result;self.mostrarToast('✅ Foto atualizada!','sucesso');});};r.readAsDataURL(f);};
+    <!-- NOTIFICAÇÕES -->
+    <div class="screen" id="notificacoesScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Notificações</h2></div><div id="notificacoesContainer"></div></div>
 
-// ===== OUTROS =====
-App.prototype.mostrarInfoVersao = function(){this.mostrarToast('🏗️ LPXConstrutor v1.0.0','info');};
-App.prototype.verMinhasAvaliacoes = function(){if(this.usuarioLogado)this.verAvaliacoes(this.usuarioLogado.id);};
-App.prototype.confirmarExclusao = function(){var m=document.getElementById('motivoExclusao').value;if(!m){this.mostrarToast('❌ Selecione um motivo!','erro');return;}if(!confirm('⚠️ Tem certeza?'))return;this.mostrarToast('📧 Solicitação enviada!','sucesso');setTimeout(function(){window.app._app.mostrarTela('loginScreen');},2000);};
-App.prototype.mudarTab = function(tab) { document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});event.target.closest('.tab').classList.add('active');document.getElementById('feedContainer').style.display=tab==='feed'?'block':'none';document.getElementById('redeContainer').style.display=tab==='rede'?'block':'none';if(tab==='feed')this.carregarFeed();if(tab==='rede')this.carregarRede(); };
-App.prototype.mostrarNotificacoes = function(){this.mostrarTela('notificacoesScreen');};
+    <!-- ===== MODAL SAIR DO APP ===== -->
+    <div class="modal-overlay" id="modalSair" style="display:none;" onclick="window.app.fecharModalSair()">
+        <div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()">
+            <div class="modal-body" style="padding:30px 20px;">
+                <i class="fas fa-sign-out-alt" style="font-size:60px;color:#F47920;margin-bottom:16px;"></i>
+                <h3 style="color:#1A3A5C;margin-bottom:8px;">Deseja sair do LPXConstrutor?</h3>
+                <p style="color:#666;font-size:14px;">Você será direcionado para a tela de login.</p>
+                <div style="display:flex;gap:10px;margin-top:24px;">
+                    <button class="btn btn-outline" onclick="window.app.fecharModalSair()" style="flex:1;">NÃO</button>
+                    <button class="btn btn-danger" onclick="window.app.confirmarSair()" style="flex:1;">SIM, SAIR</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-App.prototype.mostrarToast = function(m,t){var toast=document.getElementById('toast');if(!toast)return;toast.textContent=m;toast.style.background=t==='erro'?'#EF4444':t==='sucesso'?'#10B981':'#1F2937';toast.style.display='block';clearTimeout(this._tt);this._tt=setTimeout(function(){toast.style.display='none';},3000);};
+    <!-- MODAL QR CODE -->
+    <div class="modal-overlay" id="modalQRCode" style="display:none;" onclick="window.app.fecharQRCode()">
+        <div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()">
+            <div class="modal-header"><h3><i class="fas fa-qrcode"></i> Compartilhar</h3><button class="modal-close" onclick="window.app.fecharQRCode()"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body"><div id="qrcodeContainer"></div><p id="qrcodeNome"></p><button class="btn btn-primary btn-small" onclick="window.app.baixarQRCode()"><i class="fas fa-download"></i> Baixar</button></div>
+        </div>
+    </div>
 
-document.addEventListener('DOMContentLoaded',function(){window.app._app=new App();console.log('✅ App pronto!');});
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-item active" data-screen="homeScreen" onclick="window.app.mostrarTela('homeScreen')"><i class="fas fa-home"></i><span>Início</span></button>
+        <button class="nav-item" data-screen="buscaScreen" onclick="window.app.mostrarTela('buscaScreen')"><i class="fas fa-search"></i><span>Buscar</span></button>
+        <button class="nav-item" id="btnPublicar" style="display:none;" onclick="window.app.abrirTelaPublicacao()"><i class="fas fa-plus-circle" style="font-size:28px;color:#10B981;"></i><span>Publicar</span></button>
+        <button class="nav-item" id="btnObras" style="display:none;" onclick="window.app.mostrarTela('minhasObrasScreen')"><i class="fas fa-building"></i><span>Obras</span></button>
+        <button class="nav-item" data-screen="chatScreen" onclick="window.app.mostrarTela('chatScreen')"><i class="fas fa-comments"></i><span>Chat</span></button>
+        <button class="nav-item" data-screen="meuPerfilScreen" onclick="window.app.mostrarTela('meuPerfilScreen')"><i class="fas fa-user"></i><span>Perfil</span></button>
+    </nav>
+
+</div>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/database.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
