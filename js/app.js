@@ -75,7 +75,7 @@ var App = function() {
 
 App.prototype.init = function() {
     var s = this; 
-    console.log('🚀 Iniciando...'); 
+    console.log('🚀 Iniciando LPXCONSTRUTOR...'); 
     window.app._app = this;
     
     // Garantir que a barra de navegação comece oculta
@@ -94,6 +94,7 @@ App.prototype.init = function() {
     // Verificar autenticação ou criar demo
     if (typeof authService !== 'undefined' && authService.onAuthStateChange) {
         authService.onAuthStateChange(function(u) { 
+            console.log('Auth state:', u ? 'Logado' : 'Deslogado');
             if (u) { 
                 s.usuarioLogado = u; 
                 s.atualizarBotoes(); 
@@ -106,7 +107,8 @@ App.prototype.init = function() {
             setTimeout(function() { s.esconderSplash(); }, 1500); 
         });
     } else {
-        // Criar usuário demo se authService não existir
+        // Criar usuário demo
+        console.log('AuthService não encontrado, usando modo demo');
         setTimeout(function() {
             s.usuarioLogado = {
                 id: 'demo123',
@@ -133,7 +135,7 @@ App.prototype.mostrarSplash = function() {
         splash = document.createElement('div'); 
         splash.id = 'splashScreen'; 
         splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;'; 
-        splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p><div id="tijolosContainer" style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:2px;"></div>'; 
+        splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect width=%22120%22 height=%22120%22 fill=%22%23f0c27f%22/%3E%3Ctext x=%2260%22 y=%2260%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2240%22%3E🏗️%3C/text%3E%3C/svg%3E"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p><div id="tijolosContainer" style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:2px;"></div>'; 
         document.body.appendChild(splash); 
         this.animarTijolos(); 
     }
@@ -185,7 +187,13 @@ App.prototype.atualizarBotoes = function() {
 };
 
 App.prototype.mostrarTela = function(id) {
-    var s = this; 
+    var s = this;
+    console.log('📱 Mostrando tela:', id);
+    
+    // Ocultar barra de navegação
+    var bottomNav = document.getElementById('bottomNav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    
     if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen') 
         s.historicoTelas.push(s.telaAtual);
     
@@ -194,26 +202,31 @@ App.prototype.mostrarTela = function(id) {
     }); 
     
     var t = document.getElementById(id); 
-    if (!t) return; 
+    if (!t) {
+        console.error('❌ Tela não encontrada:', id);
+        return;
+    }
+    
     t.classList.add('active'); 
     s.telaAtual = id;
     
-    var n = document.getElementById('bottomNav'); 
-    if (n) { 
+    // Mostrar barra de navegação apenas em telas específicas quando logado
+    if (bottomNav && s.usuarioLogado) { 
         var tn = ['homeScreen','buscaScreen','meuPerfilScreen','chatScreen','minhasObrasScreen']; 
-        // Só mostra a barra se o usuário estiver logado
-        if (tn.indexOf(id) >= 0 && s.usuarioLogado) {
-            n.style.display = 'flex';
-        } else {
-            n.style.display = 'none';
+        if (tn.indexOf(id) >= 0) {
+            bottomNav.style.display = 'flex';
         }
     }
     
-    if (id === 'homeScreen') setTimeout(function() { s.carregarHome(); }, 100);
-    if (id === 'meuPerfilScreen') setTimeout(function() { s.carregarMeuPerfil(); }, 100);
-    if (id === 'buscaScreen') setTimeout(function() { s.buscarProfissionais(); }, 100);
-    if (id === 'minhasObrasScreen') setTimeout(function() { s.carregarMinhasObras(); }, 100);
-    if (id === 'publicarVagaScreen') setTimeout(function() { s.configurarPublicacao(); }, 100);
+    // Carregar dados específicos
+    setTimeout(function() {
+        if (id === 'homeScreen') s.carregarHome();
+        if (id === 'meuPerfilScreen') s.carregarMeuPerfil();
+        if (id === 'buscaScreen') s.buscarProfissionais();
+        if (id === 'minhasObrasScreen') s.carregarMinhasObras();
+        if (id === 'publicarVagaScreen') s.configurarPublicacao();
+    }, 100);
+    
     if (id === 'recuperarSenhaScreen') { 
         var p1=document.getElementById('recPasso1'),p2=document.getElementById('recPasso2'); 
         if(p1)p1.style.display='block'; 
@@ -384,16 +397,18 @@ App.prototype.solicitarCodigo = function() {
         s.mostrarToast('❌ Email inválido!','erro');
         return;
     } 
-    authService.solicitarCodigoRecuperacao(e).then(function(r){
-        if(r.sucesso){
-            s.recuperacaoUid=r.uid;
-            s.mostrarToast('✅ Código: '+r.codigo,'sucesso');
-            document.getElementById('recPasso1').style.display='none';
-            document.getElementById('recPasso2').style.display='block';
-        } else {
-            s.mostrarToast('❌ '+r.erro,'erro');
-        }
-    }); 
+    if (typeof authService !== 'undefined') {
+        authService.solicitarCodigoRecuperacao(e).then(function(r){
+            if(r.sucesso){
+                s.recuperacaoUid=r.uid;
+                s.mostrarToast('✅ Código: '+r.codigo,'sucesso');
+                document.getElementById('recPasso1').style.display='none';
+                document.getElementById('recPasso2').style.display='block';
+            } else {
+                s.mostrarToast('❌ '+r.erro,'erro');
+            }
+        });
+    }
 };
 
 App.prototype.voltarPasso1 = function(){
@@ -448,7 +463,10 @@ App.prototype.carregarHome = function() {
 // ===== FEED COM VÍDEOS =====
 App.prototype.carregarFeed = function() {
     var s = this, c = document.getElementById('feedContainer'); 
-    if (!c) return;
+    if (!c) {
+        console.error('❌ feedContainer não encontrado');
+        return;
+    }
     
     c.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
     
@@ -465,30 +483,28 @@ App.prototype.carregarFeed = function() {
     var dia = Math.floor((hoje - new Date(hoje.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)); 
     var vd = videos[dia % videos.length];
     
-    // Tentar carregar do Firestore
+    // Carregar vagas
     var carregarVagas = function() {
         if (typeof db !== 'undefined') {
-            return db.collection('vagas').get();
+            return db.collection('vagas').where('ativa', '==', true).get()
+                .then(function(snap) {
+                    var vagas = [];
+                    snap.forEach(function(doc) {
+                        vagas.push({ id: doc.id, data: doc.data() });
+                    });
+                    return vagas;
+                });
         } else {
-            // Retornar dados demo
-            return Promise.resolve({
-                forEach: function(callback) {
-                    var vagasDemo = [
-                        { id: 'v1', data: function() { return { titulo: 'Pedreiro para Reforma', endereco: 'Rua das Flores, 123 - Centro', profissoes: 'Pedreiro', valorHora: '25', fotoObra: null, localizacao: { lat: -23.5505, lng: -46.6333 }, ativa: true, autorNome: 'Carlos Silva' }; } },
-                        { id: 'v2', data: function() { return { titulo: 'Eletricista Urgente', endereco: 'Av. Paulista, 1000 - Bela Vista', profissoes: 'Eletricista', valorHora: '40', fotoObra: null, localizacao: { lat: -23.5612, lng: -46.6560 }, ativa: true, autorNome: 'Maria Santos' }; } }
-                    ];
-                    vagasDemo.forEach(callback);
-                }
-            });
+            // Carregar do localStorage
+            var vagasSalvas = JSON.parse(localStorage.getItem('vagasDemo') || '[]');
+            return Promise.resolve(vagasSalvas.map(function(v) {
+                return { id: v.id || 'demo', data: v };
+            }));
         }
     };
     
-    carregarVagas().then(function(snap) {
-        var vagas = []; 
-        snap.forEach(function(doc) { 
-            var d = doc.data ? doc.data() : doc; 
-            if (d.ativa !== false) vagas.push({ id: doc.id, data: d }); 
-        });
+    carregarVagas().then(function(vagas) {
+        console.log('📊 Vagas carregadas:', vagas.length);
         
         var html = '<div class="card" style="padding:0;overflow:hidden;border:2px solid #10B981;margin-bottom:14px;"><div style="background:linear-gradient(135deg,#059669,#10B981);padding:10px 14px;color:white;"><span style="font-size:20px;">🎓</span> <strong>📚 ' + vd.categoria + '</strong><br><span style="font-size:10px;">' + hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' }) + ' • SafetyWiSST</span><p style="font-size:11px;margin-top:4px;">' + vd.descricao + '</p></div><iframe src="' + vd.url + '?autoplay=0&rel=0&controls=1" style="width:100%;height:200px;border:none;" allowfullscreen></iframe><div style="padding:6px 14px;background:#f0fdf4;display:flex;justify-content:space-between;"><span style="font-size:10px;color:#059669;"><strong>' + vd.titulo + '</strong></span><div style="display:flex;gap:4px;"><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoAnterior()">◀</button><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoSeguinte()">▶</button></div></div></div>';
         
@@ -500,23 +516,23 @@ App.prototype.carregarFeed = function() {
                 var mapaHtml = '';
                 
                 if (temLocalizacao) {
-                    mapaHtml = '<div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="event.stopPropagation();window.app._app.verDetalheObra(\'' + v.id + '\')"><i class="fas fa-map-marker-alt" style="color:#1A3A5C;font-size:18px;"></i><span style="font-size:12px;color:#1A3A5C;">📍 ' + (v.data.endereco || 'Ver no mapa') + '</span></div>';
+                    mapaHtml = '<div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:8px;cursor:pointer;"><i class="fas fa-map-marker-alt" style="color:#1A3A5C;font-size:18px;"></i><span style="font-size:12px;color:#1A3A5C;">📍 ' + (v.data.endereco || 'Ver no mapa') + '</span></div>';
                 } else if (v.data.endereco) {
                     mapaHtml = '<div style="margin-top:8px;padding:8px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-pin" style="color:#d97706;"></i><span style="font-size:12px;color:#92400e;">📌 ' + v.data.endereco + '</span></div>';
                 }
                 
-                // CORRIGIDO: Foto da obra
                 var fotoHtml = '';
                 if (v.data.fotoObra && typeof v.data.fotoObra === 'string' && v.data.fotoObra.length > 0) {
                     fotoHtml = '<img src="' + v.data.fotoObra + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;" onerror="this.style.display=\'none\'">';
                 }
                 
-                html += '<div class="vaga-card" onclick="window.app._app.verDetalheObra(\'' + v.id + '\')" style="cursor:pointer;"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || 'Local não informado') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + fotoHtml + mapaHtml + '</div>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'profissional' ? '<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.candidatarVaga(\'' + v.id + '\')">✋ QUERO!</button></div>' : '') + '</div>'; 
+                html += '<div class="vaga-card" style="cursor:pointer;"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || 'Local não informado') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + fotoHtml + mapaHtml + '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + (v.data.autorNome || 'Anônimo') + '</div></div></div>'; 
             }); 
         }
         c.innerHTML = html;
-    }).catch(function() { 
-        c.innerHTML = '<div class="card">Erro ao carregar feed</div>'; 
+    }).catch(function(error) {
+        console.error('❌ Erro ao carregar feed:', error);
+        c.innerHTML = '<div class="card" style="text-align:center;padding:30px;">Erro ao carregar feed</div>';
     });
 };
 
@@ -533,7 +549,7 @@ App.prototype.videoSeguinte = function() {
     this.carregarFeed(); 
 };
 
-// ===== PUBLICAÇÃO DE VAGA (CORRIGIDO - FOTO FUNCIONA) =====
+// ===== PUBLICAÇÃO DE VAGA (CORRIGIDO) =====
 App.prototype.configurarPublicacao = function() {
     var s = this;
     console.log('📝 Configurando tela de publicação');
@@ -541,26 +557,35 @@ App.prototype.configurarPublicacao = function() {
     // Configurar input de foto
     var inputFoto = document.getElementById('fotoObraInput');
     if (inputFoto) {
-        // Remover listener antigo se existir
+        // Remover listener antigo
         var novoInput = inputFoto.cloneNode(true);
         inputFoto.parentNode.replaceChild(novoInput, inputFoto);
         
         // Adicionar novo listener
         novoInput.addEventListener('change', function(e) {
+            console.log('📸 Evento change disparado');
             var arquivo = e.target.files[0];
-            if (!arquivo) return;
+            if (!arquivo) {
+                console.log('Nenhum arquivo');
+                return;
+            }
             
-            console.log('📸 Arquivo selecionado:', arquivo.name, arquivo.type, (arquivo.size / 1024).toFixed(2) + 'KB');
+            console.log('📁 Arquivo:', arquivo.name, arquivo.type, (arquivo.size / 1024).toFixed(2) + 'KB');
             
             if (!arquivo.type.match('image.*')) {
                 s.mostrarToast('❌ Selecione uma imagem!', 'erro');
                 return;
             }
             
+            if (arquivo.size > 5 * 1024 * 1024) {
+                s.mostrarToast('❌ Imagem muito grande! Máx 5MB', 'erro');
+                return;
+            }
+            
             var reader = new FileReader();
             reader.onload = function(event) {
+                console.log('✅ Imagem carregada');
                 s.vagaFotoBase64 = event.target.result;
-                console.log('✅ Foto carregada em base64');
                 
                 var preview = document.getElementById('fotoObraPreview');
                 if (preview) {
@@ -571,9 +596,19 @@ App.prototype.configurarPublicacao = function() {
                     preview.style.objectFit = 'cover';
                     preview.style.borderRadius = '8px';
                     console.log('✅ Preview atualizado');
+                } else {
+                    console.warn('⚠️ Preview não encontrado');
+                    // Criar preview se não existir
+                    var container = e.target.parentElement;
+                    var img = document.createElement('img');
+                    img.id = 'fotoObraPreview';
+                    img.src = event.target.result;
+                    img.style.cssText = 'display:block;max-width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;';
+                    container.appendChild(img);
                 }
             };
             reader.onerror = function() {
+                console.error('❌ Erro ao ler arquivo');
                 s.mostrarToast('❌ Erro ao carregar imagem', 'erro');
             };
             reader.readAsDataURL(arquivo);
@@ -601,6 +636,7 @@ App.prototype.abrirTelaPublicacao = function(vagaData) {
         var fotoPreview = document.getElementById('fotoObraPreview');
         
         if (s.vagaEmEdicao) {
+            console.log('📝 Editando vaga existente');
             if (tituloEl) tituloEl.value = s.vagaEmEdicao.titulo || '';
             if (enderecoEl) enderecoEl.value = s.vagaEmEdicao.endereco || '';
             if (profissoesEl) profissoesEl.value = s.vagaEmEdicao.profissoes || '';
@@ -631,6 +667,7 @@ App.prototype.abrirTelaPublicacao = function(vagaData) {
                 }, 500);
             }
         } else {
+            console.log('📝 Nova publicação');
             if (tituloEl) tituloEl.value = '';
             if (enderecoEl) enderecoEl.value = '';
             if (profissoesEl) profissoesEl.value = '';
@@ -651,9 +688,8 @@ App.prototype.abrirTelaPublicacao = function(vagaData) {
 };
 
 App.prototype.previewFotoObra = function(e) {
-    // Esta função é mantida para compatibilidade
-    // A lógica real está em configurarPublicacao
     console.log('📸 previewFotoObra chamado');
+    // A lógica real está em configurarPublicacao
 };
 
 App.prototype.buscarLocalizacao = function() {
@@ -693,19 +729,64 @@ App.prototype.buscarLocalizacao = function() {
 App.prototype.publicarVagaApp = function() {
     var s = this;
     
-    var titulo = (document.getElementById('vagaTitulo') ? document.getElementById('vagaTitulo').value : '').trim();
-    var endereco = (document.getElementById('vagaEndereco') ? document.getElementById('vagaEndereco').value : '').trim();
-    var profissoes = (document.getElementById('vagaProfissoes') ? document.getElementById('vagaProfissoes').value : '').trim();
-    var valorHora = (document.getElementById('vagaValor') ? document.getElementById('vagaValor').value : '').trim();
+    console.log('📤 Iniciando publicação...');
+    
+    // Pegar elementos
+    var tituloEl = document.getElementById('vagaTitulo');
+    var enderecoEl = document.getElementById('vagaEndereco');
+    var profissoesEl = document.getElementById('vagaProfissoes');
+    var valorEl = document.getElementById('vagaValor');
+    
+    // Verificar elementos
+    if (!tituloEl || !enderecoEl || !profissoesEl || !valorEl) {
+        console.error('❌ Campos não encontrados');
+        s.mostrarToast('❌ Erro: Campos do formulário não encontrados', 'erro');
+        return;
+    }
+    
+    // Pegar valores
+    var titulo = tituloEl.value.trim();
+    var endereco = enderecoEl.value.trim();
+    var profissoes = profissoesEl.value.trim();
+    var valorHora = valorEl.value.trim();
     var fotoBase64 = s.vagaFotoBase64 || (s.vagaEmEdicao ? s.vagaEmEdicao.fotoObra : null);
     
-    if (!titulo || !endereco || !profissoes || !valorHora) {
-        s.mostrarToast('❌ Preencha todos os campos obrigatórios!', 'erro');
+    console.log('📝 Dados:', { titulo, endereco, profissoes, valorHora, temFoto: !!fotoBase64 });
+    
+    // Validar campos
+    if (!titulo) {
+        s.mostrarToast('❌ Digite o título da vaga!', 'erro');
+        tituloEl.focus();
+        return;
+    }
+    
+    if (!endereco) {
+        s.mostrarToast('❌ Digite o endereço da obra!', 'erro');
+        enderecoEl.focus();
+        return;
+    }
+    
+    if (!profissoes) {
+        s.mostrarToast('❌ Digite as profissões necessárias!', 'erro');
+        profissoesEl.focus();
+        return;
+    }
+    
+    if (!valorHora) {
+        s.mostrarToast('❌ Digite o valor por hora!', 'erro');
+        valorEl.focus();
+        return;
+    }
+    
+    // Verificar usuário logado
+    if (!s.usuarioLogado || !s.usuarioLogado.id) {
+        s.mostrarToast('❌ Você precisa estar logado!', 'erro');
         return;
     }
     
     var localizacao = s.vagaLocalizacaoAtual || (s.vagaEmEdicao ? s.vagaEmEdicao.localizacao : null);
     
+    // Montar dados da vaga
     var dadosVaga = {
         titulo: titulo,
         endereco: endereco,
@@ -713,50 +794,80 @@ App.prototype.publicarVagaApp = function() {
         valorHora: valorHora,
         fotoObra: fotoBase64 || null,
         localizacao: localizacao || null,
-        dataCriacao: s.vagaEmEdicao ? s.vagaEmEdicao.dataCriacao : firebase.firestore ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString(),
-        dataAtualizacao: firebase.firestore ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString(),
         ativa: true,
         autorId: s.usuarioLogado.id,
-        autorNome: s.usuarioLogado.nome
+        autorNome: s.usuarioLogado.nome,
+        dataCriacao: new Date().toISOString()
     };
     
-    console.log('📤 Publicando vaga:', dadosVaga);
+    console.log('💾 Salvando vaga:', dadosVaga);
     
-    var salvar = function() {
-        if (typeof db !== 'undefined') {
-            var promise;
-            if (s.vagaEmEdicao && s.vagaEmEdicao.id) {
-                promise = db.collection('vagas').doc(s.vagaEmEdicao.id).update(dadosVaga);
-            } else {
-                promise = db.collection('vagas').add(dadosVaga);
-            }
-            
-            promise.then(function() {
-                s.mostrarToast(s.vagaEmEdicao ? '✅ Vaga atualizada!' : '🚀 Vaga publicada!', 'sucesso');
-                s.vagaEmEdicao = null;
-                s.vagaLocalizacaoAtual = null;
-                s.vagaFotoBase64 = null;
-                s.mostrarTela('homeScreen');
-                setTimeout(function() { s.carregarFeed(); }, 300);
-            }).catch(function(error) {
-                console.error('Erro:', error);
-                s.mostrarToast('❌ Erro ao salvar', 'erro');
-            });
+    // Salvar no Firestore ou localStorage
+    if (typeof db !== 'undefined') {
+        s.mostrarToast('⏳ Salvando...', 'info');
+        
+        var promise;
+        if (s.vagaEmEdicao && s.vagaEmEdicao.id) {
+            promise = db.collection('vagas').doc(s.vagaEmEdicao.id).update(dadosVaga);
         } else {
-            // Demo
-            s.mostrarToast(s.vagaEmEdicao ? '✅ Vaga atualizada!' : '🚀 Vaga publicada!', 'sucesso');
-            s.vagaEmEdicao = null;
-            s.vagaLocalizacaoAtual = null;
-            s.vagaFotoBase64 = null;
-            s.mostrarTela('homeScreen');
-            setTimeout(function() { s.carregarFeed(); }, 300);
+            promise = db.collection('vagas').add(dadosVaga);
         }
-    };
-    
-    salvar();
+        
+        promise.then(function() {
+            console.log('✅ Vaga salva no Firestore');
+            s.limparFormularioPublicacao();
+            s.mostrarToast('✅ Vaga publicada com sucesso!', 'sucesso');
+            setTimeout(function() {
+                s.mostrarTela('homeScreen');
+            }, 500);
+        }).catch(function(error) {
+            console.error('❌ Erro:', error);
+            s.mostrarToast('❌ Erro ao publicar', 'erro');
+        });
+    } else {
+        // Modo demo - salvar no localStorage
+        console.log('📦 Modo demo');
+        var vagasSalvas = JSON.parse(localStorage.getItem('vagasDemo') || '[]');
+        dadosVaga.id = 'vaga_' + Date.now();
+        vagasSalvas.unshift(dadosVaga);
+        localStorage.setItem('vagasDemo', JSON.stringify(vagasSalvas));
+        
+        s.limparFormularioPublicacao();
+        s.mostrarToast('✅ Vaga publicada com sucesso!', 'sucesso');
+        setTimeout(function() {
+            s.mostrarTela('homeScreen');
+        }, 500);
+    }
 };
 
-// ===== PERFIL (CORRIGIDO - CARREGA DADOS) =====
+App.prototype.limparFormularioPublicacao = function() {
+    var s = this;
+    
+    // Limpar dados
+    s.vagaEmEdicao = null;
+    s.vagaLocalizacaoAtual = null;
+    s.vagaFotoBase64 = null;
+    
+    // Limpar campos
+    var campos = ['vagaTitulo', 'vagaEndereco', 'vagaProfissoes', 'vagaValor'];
+    campos.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    
+    // Limpar preview da foto
+    var fotoPreview = document.getElementById('fotoObraPreview');
+    if (fotoPreview) {
+        fotoPreview.src = '';
+        fotoPreview.style.display = 'none';
+    }
+    
+    // Limpar input de foto
+    var inputFoto = document.getElementById('fotoObraInput');
+    if (inputFoto) inputFoto.value = '';
+};
+
+// ===== PERFIL (CORRIGIDO) =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
     console.log('👤 Carregando perfil...');
@@ -773,14 +884,13 @@ App.prototype.carregarMeuPerfil = function() {
     var nomeEl = document.getElementById('perfilNome');
     if (nomeEl) {
         nomeEl.textContent = user.nome || 'Usuário';
-        console.log('✅ Nome definido:', user.nome);
+        console.log('✅ Nome:', user.nome);
     }
     
     // Profissão
     var profEl = document.getElementById('perfilProfissao');
     if (profEl) {
         profEl.textContent = (user.profissao || 'Profissional') + ' • ' + (user.experiencia || '0') + ' anos';
-        console.log('✅ Profissão definida');
     }
     
     // Email
@@ -804,19 +914,15 @@ App.prototype.carregarMeuPerfil = function() {
             fotoEl.src = user.fotoPerfil;
             fotoEl.style.display = 'block';
             if (iconEl) iconEl.style.display = 'none';
-            console.log('✅ Foto carregada');
         } else {
             fotoEl.style.display = 'none';
             if (iconEl) iconEl.style.display = 'block';
-            console.log('ℹ️ Sem foto');
         }
     }
     
     // Esconder loading
     var loadingEl = document.getElementById('perfilLoading');
-    if (loadingEl) {
-        loadingEl.style.display = 'none';
-    }
+    if (loadingEl) loadingEl.style.display = 'none';
     
     console.log('✅ Perfil carregado!');
 };
@@ -836,8 +942,6 @@ App.prototype.verPerfil = function(uid) {
             }
             var u=doc.data();
             var w=u.celular?u.celular.replace(/\D/g,''):'';
-            
-            // CORRIGIDO: Avatar com foto ou ícone
             var av=u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'<i class="fas fa-user"></i>';
             
             var html='<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar">'+av+'</div></div></div><div class="profile-info-card"><h2>'+u.nome+'</h2><p>'+(u.profissao||'Profissional')+' • '+(u.experiencia||0)+' anos</p><div>'+'⭐'.repeat(Math.round(u.score||0))+'</div></div><div class="card"><h3>Contato</h3><p>📱 '+(u.celular||'Não informado')+'</p></div>';
@@ -858,7 +962,7 @@ App.prototype.verPerfil = function(uid) {
     }
 };
 
-// ===== BUSCA (CORRIGIDO - FOTOS NOS PERFIS) =====
+// ===== BUSCA (CORRIGIDO) =====
 App.prototype.buscarProfissionais = function() {
     var s=this,c=document.getElementById('buscaResultados');
     if(!c)return;
@@ -903,8 +1007,6 @@ App.prototype.buscarProfissionais = function() {
         profs.forEach(function(u){
             var w=u.data.celular?u.data.celular.replace(/\D/g,''):'';
             var sc=u.data.score||0;
-            
-            // CORRIGIDO: Avatar com foto ou ícone
             var av=u.data.fotoPerfil
                 ?'<img src="'+u.data.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-hard-hat\\\'></i>\'">'
                 :'<i class="fas fa-hard-hat"></i>';
@@ -979,14 +1081,12 @@ App.prototype.removerDaRede = function(aid) {
     s.mostrarToast('Removido','sucesso');
 };
 
-// ===== DETALHE DA OBRA =====
+// ===== OUTRAS FUNÇÕES =====
 App.prototype.verDetalheObra = function(oid) {
-    var s = this;
-    s.obraSelecionada = oid;
-    s.mostrarToast('🔍 Visualizando detalhes...', 'info');
+    this.obraSelecionada = oid;
+    this.mostrarToast('🔍 Visualizando detalhes...', 'info');
 };
 
-// ===== OUTRAS FUNÇÕES =====
 App.prototype.iniciarChat = function(uid) {
     this.mostrarToast('💬 Chat iniciado!', 'sucesso');
 };
@@ -1117,7 +1217,11 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM carregado');
     if (!window.app._app) {
         new App();
+        console.log('✅ App iniciado');
     }
 });
+
+console.log('📋 Script LPXCONSTRUTOR carregado');
