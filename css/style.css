@@ -162,3 +162,11 @@ body.dark-theme .foto-obra-container{background:#374151;border-color:#4B5563}
     #homeScreen #saudacao{font-size:14px!important}
     #homeScreen #resumoTexto{font-size:11px!important}
 }
+
+/* Garantir que as imagens nos avatares fiquem redondas */
+.vaga-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
