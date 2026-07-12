@@ -59,7 +59,8 @@ window.app = {
 var App = function() {
     this.usuarioLogado = null; this.usuarioSelecionado = null; this.telaAtual = 'loginScreen';
     this.historicoTelas = []; this.vagaFotoBase64 = null; this.contratarProfId = null;
-    this.obraSelecionada = null; this.avaliarUid = null; this.avaliarNota = 0; this.init();
+    this.obraSelecionada = null; this.avaliarUid = null; this.avaliarNota = 0;
+    this.videoIndex = 0; this.init();
 };
 
 App.prototype.init = function() {
@@ -88,7 +89,7 @@ App.prototype.init = function() {
     });
 };
 
-// ===== SPLASH SCREEN COM ANIMAÇÃO DE TIJOLOS =====
+// ===== SPLASH SCREEN =====
 App.prototype.mostrarSplash = function() {
     var splash = document.getElementById('splashScreen');
     if (!splash) {
@@ -96,10 +97,10 @@ App.prototype.mostrarSplash = function() {
         splash.id = 'splashScreen';
         splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;';
         splash.innerHTML = 
-            '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:150px;height:150px;object-fit:contain;animation:float 2s ease-in-out infinite;">' +
-            '<p style="color:white;font-size:24px;font-weight:900;margin-top:20px;">LPXCONSTRUTOR</p>' +
-            '<p style="color:#f0c27f;font-size:14px;margin-top:8px;">Rede Profissional da Construção</p>' +
-            '<div id="tijolosContainer" style="margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:4px;"></div>';
+            '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;">' +
+            '<p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p>' +
+            '<p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>' +
+            '<div id="tijolosContainer" style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:3px;"></div>';
         document.body.appendChild(splash);
         this.animarTijolos();
     }
@@ -108,75 +109,39 @@ App.prototype.mostrarSplash = function() {
 App.prototype.animarTijolos = function() {
     var container = document.getElementById('tijolosContainer');
     if (!container) return;
-    
-    var tijolos = ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱'];
     var fiada = 0;
-    var maxFiadas = 4;
-    
     function adicionarFiada() {
-        if (fiada >= maxFiadas) {
-            // Reinicia
-            container.innerHTML = '';
-            fiada = 0;
-            setTimeout(adicionarFiada, 300);
-            return;
-        }
-        
+        if (fiada >= 4) { container.innerHTML = ''; fiada = 0; setTimeout(adicionarFiada, 300); return; }
         var row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:4px;transition:all 0.3s;';
-        
-        // Alterna offset para efeito de parede
-        if (fiada % 2 === 1) {
-            row.style.marginLeft = '12px';
+        row.style.cssText = 'display:flex;gap:3px;transition:all 0.3s;';
+        if (fiada % 2 === 1) row.style.marginLeft = '10px';
+        var qtd = fiada === 0 ? 3 : fiada === 1 ? 4 : fiada === 2 ? 3 : 4;
+        for (var i = 0; i < qtd; i++) {
+            var t = document.createElement('span');
+            t.textContent = '🧱'; t.style.cssText = 'font-size:24px;animation:aparecer 0.3s ease;';
+            row.appendChild(t);
         }
-        
-        var tijolosNaFiada = fiada === 0 ? 3 : fiada === 1 ? 4 : fiada === 2 ? 3 : 4;
-        
-        for (var i = 0; i < tijolosNaFiada; i++) {
-            var tijolo = document.createElement('span');
-            tijolo.textContent = '🧱';
-            tijolo.style.cssText = 'font-size:28px;animation:aparecer 0.3s ease;';
-            row.appendChild(tijolo);
-        }
-        
-        container.appendChild(row);
-        fiada++;
-        
-        if (fiada < maxFiadas) {
-            setTimeout(adicionarFiada, 400);
-        } else {
-            setTimeout(adicionarFiada, 800);
-        }
+        container.appendChild(row); fiada++;
+        setTimeout(adicionarFiada, fiada < 4 ? 400 : 800);
     }
-    
     adicionarFiada();
 };
 
 App.prototype.esconderSplash = function() {
     var splash = document.getElementById('splashScreen');
-    if (splash) {
-        splash.style.opacity = '0';
-        setTimeout(function() {
-            if (splash.parentNode) splash.parentNode.removeChild(splash);
-        }, 500);
-    }
+    if (splash) { splash.style.opacity = '0'; setTimeout(function() { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 500); }
 };
 
 App.prototype.atualizarBotoes = function() {
-    var bp = document.getElementById('btnPublicar');
-    if (bp) bp.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
-    var bo = document.getElementById('btnObras');
-    if (bo) bo.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
+    var bp = document.getElementById('btnPublicar'); if (bp) bp.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
+    var bo = document.getElementById('btnObras'); if (bo) bo.style.display = (this.usuarioLogado && this.usuarioLogado.tipo === 'empreiteiro') ? 'flex' : 'none';
 };
 
 App.prototype.mostrarTela = function(id) {
     var s = this;
     if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen') { s.historicoTelas.push(s.telaAtual); }
     document.querySelectorAll('.screen').forEach(function(x) { x.classList.remove('active'); });
-    var t = document.getElementById(id);
-    if (!t) return;
-    t.classList.add('active');
-    s.telaAtual = id;
+    var t = document.getElementById(id); if (!t) return; t.classList.add('active'); s.telaAtual = id;
     var n = document.getElementById('bottomNav');
     if (n) { var tn = ['homeScreen','buscaScreen','meuPerfilScreen','chatScreen','publicarVagaScreen','minhasObrasScreen']; n.style.display = tn.indexOf(id) >= 0 ? 'flex' : 'none'; }
     if (id === 'homeScreen') setTimeout(function() { s.carregarHome(); }, 100);
@@ -190,10 +155,8 @@ App.prototype.voltarTela = function() {
     if (this.historicoTelas.length > 0) {
         var a = this.historicoTelas.pop();
         document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-        var t = document.getElementById(a);
-        if (t) { t.classList.add('active'); this.telaAtual = a; }
-        if (a === 'homeScreen') this.carregarHome();
-        if (a === 'meuPerfilScreen') this.carregarMeuPerfil();
+        var t = document.getElementById(a); if (t) { t.classList.add('active'); this.telaAtual = a; }
+        if (a === 'homeScreen') this.carregarHome(); if (a === 'meuPerfilScreen') this.carregarMeuPerfil();
     } else { this.mostrarTela('homeScreen'); }
 };
 
@@ -223,17 +186,75 @@ App.prototype.solicitarCodigo = function() { var s=this; var e=document.getEleme
 App.prototype.voltarPasso1 = function(){document.getElementById('recPasso1').style.display='block';document.getElementById('recPasso2').style.display='none';};
 App.prototype.verificarCodigo = function(){var s=this;s.mostrarToast('✅ Senha redefinida!','sucesso');setTimeout(function(){s.mostrarTela('loginScreen');},1500);};
 
-App.prototype.carregarHome = function() { if(!this.usuarioLogado)return; var h=new Date().getHours(),sd='Bom dia';if(h>=12&&h<18)sd='Boa tarde';if(h>=18)sd='Boa noite'; document.getElementById('saudacao').textContent='👋 '+sd+', '+this.usuarioLogado.nome+'!'; document.getElementById('resumoTexto').textContent=(this.usuarioLogado.tipo==='empreiteiro'?'🏢 Empreiteiro':'👷 Profissional')+' • '+(this.usuarioLogado.profissao||this.usuarioLogado.tipo); setTimeout(function(){try{if(typeof mapaService!=='undefined')mapaService.initMap()}catch(e){}},500); this.carregarFeed(); };
-
-App.prototype.carregarFeed = function() {
-    var s=this,c=document.getElementById('feedContainer');if(!c)return;c.innerHTML='<div class="loading">Carregando...</div>';
-    db.collection('vagas').get().then(function(snap){var vagas=[];snap.forEach(function(doc){var d=doc.data();if(d.ativa!==false)vagas.push({id:doc.id,data:d});});var html='';
-        if(vagas.length===0){html+='<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma vaga</h3>'+(s.usuarioLogado&&s.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()">PUBLICAR VAGA</button>':'')+'</div>';}
-        else{vagas.forEach(function(v){html+='<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">'+(v.data.titulo||'Vaga')+'</div><div class="vaga-data">📍 '+(v.data.endereco||'')+'</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.data.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.data.profissoes||'Todas')+'</span></div></div>'+(s.usuarioLogado&&s.usuarioLogado.tipo==='profissional'?'<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app.candidatarVaga(\''+v.id+'\')">✋ QUERO!</button></div>':'')+'</div>';});}
-        c.innerHTML=html;
-    }).catch(function(){c.innerHTML='<div class="card">Erro</div>';});
+// ===== HOME =====
+App.prototype.carregarHome = function() {
+    if (!this.usuarioLogado) return;
+    var h = new Date().getHours();
+    var sd = 'Bom dia'; if (h >= 12 && h < 18) sd = 'Boa tarde'; if (h >= 18) sd = 'Boa noite';
+    var sa = document.getElementById('saudacao'); if (sa) sa.textContent = '👋 ' + sd + ', ' + this.usuarioLogado.nome + '!';
+    var re = document.getElementById('resumoTexto'); if (re) re.textContent = (this.usuarioLogado.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional') + ' • ' + (this.usuarioLogado.profissao || this.usuarioLogado.tipo);
+    setTimeout(function() { try { if (typeof mapaService !== 'undefined') mapaService.initMap(); } catch(e) {} }, 500);
+    this.carregarFeed();
 };
 
+// ===== FEED COM VÍDEOS EDUCATIVOS =====
+App.prototype.carregarFeed = function() {
+    var s = this, c = document.getElementById('feedContainer');
+    if (!c) return;
+    c.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
+    
+    var videosEducativos = [
+        { titulo: '🦺 Segurança no Trabalho', descricao: 'Dicas essenciais de segurança para o dia a dia.', url: 'https://www.youtube.com/embed/e6xfabB9ovg', categoria: 'Segurança' },
+        { titulo: '⚠️ Prevenção de Acidentes', descricao: 'Como evitar acidentes comuns em obras.', url: 'https://www.youtube.com/embed/AIXEnxNejEo', categoria: 'Segurança' },
+        { titulo: '👷 Uso Correto de EPIs', descricao: 'Equipamentos de Proteção Individual.', url: 'https://www.youtube.com/embed/4uEdMmJUwOQ', categoria: 'Segurança' },
+        { titulo: '🏗️ Segurança em Altura', descricao: 'Cuidados para trabalhos acima de 2m.', url: 'https://www.youtube.com/embed/bh2pzYBs_go', categoria: 'Segurança' },
+        { titulo: '🔌 Segurança com Eletricidade', descricao: 'Riscos elétricos e proteção.', url: 'https://www.youtube.com/embed/awR7lJO3jUU', categoria: 'Eletricista' },
+        { titulo: '🧯 Prevenção de Incêndios', descricao: 'Uso de extintores e evacuação.', url: 'https://www.youtube.com/embed/RReflO7kR3Y', categoria: 'Segurança' },
+        { titulo: '📋 Normas Regulamentadoras', descricao: 'Entenda as principais NRs.', url: 'https://www.youtube.com/embed/O_ZnZb7YN4M', categoria: 'Normas' },
+        { titulo: '⚠️ Riscos no Canteiro', descricao: 'Perigos mais comuns na construção.', url: 'https://www.youtube.com/embed/jsa31UlsC5g', categoria: 'Segurança' },
+        { titulo: '🦺 Dicas de Segurança', descricao: 'Pequenas atitudes, grandes diferenças.', url: 'https://www.youtube.com/embed/HBOMP-khorA', categoria: 'Segurança' },
+        { titulo: '👷 Proteção do Trabalhador', descricao: 'Direitos e deveres do trabalhador.', url: 'https://www.youtube.com/embed/7qljv7zCJZg', categoria: 'Segurança' },
+        { titulo: '🏗️ Obras Seguras', descricao: 'Ambiente de trabalho organizado.', url: 'https://www.youtube.com/embed/fkZNyLCeVhY', categoria: 'Segurança' },
+        { titulo: '⚠️ Atenção aos Perigos', descricao: 'Riscos que passam despercebidos.', url: 'https://www.youtube.com/embed/UG57VgP_IEs', categoria: 'Segurança' },
+        { titulo: '🦺 Segurança em 1º Lugar', descricao: 'Priorize a segurança sempre.', url: 'https://www.youtube.com/embed/CloAlUsyKTo', categoria: 'Segurança' },
+        { titulo: '📏 Condutas Seguras', descricao: 'Boas práticas previnem acidentes.', url: 'https://www.youtube.com/embed/xZKBm-tGvrc', categoria: 'Segurança' },
+        { titulo: '👷 Trabalho com Segurança', descricao: 'Dicas práticas para o dia a dia.', url: 'https://www.youtube.com/embed/XtS99srL4K4', categoria: 'Segurança' }
+    ];
+    
+    var hoje = new Date();
+    var diaDoAno = Math.floor((hoje - new Date(hoje.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    var videoDoDia = videosEducativos[diaDoAno % videosEducativos.length];
+    
+    db.collection('vagas').get().then(function(snap) {
+        var vagas = []; snap.forEach(function(doc) { var d = doc.data(); if (d.ativa !== false) vagas.push({ id: doc.id, data: d }); });
+        var html = '';
+        
+        // Vídeo educativo do dia
+        html += '<div class="card" style="padding:0;overflow:hidden;border:2px solid #10B981;margin-bottom:14px;">' +
+            '<div style="background:linear-gradient(135deg,#059669,#10B981);padding:10px 14px;color:white;">' +
+                '<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🎓</span><div><strong style="font-size:13px;">📚 ' + videoDoDia.categoria + '</strong><div style="font-size:10px;opacity:0.9;">' + hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' }) + ' • SafetyWiSST</div></div></div>' +
+                '<p style="font-size:11px;opacity:0.95;margin-top:4px;">' + videoDoDia.descricao + '</p></div>' +
+            '<iframe src="' + videoDoDia.url + '?autoplay=0&rel=0&controls=1" style="width:100%;height:200px;border:none;" allowfullscreen></iframe>' +
+            '<div style="padding:6px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;">' +
+                '<span style="font-size:10px;color:#059669;"><strong>' + videoDoDia.titulo + '</strong></span>' +
+                '<div style="display:flex;gap:4px;"><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoAnterior()">◀</button><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoSeguinte()">▶</button></div></div></div>';
+        
+        // Vagas
+        if (vagas.length === 0) {
+            html += '<div class="card" style="text-align:center;padding:30px;"><i class="fas fa-hard-hat" style="font-size:40px;color:#ccc;"></i><h3 style="margin-top:8px;">Nenhuma vaga</h3><p style="color:#999;font-size:12px;">Aproveite o estudo diário! 📚</p>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()" style="margin-top:8px;">📢 PUBLICAR VAGA</button>' : '') + '</div>';
+        } else {
+            vagas.forEach(function(v) {
+                html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || '') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + (v.data.fotoObra ? '<img src="' + v.data.fotoObra + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;">' : '') + '</div>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'profissional' ? '<div class="vaga-footer"><button class="btn btn-primary btn-small" onclick="window.app.candidatarVaga(\'' + v.id + '\')">✋ QUERO!</button></div>' : '') + '</div>';
+            });
+        }
+        c.innerHTML = html;
+    }).catch(function() { c.innerHTML = '<div class="card" style="text-align:center;">Erro ao carregar feed</div>'; });
+};
+
+App.prototype.videoAnterior = function() { if (!this.videoIndex) this.videoIndex = 0; this.videoIndex--; if (this.videoIndex < 0) this.videoIndex = 14; this.carregarFeed(); };
+App.prototype.videoSeguinte = function() { if (!this.videoIndex) this.videoIndex = 0; this.videoIndex++; this.carregarFeed(); };
+
+// ===== REDE =====
 App.prototype.carregarRede = function() {
     var s=this,c=document.getElementById('redeContainer');if(!c)return;c.innerHTML='<div class="loading">Carregando...</div>';
     db.collection('conexoes').get().then(function(snap){var conexoes=[];snap.forEach(function(doc){var d=doc.data();if(d.usuarioId===s.usuarioLogado.id||d.amigoId===s.usuarioLogado.id)conexoes.push({id:doc.id,data:d});});
@@ -258,12 +279,10 @@ App.prototype.verPerfil = function(uid) { var s=this; db.collection('usuarios').
 App.prototype.iniciarChat = function(uid) { var s=this; db.collection('usuarios').doc(uid).get().then(function(doc){if(!doc.exists)return;s.usuarioSelecionado={id:doc.id,data:doc.data()};var h=document.getElementById('chatHeaderInfo');if(h)h.innerHTML='<div><strong>'+doc.data().nome+'</strong></div>';s.mostrarTela('chatScreen');}); };
 App.prototype.enviarMensagem = function() { var s=this,i=document.getElementById('chatInput'),ct=i?i.value.trim():'';if(!ct||!s.usuarioSelecionado)return;db.collection('mensagens').add({remetenteId:s.usuarioLogado.id,destinatarioId:s.usuarioSelecionado.id,participantes:[s.usuarioLogado.id,s.usuarioSelecionado.id],conteudo:ct,dataEnvio:firebase.firestore.FieldValue.serverTimestamp(),lida:false}).then(function(){i.value='';s.mostrarToast('✅ Enviada!','sucesso');}); };
 
-// ===== PUBLICAR VAGA (COM FOTO) =====
+// ===== PUBLICAR VAGA =====
 App.prototype.abrirTelaPublicacao = function() {
-    console.log('📢 Abrindo tela de publicação');
-    if (!this.usuarioLogado) { this.mostrarToast('❌ Faça login primeiro!', 'erro'); return; }
+    if (!this.usuarioLogado) { this.mostrarToast('❌ Faça login!', 'erro'); return; }
     if (this.usuarioLogado.tipo !== 'empreiteiro') { this.mostrarToast('❌ Apenas empreiteiros!', 'erro'); return; }
-    
     ['vagaTitulo','vagaDescricao','vagaEndereco'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
     var vh=document.getElementById('vagaValorHora'); if(vh)vh.value='';
     var fp=document.getElementById('vagaFotoPreview'); if(fp)fp.src='imagem/logo-sem-fundo-lpxconstrutor.png';
@@ -284,32 +303,15 @@ App.prototype.publicarVagaApp = function() {
     var e=(document.getElementById('vagaEndereco')||{}).value||'';
     var d=(document.getElementById('vagaDescricao')||{}).value||'';
     var vh=(document.getElementById('vagaValorHora')||{}).value||'0';
-    
-    console.log('📝 Publicando:',{titulo:t,endereco:e});
-    
     if(!t||!e){s.mostrarToast('❌ Preencha título e endereço!','erro');return;}
-    
     var ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb){ps.push(cb.value);});
     var profs=ps.length>0?ps.join(', '):'Geral';
-    
     s.mostrarToast('Publicando...','info');
-    
-    db.collection('vagas').add({
-        titulo:t,descricao:d,endereco:e,profissoes:profs,
-        valorHora:parseFloat(vh)||0,
-        fotoObra:s.vagaFotoBase64||'',
-        usuarioId:s.usuarioLogado.id,
-        interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true
-    }).then(function(docRef){
-        console.log('✅ Vaga salva! ID:',docRef.id);
-        s.mostrarToast('✅ Vaga publicada!','sucesso');
-        s.vagaFotoBase64=null;
-        document.getElementById('vagaFotoPreview').src='imagem/logo-sem-fundo-lpxconstrutor.png';
+    db.collection('vagas').add({titulo:t,descricao:d,endereco:e,profissoes:profs,valorHora:parseFloat(vh)||0,fotoObra:s.vagaFotoBase64||'',usuarioId:s.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true}).then(function(docRef){
+        console.log('✅ Vaga salva!'); s.mostrarToast('✅ Vaga publicada!','sucesso'); s.vagaFotoBase64=null;
+        var fp=document.getElementById('vagaFotoPreview'); if(fp)fp.src='imagem/logo-sem-fundo-lpxconstrutor.png';
         setTimeout(function(){s.mostrarTela('homeScreen');s.carregarFeed();},1000);
-    }).catch(function(error){
-        console.error('❌ Erro:',error);
-        s.mostrarToast('❌ Erro: '+error.message,'erro');
-    });
+    }).catch(function(error){console.error('❌ Erro:',error);s.mostrarToast('❌ Erro: '+error.message,'erro');});
 };
 
 App.prototype.candidatarVaga = function(vid) { var s=this;if(!s.usuarioLogado||s.usuarioLogado.tipo!=='profissional')return;db.collection('vagas').doc(vid).get().then(function(doc){if(!doc.exists)return;var v=doc.data();if(!v.interessados)v.interessados=[];if(v.interessados.indexOf(s.usuarioLogado.id)>=0)return;v.interessados.push(s.usuarioLogado.id);db.collection('vagas').doc(vid).update({interessados:v.interessados}).then(function(){s.mostrarToast('✅ Candidatura enviada!','sucesso');});}); };
