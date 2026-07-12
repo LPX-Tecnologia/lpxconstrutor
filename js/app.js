@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - COMPLETO E FUNCIONAL =====
+// ===== LPXCONSTRUTOR - VERSÃO FINAL COMPLETA =====
 // ==========================================================
 
 if (!window.app || !window.app._app) { window.app = window.app || {}; window.app._app = window.app._app || null; }
@@ -51,6 +51,10 @@ window.app = {
     selecionarIdioma: function(i){ if(window.app._app)window.app._app.selecionarIdioma(i); },
     selecionarTema: function(t){ if(window.app._app)window.app._app.selecionarTema(t); },
     mostrarInfoVersao: function(){ if(window.app._app)window.app._app.mostrarInfoVersao(); },
+    mostrarTermosUso: function(){ if(window.app._app)window.app._app.mostrarTermosUso(); },
+    mostrarPrivacidade: function(){ if(window.app._app)window.app._app.mostrarPrivacidade(); },
+    mostrarDiretrizes: function(){ if(window.app._app)window.app._app.mostrarDiretrizes(); },
+    mostrarSobre: function(){ if(window.app._app)window.app._app.mostrarSobre(); },
     confirmarExclusao: function(){ if(window.app._app)window.app._app.confirmarExclusao(); },
     mostrarModalSair: function(){ if(window.app._app)window.app._app.mostrarModalSair(); },
     fecharModalSair: function(){ if(window.app._app)window.app._app.fecharModalSair(); },
@@ -76,13 +80,26 @@ var App = function() {
     this.vagaEmEdicao = null;
     this.vagaLocalizacaoAtual = null;
     this.contratoAtual = null;
+    this.idiomaAtual = 'pt';
+    this.temaAtual = 'claro';
     this.init();
 };
 
 App.prototype.init = function() {
     var s = this; 
-    console.log('🚀 Iniciando...'); 
+    console.log('🚀 Iniciando LPXCONSTRUTOR...'); 
     window.app._app = this;
+    
+    // Carregar tema
+    var temaSalvo = localStorage.getItem('tema');
+    if (temaSalvo === 'escuro') {
+        document.body.classList.add('dark-theme');
+        s.temaAtual = 'escuro';
+    }
+    
+    // Carregar idioma
+    var idiomaSalvo = localStorage.getItem('idioma');
+    if (idiomaSalvo) s.idiomaAtual = idiomaSalvo;
     
     var bottomNav = document.getElementById('bottomNav');
     if (bottomNav) bottomNav.style.display = 'none';
@@ -94,13 +111,11 @@ App.prototype.init = function() {
         else s.voltarTela(); 
     });
     
-    // Carregar dados salvos
     var dadosSalvos = localStorage.getItem('usuarioLPX');
     if (dadosSalvos) {
         try { s.usuarioLogado = JSON.parse(dadosSalvos); } catch(e) {}
     }
     
-    // Carregar contrato ativo
     var contratoSalvo = localStorage.getItem('contratoAtualLPX');
     if (contratoSalvo) {
         try { s.contratoAtual = JSON.parse(contratoSalvo); } catch(e) {}
@@ -125,11 +140,53 @@ App.prototype.init = function() {
         setTimeout(function() {
             s.esconderSplash();
             s.atualizarBotoes();
-            if (s.usuarioLogado) {
-                s.mostrarTela('homeScreen');
-            }
+            if (s.usuarioLogado) s.mostrarTela('homeScreen');
         }, 1500);
     }
+};
+
+// ===== TEXTOS POR IDIOMA =====
+App.prototype.getTexto = function(chave) {
+    var textos = {
+        pt: {
+            saudacao: { bomDia: 'Bom dia', boaTarde: 'Boa tarde', boaNoite: 'Boa noite' },
+            perfil: { titulo: 'Meu Perfil', editar: 'Editar Perfil', sair: 'Sair', contratos: 'Meus Contratos', notificacoes: 'Notificações' },
+            home: { titulo: 'Início', publicar: 'Publicar Vaga', buscar: 'Buscar' },
+            contrato: { ativo: 'Contrato Ativo', finalizar: 'Finalizar Contrato', detalhes: 'Detalhes da Obra' }
+        },
+        en: {
+            saudacao: { bomDia: 'Good morning', boaTarde: 'Good afternoon', boaNoite: 'Good evening' },
+            perfil: { titulo: 'My Profile', editar: 'Edit Profile', sair: 'Logout', contratos: 'My Contracts', notificacoes: 'Notifications' },
+            home: { titulo: 'Home', publicar: 'Post Job', buscar: 'Search' },
+            contrato: { ativo: 'Active Contract', finalizar: 'Finish Contract', detalhes: 'Project Details' }
+        },
+        es: {
+            saudacao: { bomDia: 'Buenos días', boaTarde: 'Buenas tardes', boaNoite: 'Buenas noches' },
+            perfil: { titulo: 'Mi Perfil', editar: 'Editar Perfil', sair: 'Salir', contratos: 'Mis Contratos', notificacoes: 'Notificaciones' },
+            home: { titulo: 'Inicio', publicar: 'Publicar', buscar: 'Buscar' },
+            contrato: { ativo: 'Contrato Activo', finalizar: 'Finalizar Contrato', detalhes: 'Detalles' }
+        }
+    };
+    
+    var lang = this.idiomaAtual || 'pt';
+    var keys = chave.split('.');
+    var valor = textos[lang];
+    
+    for (var i = 0; i < keys.length; i++) {
+        if (valor && valor[keys[i]]) {
+            valor = valor[keys[i]];
+        } else {
+            // Fallback para português
+            valor = textos.pt;
+            for (var j = 0; j < keys.length; j++) {
+                if (valor && valor[keys[j]]) valor = valor[keys[j]];
+                else return chave;
+            }
+            return valor;
+        }
+    }
+    
+    return valor || chave;
 };
 
 // ===== SPLASH =====
@@ -233,10 +290,118 @@ App.prototype.confirmarSair = function() {
     this.mostrarTela('loginScreen'); 
 };
 
+// ===== TEMA E IDIOMA =====
 App.prototype.selecionarTema = function(t) { 
-    if(t==='escuro'){ document.body.classList.add('dark-theme'); localStorage.setItem('tema','escuro'); } 
-    else { document.body.classList.remove('dark-theme'); localStorage.setItem('tema','claro'); } 
-    this.mostrarToast('🎨 Tema alterado!','sucesso'); 
+    this.temaAtual = t;
+    if(t==='escuro'){ 
+        document.body.classList.add('dark-theme'); 
+        localStorage.setItem('tema','escuro'); 
+    } else { 
+        document.body.classList.remove('dark-theme'); 
+        localStorage.setItem('tema','claro'); 
+    } 
+    this.mostrarToast('🎨 ' + (t === 'escuro' ? 'Tema escuro' : 'Tema claro') + ' ativado!','sucesso'); 
+};
+
+App.prototype.selecionarIdioma = function(i) { 
+    this.idiomaAtual = i;
+    localStorage.setItem('idioma', i);
+    var nomes = { pt: 'Português', en: 'English', es: 'Español' };
+    this.mostrarToast('🌐 Idioma: ' + (nomes[i] || i),'sucesso');
+    if (this.telaAtual === 'homeScreen') this.carregarHome();
+    if (this.telaAtual === 'meuPerfilScreen') this.carregarMeuPerfil();
+};
+
+// ===== TERMOS, PRIVACIDADE, DIRETRIZES =====
+App.prototype.mostrarTermosUso = function() {
+    var html = this.criarTelaDocumento(
+        '📄 Termos de Uso',
+        '<h3>1. Aceitação dos Termos</h3>' +
+        '<p>Ao utilizar o LPXCONSTRUTOR, você concorda com estes termos de uso.</p>' +
+        '<h3>2. Cadastro</h3>' +
+        '<p>Você é responsável por manter suas informações atualizadas e verdadeiras.</p>' +
+        '<h3>3. Publicação de Vagas</h3>' +
+        '<p>As vagas publicadas devem ser reais e conter informações precisas.</p>' +
+        '<h3>4. Contratação</h3>' +
+        '<p>O LPXCONSTRUTOR não se responsabiliza por acordos feitos entre as partes.</p>' +
+        '<h3>5. Conduta</h3>' +
+        '<p>É proibido qualquer tipo de discriminação, assédio ou conduta inadequada.</p>' +
+        '<h3>6. Cancelamento</h3>' +
+        '<p>Você pode cancelar sua conta a qualquer momento.</p>'
+    );
+    this.mostrarTelaDocumento(html);
+};
+
+App.prototype.mostrarPrivacidade = function() {
+    var html = this.criarTelaDocumento(
+        '🔒 Política de Privacidade',
+        '<h3>1. Dados Coletados</h3>' +
+        '<p>Coletamos: nome, email, telefone, profissão, experiência e fotos.</p>' +
+        '<h3>2. Uso dos Dados</h3>' +
+        '<p>Seus dados são usados para conectar profissionais e empreiteiros.</p>' +
+        '<h3>3. Compartilhamento</h3>' +
+        '<p>Não vendemos seus dados. Compartilhamos apenas o necessário para a contratação.</p>' +
+        '<h3>4. Armazenamento</h3>' +
+        '<p>Seus dados são armazenados de forma segura.</p>' +
+        '<h3>5. Seus Direitos</h3>' +
+        '<p>Você pode solicitar a exclusão dos seus dados a qualquer momento.</p>'
+    );
+    this.mostrarTelaDocumento(html);
+};
+
+App.prototype.mostrarDiretrizes = function() {
+    var html = this.criarTelaDocumento(
+        '📋 Diretrizes da Comunidade',
+        '<h3>1. Respeito Mútuo</h3>' +
+        '<p>Trate todos com respeito e profissionalismo.</p>' +
+        '<h3>2. Pagamentos</h3>' +
+        '<p>Combine valores e formas de pagamento antes de iniciar o trabalho.</p>' +
+        '<h3>3. Segurança</h3>' +
+        '<p>Siga todas as normas de segurança no trabalho.</p>' +
+        '<h3>4. Qualidade</h3>' +
+        '<p>Entregue trabalhos com qualidade e dentro do prazo combinado.</p>' +
+        '<h3>5. Avaliações</h3>' +
+        '<p>Avalie com honestidade após a conclusão do contrato.</p>'
+    );
+    this.mostrarTelaDocumento(html);
+};
+
+App.prototype.mostrarSobre = function() {
+    var html = this.criarTelaDocumento(
+        'ℹ️ Sobre o LPXCONSTRUTOR',
+        '<div style="text-align:center;padding:20px;">' +
+        '<div style="font-size:80px;">🏗️</div>' +
+        '<h2>LPXCONSTRUTOR</h2>' +
+        '<p><strong>Versão 1.0.0</strong></p>' +
+        '<p>Rede Profissional da Construção Civil</p>' +
+        '<p>Conectando profissionais e empreiteiros</p>' +
+        '<hr style="margin:20px 0;">' +
+        '<p><strong>Desenvolvido por:</strong> LPX Tecnologia</p>' +
+        '<p><strong>Contato:</strong> contato@lpxconstrutor.com.br</p>' +
+        '<p><strong>Fundação:</strong> 2024</p>' +
+        '</div>'
+    );
+    this.mostrarTelaDocumento(html);
+};
+
+App.prototype.criarTelaDocumento = function(titulo, conteudo) {
+    return '<div style="padding:20px;background:#f5f5f5;min-height:100vh;">' +
+        '<div style="background:#1A3A5C;color:white;padding:20px;border-radius:15px;margin-bottom:20px;text-align:center;">' +
+        '<h2 style="margin:0;">' + titulo + '</h2></div>' +
+        '<div style="background:white;border-radius:15px;padding:20px;">' + conteudo + '</div>' +
+        '<button onclick="window.app.voltarTela()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;margin-top:20px;font-weight:bold;">Voltar</button></div>';
+};
+
+App.prototype.mostrarTelaDocumento = function(html) {
+    var tela = document.getElementById('meuPerfilScreen');
+    if (tela) {
+        tela.innerHTML = html;
+        this.mostrarTela('meuPerfilScreen');
+    }
+};
+
+App.prototype.mostrarInfoVersao = function() {
+    this.mostrarSobre();
 };
 
 // ===== AUTENTICAÇÃO =====
@@ -382,7 +547,8 @@ App.prototype.carregarHome = function() {
     }
     
     var h = new Date().getHours(); 
-    var sd = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    var txt = this.getTexto('saudacao');
+    var sd = h < 12 ? txt.bomDia : h < 18 ? txt.boaTarde : txt.boaNoite;
     
     var sa = document.getElementById('saudacao'); 
     if (sa) sa.textContent = '👋 ' + sd + ', ' + this.usuarioLogado.nome + '!';
@@ -663,6 +829,20 @@ App.prototype.candidatarVaga = function(vagaId) {
     candidaturas.push(candidatura);
     localStorage.setItem('candidaturasLPX', JSON.stringify(candidaturas));
     
+    // Notificar empreiteiro
+    var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
+    notificacoes.unshift({
+        id: 'notif_' + Date.now(),
+        para: vaga.autorId,
+        tipo: 'candidatura',
+        titulo: '🔔 Nova candidatura!',
+        mensagem: s.usuarioLogado.nome + ' se candidatou para: ' + vaga.titulo,
+        vagaId: vagaId,
+        lida: false,
+        data: new Date().toISOString()
+    });
+    localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
+    
     s.mostrarToast('✅ Candidatura enviada! Aguarde o empreiteiro.', 'sucesso');
 };
 
@@ -715,15 +895,11 @@ App.prototype.aceitarCandidato = function(candidaturaId) {
     cand.status = 'em_andamento';
     cand.dataInicio = new Date().toISOString();
     
-    // Recusar outros
     candidaturas.forEach(function(c) {
-        if (c.vagaId === cand.vagaId && c.id !== candidaturaId) {
-            c.status = 'recusado';
-        }
+        if (c.vagaId === cand.vagaId && c.id !== candidaturaId) c.status = 'recusado';
     });
     localStorage.setItem('candidaturasLPX', JSON.stringify(candidaturas));
     
-    // Atualizar vaga
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
     var vaga = vagas.find(function(v) { return v.id === cand.vagaId; });
     if (vaga) {
@@ -733,7 +909,6 @@ App.prototype.aceitarCandidato = function(candidaturaId) {
     }
     localStorage.setItem('vagasLPX', JSON.stringify(vagas));
     
-    // Criar contrato
     var contrato = {
         id: 'contr_' + Date.now(),
         candidaturaId: candidaturaId, vagaId: cand.vagaId, vagaTitulo: cand.vagaTitulo,
@@ -748,6 +923,19 @@ App.prototype.aceitarCandidato = function(candidaturaId) {
     
     s.contratoAtual = contrato;
     localStorage.setItem('contratoAtualLPX', JSON.stringify(contrato));
+    
+    // Notificar profissional
+    var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
+    notificacoes.unshift({
+        id: 'notif_' + Date.now(),
+        para: cand.profissionalId,
+        tipo: 'contratado',
+        titulo: '🎉 Você foi contratado!',
+        mensagem: 'Parabéns! Você foi contratado para: ' + cand.vagaTitulo,
+        lida: false,
+        data: new Date().toISOString()
+    });
+    localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
     
     var modal = document.getElementById('modalContratacao');
     if (modal) modal.remove();
@@ -786,10 +974,10 @@ App.prototype.verContratoAtivo = function() {
     var html = '<div style="padding:20px;background:#f5f5f5;min-height:100vh;">';
     html += '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:25px;border-radius:15px;text-align:center;margin-bottom:20px;">';
     html += '<div style="font-size:50px;">🤝</div>';
-    html += '<h2 style="margin:10px 0;">Contrato Ativo</h2>';
+    html += '<h2 style="margin:10px 0;">' + s.getTexto('contrato.ativo') + '</h2>';
     html += '<p style="color:#f0c27f;">🟢 Em Andamento</p></div>';
     html += '<div style="background:white;border-radius:15px;padding:20px;margin-bottom:15px;">';
-    html += '<h3 style="color:#1A3A5C;">📋 Detalhes</h3>';
+    html += '<h3 style="color:#1A3A5C;">' + s.getTexto('contrato.detalhes') + '</h3>';
     html += '<p><strong>🏗️ Obra:</strong> ' + c.vagaTitulo + '</p>';
     html += '<p><strong>👷 Profissional:</strong> ' + c.profissionalNome + '</p>';
     html += '<p><strong>🏢 Empreiteiro:</strong> ' + c.empreiteiroNome + '</p>';
@@ -799,7 +987,7 @@ App.prototype.verContratoAtivo = function() {
     html += '<button onclick="window.app.voltarTela()" style="flex:1;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">Voltar</button></div>';
     
     if (isEmpreiteiro) {
-        html += '<button onclick="window.app.finalizarContratoAtivo()" style="width:100%;background:#EF4444;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">🔴 Finalizar Contrato</button>';
+        html += '<button onclick="window.app.finalizarContratoAtivo()" style="width:100%;background:#EF4444;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">🔴 ' + s.getTexto('contrato.finalizar') + '</button>';
     } else {
         html += '<div style="background:#fef3c7;border-radius:10px;padding:15px;text-align:center;color:#92400e;">⚠️ Apenas o empreiteiro pode finalizar.</div>';
     }
@@ -814,7 +1002,7 @@ App.prototype.verContratoAtivo = function() {
 
 App.prototype.finalizarContratoAtivo = function() {
     var s = this;
-    if (!confirm('Finalizar este contrato?')) return;
+    if (!confirm('Finalizar este contrato? Esta ação não pode ser desfeita.')) return;
     if (!s.contratoAtual) { s.mostrarToast('❌ Nenhum contrato ativo!', 'erro'); return; }
     
     var contratos = JSON.parse(localStorage.getItem('contratosLPX') || '[]');
@@ -826,6 +1014,19 @@ App.prototype.finalizarContratoAtivo = function() {
     var vaga = vagas.find(function(v) { return v.id === s.contratoAtual.vagaId; });
     if (vaga) vaga.status = 'finalizado';
     localStorage.setItem('vagasLPX', JSON.stringify(vagas));
+    
+    // Notificar profissional
+    var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
+    notificacoes.unshift({
+        id: 'notif_' + Date.now(),
+        para: s.contratoAtual.profissionalId,
+        tipo: 'finalizado',
+        titulo: '🔴 Contrato Finalizado',
+        mensagem: 'O contrato da obra "' + s.contratoAtual.vagaTitulo + '" foi finalizado.',
+        lida: false,
+        data: new Date().toISOString()
+    });
+    localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
     
     s.contratoAtual = null;
     localStorage.removeItem('contratoAtualLPX');
@@ -843,7 +1044,7 @@ App.prototype.verMeusContratos = function() {
         return c.empreiteiroId === userId || c.profissionalId === userId;
     });
     
-    var html = '<div style="padding:20px;"><h3 style="color:#1A3A5C;">📋 Meus Contratos</h3>';
+    var html = '<div style="padding:20px;"><h3 style="color:#1A3A5C;">📋 ' + s.getTexto('perfil.contratos') + '</h3>';
     
     if (meus.length === 0) {
         html += '<p style="text-align:center;color:#999;margin-top:40px;">Nenhum contrato.</p>';
@@ -906,10 +1107,32 @@ App.prototype.carregarMeuPerfil = function() {
     html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;"><div style="font-size:24px;color:#f59e0b;font-weight:bold;">' + score + '</div><div style="color:#999;font-size:11px;">Avaliação</div></div>';
     html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;" onclick="window.app.verMeusContratos()"><div style="font-size:24px;color:#10B981;font-weight:bold;">📋</div><div style="color:#999;font-size:11px;">Contratos</div></div></div>';
     
-    html += '<button onclick="window.app.verMeusContratos()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">📋 Meus Contratos</button>';
-    html += '<button onclick="window.app.mostrarNotificacoes()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">🔔 Notificações</button>';
-    html += '<button onclick="window.app.abrirEditarPerfil()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">✏️ Editar Perfil</button>';
-    html += '<button onclick="window.app.sair()" style="width:100%;background:white;color:#EF4444;border:2px solid #EF4444;padding:15px;border-radius:10px;font-weight:bold;">🚪 Sair</button></div>';
+    html += '<button onclick="window.app.verMeusContratos()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">📋 ' + s.getTexto('perfil.contratos') + '</button>';
+    html += '<button onclick="window.app.mostrarNotificacoes()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">🔔 ' + s.getTexto('perfil.notificacoes') + '</button>';
+    html += '<button onclick="window.app.abrirEditarPerfil()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">✏️ ' + s.getTexto('perfil.editar') + '</button>';
+    
+    html += '<div style="display:flex;gap:10px;margin-bottom:10px;">';
+    html += '<button onclick="window.app.mostrarTermosUso()" style="flex:1;background:white;color:#1A3A5C;border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">📄 Termos</button>';
+    html += '<button onclick="window.app.mostrarPrivacidade()" style="flex:1;background:white;color:#1A3A5C;border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">🔒 Privacidade</button>';
+    html += '</div>';
+    
+    html += '<div style="display:flex;gap:10px;margin-bottom:10px;">';
+    html += '<button onclick="window.app.mostrarDiretrizes()" style="flex:1;background:white;color:#1A3A5C;border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">📋 Diretrizes</button>';
+    html += '<button onclick="window.app.mostrarSobre()" style="flex:1;background:white;color:#1A3A5C;border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">ℹ️ Sobre</button>';
+    html += '</div>';
+    
+    html += '<div style="display:flex;gap:10px;margin-bottom:10px;">';
+    html += '<button onclick="window.app.selecionarIdioma(\'pt\')" style="flex:1;background:' + (s.idiomaAtual === 'pt' ? '#1A3A5C' : 'white') + ';color:' + (s.idiomaAtual === 'pt' ? 'white' : '#1A3A5C') + ';border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">🇧🇷 PT</button>';
+    html += '<button onclick="window.app.selecionarIdioma(\'en\')" style="flex:1;background:' + (s.idiomaAtual === 'en' ? '#1A3A5C' : 'white') + ';color:' + (s.idiomaAtual === 'en' ? 'white' : '#1A3A5C') + ';border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">🇺🇸 EN</button>';
+    html += '<button onclick="window.app.selecionarIdioma(\'es\')" style="flex:1;background:' + (s.idiomaAtual === 'es' ? '#1A3A5C' : 'white') + ';color:' + (s.idiomaAtual === 'es' ? 'white' : '#1A3A5C') + ';border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">🇪🇸 ES</button>';
+    html += '</div>';
+    
+    html += '<div style="display:flex;gap:10px;margin-bottom:10px;">';
+    html += '<button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;background:' + (s.temaAtual === 'claro' ? '#1A3A5C' : 'white') + ';color:' + (s.temaAtual === 'claro' ? 'white' : '#1A3A5C') + ';border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">☀️ Claro</button>';
+    html += '<button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;background:' + (s.temaAtual === 'escuro' ? '#1A3A5C' : 'white') + ';color:' + (s.temaAtual === 'escuro' ? 'white' : '#1A3A5C') + ';border:1px solid #1A3A5C;padding:12px;border-radius:10px;font-size:13px;">🌙 Escuro</button>';
+    html += '</div>';
+    
+    html += '<button onclick="window.app.sair()" style="width:100%;background:white;color:#EF4444;border:2px solid #EF4444;padding:15px;border-radius:10px;font-weight:bold;">🚪 ' + s.getTexto('perfil.sair') + '</button></div>';
     
     tela.innerHTML = html;
     var loading = document.getElementById('perfilLoading');
@@ -963,9 +1186,11 @@ App.prototype.mostrarNotificacoes = function() {
         html += '<p style="text-align:center;color:#999;margin-top:40px;">Nenhuma notificação.</p>';
     } else {
         minhas.forEach(function(n) {
-            html += '<div style="background:' + (n.lida ? '#f9f9f9' : '#f0f9ff') + ';border-radius:10px;padding:15px;margin-bottom:10px;">';
-            html += '<h4>' + n.titulo + '</h4><p style="color:#666;">' + n.mensagem + '</p>';
-            html += '<p style="font-size:11px;color:#999;">' + new Date(n.data).toLocaleDateString('pt-BR') + '</p></div>';
+            var bg = n.lida ? '#f9f9f9' : '#f0f9ff';
+            html += '<div style="background:' + bg + ';border-radius:10px;padding:15px;margin-bottom:10px;' + (n.lida ? '' : 'border-left:3px solid #1A3A5C;') + '">';
+            html += '<h4 style="margin:0 0 5px 0;">' + n.titulo + '</h4>';
+            html += '<p style="margin:0;color:#666;">' + n.mensagem + '</p>';
+            html += '<p style="font-size:11px;color:#999;margin:5px 0 0 0;">' + new Date(n.data).toLocaleDateString('pt-BR') + '</p></div>';
         });
     }
     
@@ -990,15 +1215,29 @@ App.prototype.abrirEditarPerfil = function() { this.mostrarToast('✏️ Editar 
 App.prototype.salvarPerfil = function() { this.mostrarToast('✅ Perfil salvo!', 'sucesso'); };
 App.prototype.uploadFoto = function(e) { this.mostrarToast('📸 Foto atualizada!', 'sucesso'); };
 App.prototype.verAvaliacoes = function(uid) { this.mostrarToast('⭐ Avaliações!', 'info'); };
-App.prototype.abrirDarAvaliacao = function(uid) { this.mostrarToast('Avalie!', 'info'); };
+App.prototype.abrirDarAvaliacao = function(uid) { this.avaliarUid = uid; this.mostrarToast('Avalie!', 'info'); };
 App.prototype.setNota = function(n) { this.avaliarNota = n; };
-App.prototype.enviarAvaliacao = function() { this.mostrarToast('✅ Enviada!', 'sucesso'); };
-App.prototype.gerarQRCode = function(uid) { this.mostrarToast('📱 QR Code!', 'sucesso'); };
-App.prototype.fecharQRCode = function() {};
-App.prototype.baixarQRCode = function() { this.mostrarToast('📥 Baixado!', 'sucesso'); };
-App.prototype.selecionarIdioma = function(i) { this.mostrarToast('🌐 Idioma alterado!', 'sucesso'); };
-App.prototype.mostrarInfoVersao = function() { this.mostrarToast('📱 Versão 1.0.0', 'info'); };
-App.prototype.confirmarExclusao = function() { if (confirm('Excluir?')) this.mostrarToast('Excluída.', 'sucesso'); };
+App.prototype.enviarAvaliacao = function() { 
+    if (this.avaliarUid && this.avaliarNota > 0) {
+        this.mostrarToast('✅ Avaliação ' + this.avaliarNota + ' estrelas enviada!', 'sucesso');
+        this.avaliarUid = null;
+        this.avaliarNota = 0;
+    }
+};
+App.prototype.gerarQRCode = function(uid) { 
+    var qrDiv = document.getElementById('qrCodeContainer');
+    if (qrDiv) {
+        qrDiv.innerHTML = '<div style="text-align:center;padding:20px;"><div style="background:white;padding:20px;display:inline-block;border-radius:10px;"><p>📱 QR Code</p><div style="width:150px;height:150px;background:#000;margin:10px auto;"></div><p style="font-size:12px;">Perfil: ' + uid + '</p><button onclick="window.app.fecharQRCode()" style="background:#1A3A5C;color:white;border:none;padding:10px 20px;border-radius:8px;">Fechar</button></div></div>';
+        qrDiv.style.display = 'flex';
+    }
+};
+App.prototype.fecharQRCode = function() { 
+    var qr = document.getElementById('qrCodeContainer');
+    if (qr) qr.style.display = 'none';
+};
+App.prototype.baixarQRCode = function() { this.mostrarToast('📥 QR Code baixado!', 'sucesso'); };
+App.prototype.mostrarInfoVersao = function() { this.mostrarSobre(); };
+App.prototype.confirmarExclusao = function() { if (confirm('Excluir conta?')) this.mostrarToast('Conta excluída.', 'sucesso'); };
 App.prototype.mudarTab = function(t) {};
 App.prototype.enviarMensagem = function() { this.mostrarToast('📨 Enviada!', 'sucesso'); };
 
