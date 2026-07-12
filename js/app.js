@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - COMPLETO E FUNCIONAL =====
+// ===== LPXCONSTRUTOR - COMPLETO PROFISSIONAL =====
 // ==========================================================
 
 if (!window.app || !window.app._app) { window.app = window.app || {}; window.app._app = window.app._app || null; }
@@ -91,16 +91,19 @@ App.prototype.init = function() {
     // CARREGAR DADOS SALVOS
     var dadosSalvos = localStorage.getItem('usuarioLPX');
     if (dadosSalvos) {
-        s.usuarioLogado = JSON.parse(dadosSalvos);
-        console.log('✅ Dados carregados:', s.usuarioLogado.nome);
+        try {
+            s.usuarioLogado = JSON.parse(dadosSalvos);
+            console.log('✅ Dados carregados:', s.usuarioLogado.nome);
+        } catch(e) {
+            console.error('❌ Erro ao carregar dados');
+        }
     }
     
     // Verificar Firebase Auth
     if (typeof authService !== 'undefined' && authService.onAuthStateChange) {
         authService.onAuthStateChange(function(u) { 
             if (u) { 
-                // Mesclar com dados do Firebase
-                s.usuarioLogado = s.usuarioLogado || {};
+                if (!s.usuarioLogado) s.usuarioLogado = {};
                 Object.assign(s.usuarioLogado, u);
                 localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
                 s.atualizarBotoes(); 
@@ -251,32 +254,38 @@ App.prototype.fazerLogin = function() {
             }
         });
     } else {
-        // Login local
         var userSalvo = localStorage.getItem('usuarioLPX');
         if (userSalvo) {
-            s.usuarioLogado = JSON.parse(userSalvo);
-            s.mostrarToast('✅ Bem-vindo de volta, ' + s.usuarioLogado.nome + '!','sucesso');
+            try {
+                s.usuarioLogado = JSON.parse(userSalvo);
+                s.mostrarToast('✅ Bem-vindo de volta, ' + s.usuarioLogado.nome + '!','sucesso');
+            } catch(err) {
+                s.criarUsuarioDemo(e);
+            }
         } else {
-            s.usuarioLogado = {
-                id: 'user_' + Date.now(),
-                nome: e.split('@')[0],
-                email: e,
-                tipo: 'empreiteiro',
-                profissao: 'Profissional',
-                experiencia: '0',
-                celular: '',
-                fotoPerfil: null,
-                score: 0
-            };
-            localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
-            s.mostrarToast('✅ Bem-vindo!','sucesso');
+            s.criarUsuarioDemo(e);
         }
         s.atualizarBotoes();
         s.mostrarTela('homeScreen');
     }
 };
 
-// CADASTRO - SALVA TODOS OS DADOS
+App.prototype.criarUsuarioDemo = function(email) {
+    this.usuarioLogado = {
+        id: 'user_' + Date.now(),
+        nome: email ? email.split('@')[0] : 'Usuário',
+        email: email || 'usuario@email.com',
+        tipo: 'empreiteiro',
+        profissao: 'Engenheiro Civil',
+        experiencia: '8',
+        celular: '(11) 99999-9999',
+        fotoPerfil: null,
+        score: 4.7
+    };
+    localStorage.setItem('usuarioLPX', JSON.stringify(this.usuarioLogado));
+    this.mostrarToast('✅ Bem-vindo!','sucesso');
+};
+
 App.prototype.cadastrar = function() { 
     var s = this;
     
@@ -289,29 +298,12 @@ App.prototype.cadastrar = function() {
     var experiencia = document.getElementById('cadExperiencia');
     var fotoInput = document.getElementById('cadFoto');
     
-    if (!nome || !email || !senha) {
+    if (!nome || !email || !senha || !nome.value || !email.value || !senha.value) {
         s.mostrarToast('❌ Preencha todos os campos!','erro');
         return;
     }
     
-    if (!nome.value || !email.value || !senha.value) {
-        s.mostrarToast('❌ Preencha todos os campos!','erro');
-        return;
-    }
-    
-    var fotoPerfil = null;
-    if (fotoInput && fotoInput.files && fotoInput.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            fotoPerfil = e.target.result;
-            finalizarCadastro(fotoPerfil);
-        };
-        reader.readAsDataURL(fotoInput.files[0]);
-    } else {
-        finalizarCadastro(null);
-    }
-    
-    function finalizarCadastro(foto) {
+    var salvarUsuario = function(foto) {
         var usuario = {
             id: 'user_' + Date.now(),
             nome: nome.value,
@@ -320,31 +312,29 @@ App.prototype.cadastrar = function() {
             celular: celular ? celular.value : '',
             profissao: profissao ? profissao.value : 'Profissional',
             experiencia: experiencia ? experiencia.value : '0',
-            fotoPerfil: foto,
+            fotoPerfil: foto || null,
             score: 0,
             dataCadastro: new Date().toISOString()
         };
         
-        console.log('💾 SALVANDO USUÁRIO:', usuario);
-        
-        // Salvar no localStorage
         localStorage.setItem('usuarioLPX', JSON.stringify(usuario));
         s.usuarioLogado = usuario;
         
-        // Salvar no Firestore se disponível
         if (typeof db !== 'undefined') {
-            db.collection('usuarios').doc(usuario.id).set(usuario)
-                .then(function() {
-                    console.log('✅ Salvo no Firestore');
-                })
-                .catch(function(err) {
-                    console.error('❌ Erro Firestore:', err);
-                });
+            db.collection('usuarios').doc(usuario.id).set(usuario).catch(function(){});
         }
         
         s.mostrarToast('✅ Cadastro realizado, ' + usuario.nome + '!','sucesso');
         s.atualizarBotoes();
         s.mostrarTela('homeScreen');
+    };
+    
+    if (fotoInput && fotoInput.files && fotoInput.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) { salvarUsuario(e.target.result); };
+        reader.readAsDataURL(fotoInput.files[0]);
+    } else {
+        salvarUsuario(null);
     }
 };
 
@@ -396,7 +386,12 @@ App.prototype.carregarHome = function() {
     if (!this.usuarioLogado) {
         var userSalvo = localStorage.getItem('usuarioLPX');
         if (userSalvo) {
-            this.usuarioLogado = JSON.parse(userSalvo);
+            try {
+                this.usuarioLogado = JSON.parse(userSalvo);
+            } catch(e) {
+                this.mostrarTela('loginScreen');
+                return;
+            }
         } else {
             this.mostrarTela('loginScreen');
             return;
@@ -432,7 +427,7 @@ App.prototype.carregarHome = function() {
     this.carregarFeed();
 };
 
-// ===== FEED COM VÍDEOS E MAPA =====
+// ===== FEED =====
 App.prototype.carregarFeed = function() {
     var s = this, c = document.getElementById('feedContainer'); 
     if (!c) return;
@@ -457,16 +452,12 @@ App.prototype.carregarFeed = function() {
             return db.collection('vagas').where('ativa', '==', true).orderBy('dataCriacao', 'desc').get()
                 .then(function(snap) {
                     var vagas = [];
-                    snap.forEach(function(doc) {
-                        vagas.push({ id: doc.id, data: doc.data() });
-                    });
+                    snap.forEach(function(doc) { vagas.push({ id: doc.id, data: doc.data() }); });
                     return vagas;
                 });
         } else {
             var vagasSalvas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-            return Promise.resolve(vagasSalvas.map(function(v) {
-                return { id: v.id || 'local', data: v };
-            }));
+            return Promise.resolve(vagasSalvas.map(function(v) { return { id: v.id || 'local', data: v }; }));
         }
     };
     
@@ -490,12 +481,8 @@ App.prototype.carregarFeed = function() {
                             var mapDiv = document.getElementById(mapId);
                             if (mapDiv && typeof L !== 'undefined') {
                                 var map = L.map(mapId).setView([v.data.localizacao.lat, v.data.localizacao.lng], 15);
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                    attribution: '© OpenStreetMap'
-                                }).addTo(map);
-                                L.marker([v.data.localizacao.lat, v.data.localizacao.lng]).addTo(map)
-                                    .bindPopup(v.data.endereco || 'Local da obra')
-                                    .openPopup();
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                                L.marker([v.data.localizacao.lat, v.data.localizacao.lng]).addTo(map).bindPopup(v.data.endereco || 'Local da obra').openPopup();
                             } else if (mapDiv) {
                                 mapDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f0f9ff;border-radius:8px;">🗺️ ' + (v.data.endereco || 'Localização no mapa') + '</div>';
                             }
@@ -510,7 +497,7 @@ App.prototype.carregarFeed = function() {
                     fotoHtml = '<img src="' + v.data.fotoObra + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;" onerror="this.style.display=\'none\'">';
                 }
                 
-                html += '<div class="vaga-card" style="cursor:pointer;background:white;border-radius:12px;padding:16px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || 'Local não informado') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + fotoHtml + mapaHtml + '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + (v.data.autorNome || 'Anônimo') + '</div></div></div>'; 
+                html += '<div class="vaga-card" style="cursor:pointer;background:white;border-radius:12px;padding:16px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><div class="vaga-header" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;"><div class="vaga-avatar" style="width:50px;height:50px;background:#1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;"><i class="fas fa-hard-hat"></i></div><div class="vaga-info"><div class="vaga-nome" style="font-weight:bold;color:#1A3A5C;font-size:16px;">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data" style="font-size:12px;color:#6b7280;">📍 ' + (v.data.endereco || 'Local não informado') + '</div></div></div><div class="vaga-body"><div class="vaga-tags" style="display:flex;gap:8px;margin-bottom:8px;"><span class="vaga-tag" style="background:#10B981;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag" style="background:#1A3A5C;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + fotoHtml + mapaHtml + '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + (v.data.autorNome || 'Anônimo') + '</div></div></div>'; 
             }); 
         }
         c.innerHTML = html;
@@ -535,15 +522,26 @@ App.prototype.videoSeguinte = function() {
 // ===== PUBLICAÇÃO DE VAGA =====
 App.prototype.configurarPublicacao = function() {
     var s = this;
+    console.log('📝 Configurando publicação...');
     
     var inputFoto = document.getElementById('fotoObraInput');
+    if (!inputFoto) {
+        var inputs = document.querySelectorAll('input[type="file"]');
+        if (inputs.length > 0) inputFoto = inputs[0];
+    }
+    
     if (inputFoto) {
         var novoInput = inputFoto.cloneNode(true);
         inputFoto.parentNode.replaceChild(novoInput, inputFoto);
         
-        novoInput.addEventListener('change', function(e) {
-            var arquivo = e.target.files[0];
+        novoInput.addEventListener('change', function(event) {
+            var arquivo = event.target.files[0];
             if (!arquivo) return;
+            
+            if (!arquivo.type.match('image.*')) {
+                s.mostrarToast('❌ Selecione uma imagem!', 'erro');
+                return;
+            }
             
             if (arquivo.size > 10 * 1024 * 1024) {
                 s.mostrarToast('❌ Imagem muito grande! Máx 10MB', 'erro');
@@ -551,20 +549,27 @@ App.prototype.configurarPublicacao = function() {
             }
             
             var reader = new FileReader();
-            reader.onload = function(event) {
-                s.vagaFotoBase64 = event.target.result;
+            reader.onload = function(e) {
+                s.vagaFotoBase64 = e.target.result;
+                
                 var preview = document.getElementById('fotoObraPreview');
-                if (preview) {
-                    preview.src = event.target.result;
-                    preview.style.display = 'block';
-                    preview.style.maxWidth = '100%';
-                    preview.style.maxHeight = '200px';
-                    preview.style.objectFit = 'cover';
-                    preview.style.borderRadius = '8px';
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'fotoObraPreview';
+                    preview.style.cssText = 'display:block;max-width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;';
+                    event.target.parentElement.appendChild(preview);
                 }
+                
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                s.mostrarToast('📸 Foto carregada!', 'sucesso');
+            };
+            reader.onerror = function() {
+                s.mostrarToast('❌ Erro ao carregar imagem', 'erro');
             };
             reader.readAsDataURL(arquivo);
         });
+        console.log('✅ Input de foto configurado');
     }
 };
 
@@ -576,9 +581,7 @@ App.prototype.abrirTelaPublicacao = function(vagaData) {
     s.mostrarTela('publicarVagaScreen');
 };
 
-App.prototype.previewFotoObra = function(e) {
-    console.log('📸 Preview foto');
-};
+App.prototype.previewFotoObra = function(e) {};
 
 App.prototype.buscarLocalizacao = function() {
     var s = this;
@@ -593,34 +596,31 @@ App.prototype.buscarLocalizacao = function() {
     s.mostrarToast('🔍 Buscando localização...', 'info');
     
     fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(endereco) + '&limit=1')
-        .then(function(response) { return response.json(); })
+        .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data && data.length > 0) {
-                s.vagaLocalizacaoAtual = {
-                    lat: parseFloat(data[0].lat),
-                    lng: parseFloat(data[0].lon)
-                };
+                s.vagaLocalizacaoAtual = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
                 s.mostrarToast('✅ Localização encontrada!', 'sucesso');
             } else {
-                var hash = 0;
-                for (var i = 0; i < endereco.length; i++) {
-                    hash = ((hash << 5) - hash) + endereco.charCodeAt(i);
-                    hash |= 0;
-                }
-                s.vagaLocalizacaoAtual = {
-                    lat: -23.5505 + (Math.abs(hash) % 1000) / 10000,
-                    lng: -46.6333 + ((Math.abs(hash) * 2) % 1000) / 10000
-                };
-                s.mostrarToast('⚠️ Localização aproximada', 'info');
+                s.gerarLocalizacaoAproximada(endereco);
             }
         })
         .catch(function() {
-            s.vagaLocalizacaoAtual = {
-                lat: -23.5505 + Math.random() * 0.1,
-                lng: -46.6333 + Math.random() * 0.1
-            };
-            s.mostrarToast('⚠️ Localização aproximada', 'info');
+            s.gerarLocalizacaoAproximada(endereco);
         });
+};
+
+App.prototype.gerarLocalizacaoAproximada = function(endereco) {
+    var hash = 0;
+    for (var i = 0; i < endereco.length; i++) {
+        hash = ((hash << 5) - hash) + endereco.charCodeAt(i);
+        hash |= 0;
+    }
+    this.vagaLocalizacaoAtual = {
+        lat: -23.5505 + (Math.abs(hash) % 1000) / 10000,
+        lng: -46.6333 + ((Math.abs(hash) * 2) % 1000) / 10000
+    };
+    this.mostrarToast('⚠️ Localização aproximada', 'info');
 };
 
 App.prototype.publicarVagaApp = function() {
@@ -661,15 +661,7 @@ App.prototype.publicarVagaApp = function() {
     if (!valorHora) { s.mostrarToast('❌ Digite o valor!', 'erro'); valorEl.focus(); return; }
     
     if (!s.vagaLocalizacaoAtual) {
-        var hash = 0;
-        for (var i = 0; i < endereco.length; i++) {
-            hash = ((hash << 5) - hash) + endereco.charCodeAt(i);
-            hash |= 0;
-        }
-        s.vagaLocalizacaoAtual = {
-            lat: -23.5505 + (Math.abs(hash) % 1000) / 10000,
-            lng: -46.6333 + ((Math.abs(hash) * 2) % 1000) / 10000
-        };
+        s.gerarLocalizacaoAproximada(endereco);
     }
     
     var vaga = {
@@ -695,8 +687,8 @@ App.prototype.publicarVagaApp = function() {
         console.log('✅ Salvo no localStorage. Total:', vagasSalvas.length);
         
         if (typeof db !== 'undefined') {
-            db.collection('vagas').add(vaga).then(function(docRef) {
-                console.log('✅ Salvo no Firestore:', docRef.id);
+            db.collection('vagas').add(vaga).then(function() {
+                console.log('✅ Salvo no Firestore');
             }).catch(function(err) {
                 console.error('❌ Erro Firestore:', err);
             });
@@ -720,9 +712,7 @@ App.prototype.publicarVagaApp = function() {
         s.mostrarToast('✅ Vaga publicada com sucesso!', 'sucesso');
         console.log('🎉 PUBLICAÇÃO CONCLUÍDA!');
         
-        setTimeout(function() {
-            s.mostrarTela('homeScreen');
-        }, 500);
+        setTimeout(function() { s.mostrarTela('homeScreen'); }, 500);
         
     } catch (error) {
         console.error('❌ ERRO:', error);
@@ -730,7 +720,7 @@ App.prototype.publicarVagaApp = function() {
     }
 };
 
-// ===== PERFIL =====
+// ===== PERFIL PROFISSIONAL =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
     console.log('👤 CARREGANDO PERFIL...');
@@ -738,113 +728,102 @@ App.prototype.carregarMeuPerfil = function() {
     if (!s.usuarioLogado) {
         var userSalvo = localStorage.getItem('usuarioLPX');
         if (userSalvo) {
-            s.usuarioLogado = JSON.parse(userSalvo);
-            console.log('✅ Usuário recuperado do localStorage');
+            try {
+                s.usuarioLogado = JSON.parse(userSalvo);
+            } catch(e) {
+                console.error('❌ Erro ao carregar dados salvos');
+                return;
+            }
         } else {
             console.error('❌ Nenhum usuário encontrado');
             return;
         }
     }
     
-    console.log('📊 Dados:', s.usuarioLogado);
+    var user = s.usuarioLogado;
+    console.log('📊 Dados do usuário:', user);
     
-    var nomeEl = document.getElementById('perfilNome');
-    var profEl = document.getElementById('perfilProfissao');
-    var emailEl = document.getElementById('perfilEmail');
-    var celEl = document.getElementById('perfilCelular');
-    var scoreEl = document.getElementById('perfilScore');
-    
-    if (nomeEl) {
-        nomeEl.textContent = s.usuarioLogado.nome || 'Usuário';
-        console.log('✅ Nome:', nomeEl.textContent);
+    var telaPerfil = document.getElementById('meuPerfilScreen');
+    if (!telaPerfil) {
+        console.error('❌ Tela meuPerfilScreen não encontrada');
+        return;
     }
     
-    if (profEl) {
-        profEl.textContent = (s.usuarioLogado.profissao || 'Profissional') + ' • ' + (s.usuarioLogado.experiencia || '0') + ' anos';
-        console.log('✅ Profissão:', profEl.textContent);
+    var score = user.score || 0;
+    var estrelas = '';
+    for (var i = 0; i < 5; i++) {
+        estrelas += i < Math.round(score) ? '⭐' : '☆';
     }
     
-    if (emailEl) {
-        emailEl.textContent = '📧 ' + (s.usuarioLogado.email || 'Não informado');
-    }
+    var html = '';
     
-    if (celEl) {
-        celEl.textContent = '📱 ' + (s.usuarioLogado.celular || 'Não informado');
-    }
+    // CAPA
+    html += '<div class="profile-header-container" style="position:relative;">';
+    html += '<div class="profile-cover" style="background:linear-gradient(135deg, #1A3A5C 0%, #2d5a7b 50%, #1A3A5C 100%);height:180px;border-radius:0 0 30px 30px;position:relative;"></div>';
     
-    if (scoreEl) {
-        var score = s.usuarioLogado.score || 0;
-        var estrelas = '';
-        for (var i = 0; i < Math.round(score); i++) estrelas += '⭐';
-        scoreEl.textContent = estrelas + ' ' + score;
-        console.log('✅ Score:', score);
+    // AVATAR
+    html += '<div class="profile-avatar-container" style="position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);">';
+    html += '<div class="profile-avatar" style="width:100px;height:100px;background:white;border-radius:50%;border:4px solid #f0c27f;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(0,0,0,0.2);">';
+    if (user.fotoPerfil) {
+        html += '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\'">';
+    } else {
+        html += '<i class="fas fa-user" style="font-size:40px;color:#1A3A5C;"></i>';
     }
+    html += '</div></div>';
+    html += '</div>';
     
-    var fotoEl = document.getElementById('perfilFoto');
-    var iconEl = document.getElementById('perfilIcon');
-    if (fotoEl) {
-        if (s.usuarioLogado.fotoPerfil) {
-            fotoEl.src = s.usuarioLogado.fotoPerfil;
-            fotoEl.style.display = 'block';
-            if (iconEl) iconEl.style.display = 'none';
-        } else {
-            fotoEl.style.display = 'none';
-            if (iconEl) iconEl.style.display = 'block';
-        }
-    }
+    // INFORMAÇÕES
+    html += '<div class="profile-info-card" style="background:white;margin:60px 15px 15px 15px;border-radius:15px;padding:20px;box-shadow:0 2px 15px rgba(0,0,0,0.1);text-align:center;">';
+    html += '<h2 id="perfilNome" style="color:#1A3A5C;font-size:22px;font-weight:bold;margin:10px 0 5px 0;">' + (user.nome || 'Usuário') + '</h2>';
+    html += '<p id="perfilProfissao" style="color:#666;font-size:14px;margin:5px 0;">' + (user.profissao || 'Profissional') + ' • ' + (user.experiencia || '0') + ' anos de experiência</p>';
+    html += '<div id="perfilScore" style="color:#f59e0b;font-size:20px;margin:10px 0;">' + estrelas + ' <span style="color:#666;font-size:14px;">' + score + '</span></div>';
+    html += '</div>';
+    
+    // CONTATO
+    html += '<div class="card" style="background:white;margin:0 15px 15px 15px;border-radius:15px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);">';
+    html += '<h3 style="color:#1A3A5C;margin:0 0 15px 0;font-size:16px;"><i class="fas fa-address-card"></i> Informações de Contato</h3>';
+    
+    html += '<div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid #f0f0f0;">';
+    html += '<div style="width:40px;height:40px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;"><i class="fas fa-envelope" style="color:#1A3A5C;font-size:16px;"></i></div>';
+    html += '<div><div style="color:#999;font-size:11px;">Email</div><div id="perfilEmail" style="color:#333;font-size:14px;">' + (user.email || 'Não informado') + '</div></div></div>';
+    
+    html += '<div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid #f0f0f0;">';
+    html += '<div style="width:40px;height:40px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;"><i class="fas fa-phone" style="color:#1A3A5C;font-size:16px;"></i></div>';
+    html += '<div><div style="color:#999;font-size:11px;">Celular</div><div id="perfilCelular" style="color:#333;font-size:14px;">' + (user.celular || 'Não informado') + '</div></div></div>';
+    
+    html += '<div style="display:flex;align-items:center;padding:12px 0;">';
+    html += '<div style="width:40px;height:40px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;"><i class="fas fa-building" style="color:#1A3A5C;font-size:16px;"></i></div>';
+    html += '<div><div style="color:#999;font-size:11px;">Tipo de Conta</div><div style="color:#333;font-size:14px;">' + (user.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional') + '</div></div></div>';
+    html += '</div>';
+    
+    // ESTATÍSTICAS
+    html += '<div style="display:flex;gap:10px;margin:0 15px 15px 15px;">';
+    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);"><div style="font-size:24px;color:#1A3A5C;font-weight:bold;">' + (user.experiencia || '0') + '</div><div style="color:#999;font-size:11px;">Anos Exp.</div></div>';
+    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);"><div style="font-size:24px;color:#f59e0b;font-weight:bold;">' + score + '</div><div style="color:#999;font-size:11px;">Avaliação</div></div>';
+    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);"><div style="font-size:24px;color:#10B981;font-weight:bold;">0</div><div style="color:#999;font-size:11px;">Obras</div></div>';
+    html += '</div>';
+    
+    // BOTÕES
+    html += '<div style="padding:0 15px 20px 15px;">';
+    html += '<button onclick="window.app.abrirEditarPerfil()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-size:15px;font-weight:bold;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-edit"></i> Editar Perfil</button>';
+    html += '<button onclick="window.app.sair()" style="width:100%;background:white;color:#EF4444;border:2px solid #EF4444;padding:15px;border-radius:10px;font-size:15px;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-sign-out-alt"></i> Sair</button>';
+    html += '</div>';
+    
+    telaPerfil.innerHTML = html;
     
     var loadingEl = document.getElementById('perfilLoading');
     if (loadingEl) loadingEl.style.display = 'none';
     
-    // SE NÃO ENCONTROU ELEMENTOS, CRIA A TELA
-    if (!nomeEl && !profEl && !emailEl && !celEl) {
-        console.warn('⚠️ Criando tela de perfil');
-        var tela = document.getElementById('meuPerfilScreen');
-        if (tela) {
-            var u = s.usuarioLogado;
-            var estrelas = '';
-            for (var i = 0; i < Math.round(u.score || 0); i++) estrelas += '⭐';
-            
-            tela.innerHTML = `
-                <div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:40px 20px;text-align:center;border-radius:0 0 30px 30px;">
-                    <div style="width:100px;height:100px;background:white;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:50px;overflow:hidden;">
-                        ${u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷'}
-                    </div>
-                    <h1 style="margin:10px 0;font-size:24px;">${u.nome}</h1>
-                    <p style="font-size:16px;color:#f0c27f;">${u.profissao || 'Profissional'} • ${u.experiencia || '0'} anos</p>
-                    <p style="font-size:20px;margin-top:5px;">${estrelas} ${u.score || '0'}</p>
-                </div>
-                <div style="padding:20px;">
-                    <div style="background:white;border-radius:15px;padding:20px;margin-bottom:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                        <div style="display:flex;align-items:center;padding:15px 0;border-bottom:1px solid #eee;">
-                            <span style="font-size:24px;margin-right:15px;">📧</span>
-                            <div><div style="color:#999;font-size:12px;">Email</div><div style="font-size:16px;">${u.email || 'Não informado'}</div></div>
-                        </div>
-                        <div style="display:flex;align-items:center;padding:15px 0;border-bottom:1px solid #eee;">
-                            <span style="font-size:24px;margin-right:15px;">📱</span>
-                            <div><div style="color:#999;font-size:12px;">Celular</div><div style="font-size:16px;">${u.celular || 'Não informado'}</div></div>
-                        </div>
-                        <div style="display:flex;align-items:center;padding:15px 0;">
-                            <span style="font-size:24px;margin-right:15px;">🏢</span>
-                            <div><div style="color:#999;font-size:12px;">Tipo de Conta</div><div style="font-size:16px;">${u.tipo === 'empreiteiro' ? 'Empreiteiro' : 'Profissional'}</div></div>
-                        </div>
-                    </div>
-                    <button onclick="window.app.abrirEditarPerfil()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-size:16px;margin-bottom:10px;">✏️ Editar Perfil</button>
-                    <button onclick="window.app.sair()" style="width:100%;background:#EF4444;color:white;border:none;padding:15px;border-radius:10px;font-size:16px;">🚪 Sair</button>
-                </div>
-            `;
-            console.log('✅ Tela de perfil criada!');
-        }
-    }
-    
-    console.log('✅ PERFIL CARREGADO!');
+    console.log('✅ Perfil profissional carregado!');
+    console.log('👤 Nome:', user.nome);
+    console.log('🔧 Profissão:', user.profissao);
+    console.log('⭐ Score:', user.score);
 };
 
 App.prototype.verPerfil = function(uid) { 
     var s=this;
     var c=document.getElementById('perfilPublicoConteudo');
     if(!c)return;
-    
     c.innerHTML = '<div class="loading">Carregando...</div>';
     
     if (typeof db !== 'undefined') {
@@ -863,9 +842,7 @@ App.prototype.verPerfil = function(uid) {
             c.innerHTML=html;
         });
     } else {
-        setTimeout(function() {
-            c.innerHTML = '<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar"><i class="fas fa-user"></i></div></div></div><div class="profile-info-card"><h2>Profissional</h2><p>Construtor • 5 anos</p><div>⭐⭐⭐⭐⭐</div></div>';
-        }, 500);
+        c.innerHTML = '<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar"><i class="fas fa-user"></i></div></div></div><div class="profile-info-card"><h2>Profissional</h2><p>Construtor • 5 anos</p><div>⭐⭐⭐⭐⭐</div></div>';
     }
 };
 
@@ -873,7 +850,6 @@ App.prototype.verPerfil = function(uid) {
 App.prototype.buscarProfissionais = function() {
     var s=this,c=document.getElementById('buscaResultados');
     if(!c)return;
-    
     c.innerHTML='<div class="loading">Buscando...</div>';
     
     var carregar = function() {
@@ -936,17 +912,8 @@ App.prototype.carregarRede = function() {
     }
 };
 
-App.prototype.adicionarNaRede = function(aid) { 
-    var s=this; 
-    if(!s.usuarioLogado||s.usuarioLogado.id===aid)return; 
-    s.mostrarToast('✅ Adicionado!','sucesso');
-};
-
-App.prototype.removerDaRede = function(aid) { 
-    var s=this; 
-    if(!confirm('Remover?'))return; 
-    s.mostrarToast('Removido','sucesso');
-};
+App.prototype.adicionarNaRede = function(aid) { this.mostrarToast('✅ Adicionado!','sucesso'); };
+App.prototype.removerDaRede = function(aid) { if(!confirm('Remover?'))return; this.mostrarToast('Removido','sucesso'); };
 
 // ===== OUTRAS FUNÇÕES =====
 App.prototype.verDetalheObra = function(oid) { this.mostrarToast('🔍 Visualizando detalhes...', 'info'); };
