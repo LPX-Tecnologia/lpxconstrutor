@@ -98,7 +98,7 @@
 
     <!-- BUSCA -->
     <div class="screen" id="buscaScreen">
-        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Buscar</h2></div>
+        <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Buscar Profissionais</h2></div>
         <div class="search-container"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="buscaInput" placeholder="Nome ou profissão..." oninput="window.app.buscarProfissionais()"></div>
         <div id="buscaResultados" class="feed-container"></div>
     </div>
@@ -117,10 +117,10 @@
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
             <div class="menu-item" onclick="window.app.abrirEditarPerfil()"><i class="fas fa-user-edit"></i> Editar Perfil<i class="fas fa-chevron-right menu-arrow"></i></div>
-            <div class="menu-item" onclick="window.app.mostrarTela('termosScreen')"><i class="fas fa-file-contract"></i> Termos<i class="fas fa-chevron-right menu-arrow"></i></div>
+            <div class="menu-item" onclick="window.app.mostrarTela('termosScreen')"><i class="fas fa-file-contract"></i> Termos de Uso<i class="fas fa-chevron-right menu-arrow"></i></div>
             <div class="menu-item" onclick="window.app.mostrarInfoVersao()"><i class="fas fa-code-branch"></i> Versão 1.0.0</div>
-            <div class="menu-item" onclick="window.app.selecionarTema(document.body.classList.contains('dark-theme')?'claro':'escuro')"><i class="fas fa-palette"></i> Tema</div>
-            <div class="menu-item" onclick="window.app.verMinhasAvaliacoes()"><i class="fas fa-star"></i> Avaliações</div>
+            <div class="menu-item" onclick="window.app.selecionarTema(document.body.classList.contains('dark-theme')?'claro':'escuro')"><i class="fas fa-palette"></i> Alterar Tema</div>
+            <div class="menu-item" onclick="window.app.verMinhasAvaliacoes()"><i class="fas fa-star"></i> Minhas Avaliações</div>
             <div class="menu-item" onclick="window.app.mostrarTela('excluirContaScreen')"><i class="fas fa-trash-alt" style="color:#EF4444;"></i> Excluir Conta</div>
         </div>
         <button class="btn btn-danger" onclick="window.app.sair()" style="margin-top:8px;">SAIR</button>
@@ -133,16 +133,24 @@
         <div class="chat-input-container"><input type="text" class="chat-input" id="chatInput" placeholder="Mensagem..."><button class="btn-send" onclick="window.app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button></div>
     </div>
 
-    <!-- PUBLICAR VAGA -->
+    <!-- PUBLICAR VAGA (COM FOTO) -->
     <div class="screen" id="publicarVagaScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Publicar Vaga</h2></div>
         <div class="card">
+            <div class="input-group" style="text-align:center;">
+                <label><i class="fas fa-camera"></i> Foto da Obra</label>
+                <div class="foto-obra-container" onclick="document.getElementById('vagaFoto').click()">
+                    <img id="vagaFotoPreview" src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:200px;object-fit:cover;border-radius:12px;">
+                    <div class="foto-obra-overlay"><i class="fas fa-camera"></i> Adicionar Foto</div>
+                </div>
+                <input type="file" id="vagaFoto" accept="image/*" style="display:none;" onchange="window.app.previewFotoObra(event)">
+            </div>
             <div class="input-group"><label>Título</label><input type="text" class="input-field" id="vagaTitulo"></div>
             <div class="input-group"><label>Descrição</label><textarea class="input-field" id="vagaDescricao" rows="4"></textarea></div>
             <div class="input-group"><label>Endereço</label><input type="text" class="input-field" id="vagaEndereco"></div>
             <div class="input-group"><label>Profissões</label><div class="profissoes-checkboxes" id="profissoesCheckboxes"><label class="checkbox-item"><input type="checkbox" value="servente"> Servente</label><label class="checkbox-item"><input type="checkbox" value="pedreiro"> Pedreiro</label><label class="checkbox-item"><input type="checkbox" value="carpinteiro"> Carpinteiro</label><label class="checkbox-item"><input type="checkbox" value="encanador"> Encanador</label><label class="checkbox-item"><input type="checkbox" value="eletricista"> Eletricista</label><label class="checkbox-item"><input type="checkbox" value="pintor"> Pintor</label><label class="checkbox-item"><input type="checkbox" value="gesseiro"> Gesseiro</label></div></div>
-            <div class="input-group"><label>Valor/Hora</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25"></div>
-            <button class="btn btn-primary" onclick="window.app.publicarVagaApp()">PUBLICAR</button>
+            <div class="input-group"><label>Valor/Hora (R$)</label><input type="number" class="input-field" id="vagaValorHora" placeholder="25"></div>
+            <button class="btn btn-primary" onclick="window.app.publicarVagaApp()"><i class="fas fa-check"></i> PUBLICAR</button>
         </div>
     </div>
 
@@ -169,13 +177,22 @@
     <div class="screen" id="editarPerfilScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Editar Perfil</h2></div><div class="card"><div class="input-group"><label>Nome</label><input type="text" class="input-field" id="editNome"></div><div class="input-group"><label>WhatsApp</label><input type="tel" class="input-field" id="editCelular"></div><div class="input-group"><label>Habilidades</label><textarea class="input-field" id="editHabilidades" rows="3"></textarea></div><button class="btn btn-primary" onclick="window.app.salvarPerfil()">SALVAR</button></div></div>
 
     <!-- TERMOS -->
-    <div class="screen" id="termosScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Termos</h2></div><div class="card"><p>Ao usar o LPXConstrutor você concorda com os termos.</p></div></div>
+    <div class="screen" id="termosScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Termos</h2></div><div class="card"><p>Ao usar o LPXConstrutor você concorda com os termos de uso.</p></div></div>
 
     <!-- EXCLUIR CONTA -->
     <div class="screen" id="excluirContaScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Excluir Conta</h2></div><div class="card"><div style="text-align:center;color:#EF4444;font-size:60px;">⚠️</div><p style="text-align:center;">Tem certeza que deseja excluir sua conta?</p><button class="btn btn-danger" onclick="window.app.confirmarExclusao()">🗑️ EXCLUIR</button></div></div>
 
     <!-- NOTIFICAÇÕES -->
     <div class="screen" id="notificacoesScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Notificações</h2></div><div id="notificacoesContainer"></div></div>
+
+    <!-- FAQ -->
+    <div class="screen" id="faqScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>FAQ</h2></div><div class="card"><h3>Como criar conta?</h3><p>Clique em "Criar Conta" na tela de login.</p><h3>É gratuito?</h3><p>Sim! 100% gratuito.</p></div></div>
+
+    <!-- IDIOMAS -->
+    <div class="screen" id="idiomasScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Idioma</h2></div><div class="card" style="padding:0;"><div class="menu-item" onclick="window.app.selecionarIdioma('pt')" style="background:#E0F2FE;">🇧🇷 Português</div><div class="menu-item" onclick="window.app.selecionarIdioma('es')">🇪🇸 Español</div><div class="menu-item" onclick="window.app.selecionarIdioma('en')">🇺🇸 English</div></div></div>
+
+    <!-- APARÊNCIA -->
+    <div class="screen" id="aparenciaScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Aparência</h2></div><div class="card" style="padding:0;"><div class="menu-item" onclick="window.app.selecionarTema('claro')">☀️ Modo Claro</div><div class="menu-item" onclick="window.app.selecionarTema('escuro')">🌙 Modo Escuro</div></div></div>
 
     <!-- MODAL SAIR -->
     <div class="modal-overlay" id="modalSair" style="display:none;" onclick="window.app.fecharModalSair()"><div class="modal-content" style="max-width:350px;text-align:center;" onclick="event.stopPropagation()"><div class="modal-body" style="padding:30px 20px;"><i class="fas fa-sign-out-alt" style="font-size:60px;color:#F47920;"></i><h3>Deseja sair?</h3><div style="display:flex;gap:10px;margin-top:24px;"><button class="btn btn-outline" onclick="window.app.fecharModalSair()" style="flex:1;">NÃO</button><button class="btn btn-danger" onclick="window.app.confirmarSair()" style="flex:1;">SIM</button></div></div></div></div>
