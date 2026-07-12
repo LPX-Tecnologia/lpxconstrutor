@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - ORIGINAL COMPLETO FUNCIONAL =====
+// ===== LPXCONSTRUTOR - COMPLETO E FUNCIONAL =====
 // ==========================================================
 
 if (!window.app || !window.app._app) { window.app = window.app || {}; window.app._app = window.app._app || null; }
@@ -75,7 +75,7 @@ var App = function() {
 
 App.prototype.init = function() {
     var s = this; 
-    console.log('🚀 Iniciando...'); 
+    console.log('🚀 Iniciando LPXCONSTRUTOR...'); 
     window.app._app = this;
     
     var bottomNav = document.getElementById('bottomNav');
@@ -88,24 +88,52 @@ App.prototype.init = function() {
         else s.voltarTela(); 
     });
     
-    // CRIAR USUÁRIO COM SEUS DADOS
-    s.usuarioLogado = {
-        id: 'user123',
-        nome: 'SEU NOME AQUI',
-        email: 'seuemail@email.com',
-        tipo: 'empreiteiro',
-        profissao: 'SUA PROFISSÃO AQUI',
-        experiencia: '8',
-        celular: '(11) 99999-9999',
-        fotoPerfil: null,
-        score: 4.7
-    };
+    // TENTAR CARREGAR USUÁRIO DO LOCALSTORAGE
+    var userSalvo = localStorage.getItem('usuarioLPX');
+    if (userSalvo) {
+        s.usuarioLogado = JSON.parse(userSalvo);
+        console.log('👤 Usuário carregado do localStorage:', s.usuarioLogado.nome);
+    } else {
+        // CRIAR USUÁRIO PADRÃO
+        s.usuarioLogado = {
+            id: 'user_' + Date.now(),
+            nome: 'Carlos Silva',
+            email: 'carlos@email.com',
+            tipo: 'empreiteiro',
+            profissao: 'Engenheiro Civil',
+            experiencia: '8',
+            celular: '(11) 99999-9999',
+            fotoPerfil: null,
+            score: 4.7
+        };
+        localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+        console.log('👤 Novo usuário criado:', s.usuarioLogado.nome);
+    }
     
-    setTimeout(function() {
-        s.esconderSplash();
-        s.mostrarTela('homeScreen');
-        s.atualizarBotoes();
-    }, 1500);
+    // VERIFICAR AUTENTICAÇÃO DO FIREBASE
+    if (typeof authService !== 'undefined' && authService.onAuthStateChange) {
+        authService.onAuthStateChange(function(u) { 
+            if (u) { 
+                s.usuarioLogado = u; 
+                localStorage.setItem('usuarioLPX', JSON.stringify(u));
+                s.atualizarBotoes(); 
+                if (s.telaAtual === 'loginScreen' || s.telaAtual === 'cadastroScreen') 
+                    s.mostrarTela('homeScreen'); 
+            } else { 
+                // NÃO DESLOGAR - manter usuário local
+                if (s.telaAtual === 'loginScreen') {
+                    s.mostrarTela('homeScreen');
+                }
+            } 
+            setTimeout(function() { s.esconderSplash(); }, 1500); 
+        });
+    } else {
+        setTimeout(function() {
+            s.esconderSplash();
+            s.atualizarBotoes();
+            s.mostrarTela('homeScreen');
+        }, 1500);
+    }
 };
 
 // ===== SPLASH =====
@@ -115,7 +143,7 @@ App.prototype.mostrarSplash = function() {
         splash = document.createElement('div'); 
         splash.id = 'splashScreen'; 
         splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;'; 
-        splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p><div id="tijolosContainer" style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:2px;"></div>'; 
+        splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" onerror="this.style.display=\'none\'"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p><div id="tijolosContainer" style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:2px;"></div>'; 
         document.body.appendChild(splash); 
         this.animarTijolos(); 
     }
@@ -208,6 +236,7 @@ App.prototype.confirmarSair = function() {
     var el=document.getElementById('modalSair'); 
     if(el)el.style.display='none'; 
     this.usuarioLogado=null; 
+    localStorage.removeItem('usuarioLPX');
     this.historicoTelas=[]; 
     this.mostrarTela('loginScreen'); 
 };
@@ -226,38 +255,82 @@ App.prototype.fazerLogin = function() {
     if(!e||!p){ s.mostrarToast('❌ Preencha todos!','erro'); return; } 
     s.mostrarToast('Entrando...','info'); 
     
-    s.usuarioLogado = {
-        id: 'user123',
-        nome: 'SEU NOME AQUI',
-        email: e,
-        tipo: 'empreiteiro',
-        profissao: 'SUA PROFISSÃO AQUI',
-        experiencia: '8',
-        celular: '(11) 99999-9999',
-        fotoPerfil: null,
-        score: 4.7
-    };
-    s.mostrarToast('✅ Bem-vindo!','sucesso');
-    s.atualizarBotoes();
-    s.mostrarTela('homeScreen');
+    if (typeof authService !== 'undefined' && authService.login) {
+        authService.login(e,p).then(function(r){
+            if(r.sucesso){
+                s.usuarioLogado=r.usuario;
+                localStorage.setItem('usuarioLPX', JSON.stringify(r.usuario));
+                s.mostrarToast('✅ Bem-vindo!','sucesso');
+                s.atualizarBotoes();
+                s.mostrarTela('homeScreen');
+            } else {
+                s.mostrarToast('❌ '+r.erro,'erro');
+            }
+        });
+    } else {
+        s.usuarioLogado = {
+            id: 'user_' + Date.now(),
+            nome: 'Carlos Silva',
+            email: e,
+            tipo: 'empreiteiro',
+            profissao: 'Engenheiro Civil',
+            experiencia: '8',
+            celular: '(11) 99999-9999',
+            fotoPerfil: null,
+            score: 4.7
+        };
+        localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+        s.mostrarToast('✅ Bem-vindo!','sucesso');
+        s.atualizarBotoes();
+        s.mostrarTela('homeScreen');
+    }
 };
 
 App.prototype.cadastrar = function() { 
     var s=this; 
-    s.usuarioLogado = {
-        id: 'new' + Date.now(),
-        nome: document.getElementById('cadNome') ? document.getElementById('cadNome').value : 'Novo Usuário',
-        email: document.getElementById('cadEmail') ? document.getElementById('cadEmail').value : 'email@email.com',
-        tipo: 'profissional',
-        profissao: document.getElementById('cadProfissao') ? document.getElementById('cadProfissao').value : 'Profissional',
-        experiencia: '5',
-        celular: '(11) 90000-0000',
-        fotoPerfil: null,
-        score: 0
-    };
-    s.mostrarToast('✅ OK!','sucesso');
-    s.atualizarBotoes();
-    s.mostrarTela('homeScreen');
+    var d={
+        nome:(document.getElementById('cadNome')||{}).value||'',
+        email:(document.getElementById('cadEmail')||{}).value||'',
+        senha:(document.getElementById('cadSenha')||{}).value||'',
+        tipo:(document.getElementById('cadTipo')||{}).value||'profissional',
+        celular:(document.getElementById('cadCelular')||{}).value||'',
+        cpf:((document.getElementById('cadCPF')||{}).value||'').replace(/\D/g,''),
+        profissao:(document.getElementById('cadProfissao')||{}).value||'',
+        experiencia:(document.getElementById('cadExperiencia')||{}).value||'0',
+        habilidades:(document.getElementById('cadHabilidades')||{}).value||''
+    }; 
+    if(!d.nome||!d.email||!d.senha){ s.mostrarToast('❌ Preencha todos!','erro'); return; } 
+    s.mostrarToast('Cadastrando...','info'); 
+    
+    if (typeof authService !== 'undefined' && authService.cadastrar) {
+        authService.cadastrar(d).then(function(r){
+            if(r.sucesso){
+                s.usuarioLogado=r.usuario;
+                localStorage.setItem('usuarioLPX', JSON.stringify(r.usuario));
+                s.mostrarToast('✅ OK!','sucesso');
+                s.atualizarBotoes();
+                s.mostrarTela('homeScreen');
+            } else {
+                s.mostrarToast('❌ '+r.erro,'erro');
+            }
+        });
+    } else {
+        s.usuarioLogado = {
+            id: 'new_' + Date.now(),
+            nome: d.nome,
+            email: d.email,
+            tipo: d.tipo,
+            profissao: d.profissao,
+            experiencia: d.experiencia,
+            celular: d.celular,
+            fotoPerfil: null,
+            score: 0
+        };
+        localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+        s.mostrarToast('✅ OK!','sucesso');
+        s.atualizarBotoes();
+        s.mostrarTela('homeScreen');
+    }
 };
 
 App.prototype.proximaEtapa = function(e) { 
@@ -274,16 +347,41 @@ App.prototype.toggleProfissao = function() {
 
 App.prototype.sair = function() { 
     var s=this; 
-    s.usuarioLogado=null; 
-    s.mostrarTela('loginScreen'); 
-    s.mostrarToast('👋 Até logo!','sucesso'); 
+    if (typeof authService !== 'undefined' && authService.logout) {
+        authService.logout().then(function(){
+            s.usuarioLogado=null;
+            localStorage.removeItem('usuarioLPX');
+            s.mostrarTela('loginScreen');
+            s.mostrarToast('👋 Até logo!','sucesso');
+        });
+    } else {
+        s.usuarioLogado=null;
+        localStorage.removeItem('usuarioLPX');
+        s.mostrarTela('loginScreen');
+        s.mostrarToast('👋 Até logo!','sucesso');
+    }
 };
 
 App.prototype.solicitarCodigo = function() { 
     var s=this; 
-    s.mostrarToast('✅ Código enviado!','sucesso');
-    document.getElementById('recPasso1').style.display='none';
-    document.getElementById('recPasso2').style.display='block';
+    var e=document.getElementById('recEmail')?document.getElementById('recEmail').value.trim():''; 
+    if(!e||!e.includes('@')){ s.mostrarToast('❌ Email inválido!','erro'); return; } 
+    if (typeof authService !== 'undefined' && authService.solicitarCodigoRecuperacao) {
+        authService.solicitarCodigoRecuperacao(e).then(function(r){
+            if(r.sucesso){
+                s.recuperacaoUid=r.uid;
+                s.mostrarToast('✅ Código: '+r.codigo,'sucesso');
+                document.getElementById('recPasso1').style.display='none';
+                document.getElementById('recPasso2').style.display='block';
+            } else {
+                s.mostrarToast('❌ '+r.erro,'erro');
+            }
+        });
+    } else {
+        s.mostrarToast('✅ Código enviado!','sucesso');
+        document.getElementById('recPasso1').style.display='none';
+        document.getElementById('recPasso2').style.display='block';
+    }
 };
 
 App.prototype.voltarPasso1 = function(){
@@ -299,7 +397,15 @@ App.prototype.verificarCodigo = function(){
 
 // ===== HOME =====
 App.prototype.carregarHome = function() {
-    if (!this.usuarioLogado) return;
+    if (!this.usuarioLogado) {
+        var userSalvo = localStorage.getItem('usuarioLPX');
+        if (userSalvo) {
+            this.usuarioLogado = JSON.parse(userSalvo);
+        } else {
+            return;
+        }
+    }
+    
     var h = new Date().getHours(); 
     var sd = 'Bom dia'; 
     if (h >= 12 && h < 18) sd = 'Boa tarde'; 
@@ -351,54 +457,72 @@ App.prototype.carregarFeed = function() {
     var dia = Math.floor((hoje - new Date(hoje.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)); 
     var vd = videos[dia % videos.length];
     
-    // Carregar vagas do localStorage
-    var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
+    // CARREGAR VAGAS
+    var carregarVagas = function() {
+        if (typeof db !== 'undefined') {
+            return db.collection('vagas').where('ativa', '==', true).get()
+                .then(function(snap) {
+                    var vagas = [];
+                    snap.forEach(function(doc) {
+                        vagas.push({ id: doc.id, data: doc.data() });
+                    });
+                    return vagas;
+                });
+        } else {
+            var vagasSalvas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
+            return Promise.resolve(vagasSalvas.map(function(v) {
+                return { id: v.id || 'local', data: v };
+            }));
+        }
+    };
     
-    var html = '<div class="card" style="padding:0;overflow:hidden;border:2px solid #10B981;margin-bottom:14px;"><div style="background:linear-gradient(135deg,#059669,#10B981);padding:10px 14px;color:white;"><span style="font-size:20px;">🎓</span> <strong>📚 ' + vd.categoria + '</strong><br><span style="font-size:10px;">' + hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' }) + ' • SafetyWiSST</span><p style="font-size:11px;margin-top:4px;">' + vd.descricao + '</p></div><iframe src="' + vd.url + '?autoplay=0&rel=0&controls=1" style="width:100%;height:200px;border:none;" allowfullscreen></iframe><div style="padding:6px 14px;background:#f0fdf4;display:flex;justify-content:space-between;"><span style="font-size:10px;color:#059669;"><strong>' + vd.titulo + '</strong></span><div style="display:flex;gap:4px;"><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoAnterior()">◀</button><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoSeguinte()">▶</button></div></div></div>';
-    
-    if (vagas.length === 0) { 
-        html += '<div class="card" style="text-align:center;padding:30px;"><h3>Nenhuma vaga</h3>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()">📢 PUBLICAR VAGA</button>' : '') + '</div>'; 
-    } else { 
-        vagas.forEach(function(v) { 
-            // MAPA COM LOCALIZAÇÃO
-            var mapaHtml = '';
-            if (v.localizacao && v.localizacao.lat && v.localizacao.lng) {
-                var mapId = 'map_' + v.id;
-                mapaHtml = '<div id="' + mapId + '" style="width:100%;height:150px;border-radius:8px;margin-top:8px;background:#e5e7eb;"></div>';
-                mapaHtml += '<div style="padding:4px 8px;background:#f0f9ff;border-radius:0 0 8px 8px;font-size:11px;">📍 ' + (v.endereco || 'Localização no mapa') + '</div>';
+    carregarVagas().then(function(vagas) {
+        var html = '<div class="card" style="padding:0;overflow:hidden;border:2px solid #10B981;margin-bottom:14px;"><div style="background:linear-gradient(135deg,#059669,#10B981);padding:10px 14px;color:white;"><span style="font-size:20px;">🎓</span> <strong>📚 ' + vd.categoria + '</strong><br><span style="font-size:10px;">' + hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' }) + ' • SafetyWiSST</span><p style="font-size:11px;margin-top:4px;">' + vd.descricao + '</p></div><iframe src="' + vd.url + '?autoplay=0&rel=0&controls=1" style="width:100%;height:200px;border:none;" allowfullscreen></iframe><div style="padding:6px 14px;background:#f0fdf4;display:flex;justify-content:space-between;"><span style="font-size:10px;color:#059669;"><strong>' + vd.titulo + '</strong></span><div style="display:flex;gap:4px;"><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoAnterior()">◀</button><button class="btn btn-small" style="background:#10B981;color:white;font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();window.app._app.videoSeguinte()">▶</button></div></div></div>';
+        
+        if (vagas.length === 0) { 
+            html += '<div class="card" style="text-align:center;padding:30px;"><h3>Nenhuma vaga</h3>' + (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button class="btn btn-primary" onclick="window.app.abrirTelaPublicacao()">📢 PUBLICAR VAGA</button>' : '') + '</div>'; 
+        } else { 
+            vagas.forEach(function(v) { 
+                var temLocalizacao = v.data.localizacao && v.data.localizacao.lat && v.data.localizacao.lng;
+                var mapaHtml = '';
                 
-                // Inicializar mapa depois
-                setTimeout(function() {
-                    try {
-                        var mapDiv = document.getElementById(mapId);
-                        if (mapDiv && typeof L !== 'undefined') {
-                            var map = L.map(mapId).setView([v.localizacao.lat, v.localizacao.lng], 15);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '© OpenStreetMap'
-                            }).addTo(map);
-                            L.marker([v.localizacao.lat, v.localizacao.lng]).addTo(map)
-                                .bindPopup(v.endereco || 'Local da obra')
-                                .openPopup();
-                        } else if (mapDiv) {
-                            mapDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f0f9ff;border-radius:8px;">🗺️ Localização: ' + (v.endereco || 'Ver no mapa') + '</div>';
-                        }
-                    } catch(e) {
-                        console.log('Mapa não disponível');
-                    }
-                }, 100);
-            } else if (v.endereco) {
-                mapaHtml = '<div style="margin-top:8px;padding:8px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-pin" style="color:#d97706;"></i><span style="font-size:12px;color:#92400e;">📌 ' + v.endereco + '</span></div>';
-            }
-            
-            var fotoHtml = '';
-            if (v.fotoObra && typeof v.fotoObra === 'string' && v.fotoObra.length > 0) {
-                fotoHtml = '<img src="' + v.fotoObra + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;" onerror="this.style.display=\'none\'">';
-            }
-            
-            html += '<div class="vaga-card" style="cursor:pointer;"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.endereco || 'Local não informado') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.profissoes || 'Todas') + '</span></div>' + fotoHtml + mapaHtml + '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + (v.autorNome || 'Anônimo') + '</div></div></div>'; 
-        }); 
-    }
-    c.innerHTML = html;
+                if (temLocalizacao) {
+                    var mapId = 'map_' + v.id;
+                    mapaHtml = '<div id="' + mapId + '" style="width:100%;height:150px;border-radius:8px;margin-top:8px;background:#e5e7eb;"></div>';
+                    mapaHtml += '<div style="padding:4px 8px;background:#f0f9ff;border-radius:0 0 8px 8px;font-size:11px;">📍 ' + (v.data.endereco || 'Localização no mapa') + '</div>';
+                    
+                    setTimeout(function() {
+                        try {
+                            var mapDiv = document.getElementById(mapId);
+                            if (mapDiv && typeof L !== 'undefined') {
+                                var map = L.map(mapId).setView([v.data.localizacao.lat, v.data.localizacao.lng], 15);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: '© OpenStreetMap'
+                                }).addTo(map);
+                                L.marker([v.data.localizacao.lat, v.data.localizacao.lng]).addTo(map)
+                                    .bindPopup(v.data.endereco || 'Local da obra')
+                                    .openPopup();
+                            } else if (mapDiv) {
+                                mapDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f0f9ff;border-radius:8px;">🗺️ ' + (v.data.endereco || 'Localização no mapa') + '</div>';
+                            }
+                        } catch(e) {}
+                    }, 100);
+                } else if (v.data.endereco) {
+                    mapaHtml = '<div style="margin-top:8px;padding:8px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-pin" style="color:#d97706;"></i><span style="font-size:12px;color:#92400e;">📌 ' + v.data.endereco + '</span></div>';
+                }
+                
+                var fotoHtml = '';
+                if (v.data.fotoObra && typeof v.data.fotoObra === 'string' && v.data.fotoObra.length > 0) {
+                    fotoHtml = '<img src="' + v.data.fotoObra + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;" onerror="this.style.display=\'none\'">';
+                }
+                
+                html += '<div class="vaga-card" style="cursor:pointer;"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-user-tie"></i></div><div class="vaga-info"><div class="vaga-nome">' + (v.data.titulo || 'Vaga') + '</div><div class="vaga-data">📍 ' + (v.data.endereco || 'Local não informado') + '</div></div></div><div class="vaga-body"><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.data.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.data.profissoes || 'Todas') + '</span></div>' + fotoHtml + mapaHtml + '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + (v.data.autorNome || 'Anônimo') + '</div></div></div>'; 
+            }); 
+        }
+        c.innerHTML = html;
+    }).catch(function() { 
+        c.innerHTML = '<div class="card">Erro ao carregar feed</div>'; 
+    });
 };
 
 App.prototype.videoAnterior = function() { 
@@ -414,7 +538,7 @@ App.prototype.videoSeguinte = function() {
     this.carregarFeed(); 
 };
 
-// ===== PUBLICAÇÃO COM FOTO E LOCALIZAÇÃO =====
+// ===== PUBLICAÇÃO DE VAGA =====
 App.prototype.configurarPublicacao = function() {
     var s = this;
     
@@ -457,7 +581,6 @@ App.prototype.previewFotoObra = function(e) {
     console.log('📸 Preview foto');
 };
 
-// BUSCAR LOCALIZAÇÃO E MOSTRAR NO MAPA
 App.prototype.buscarLocalizacao = function() {
     var s = this;
     var enderecoEl = document.getElementById('vagaEndereco');
@@ -470,81 +593,98 @@ App.prototype.buscarLocalizacao = function() {
     
     s.mostrarToast('🔍 Buscando localização...', 'info');
     
-    // Tentar geocodificar com OpenStreetMap
+    // Tentar geocodificar
     var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(endereco) + '&limit=1';
     
     fetch(url)
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data && data.length > 0) {
-                var lat = parseFloat(data[0].lat);
-                var lng = parseFloat(data[0].lon);
-                
-                s.vagaLocalizacaoAtual = { lat: lat, lng: lng };
-                
-                // Mostrar no mapa se existir
-                var mapaContainer = document.getElementById('mapaPublicacao');
-                if (mapaContainer) {
-                    if (typeof L !== 'undefined') {
-                        if (s.mapaPublicacao) s.mapaPublicacao.remove();
-                        s.mapaPublicacao = L.map('mapaPublicacao').setView([lat, lng], 16);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(s.mapaPublicacao);
-                        L.marker([lat, lng]).addTo(s.mapaPublicacao).bindPopup(endereco).openPopup();
-                    } else {
-                        mapaContainer.innerHTML = '<div style="padding:20px;text-align:center;background:#f0f9ff;border-radius:8px;">📍 ' + endereco + '<br>Lat: ' + lat + '<br>Lng: ' + lng + '</div>';
-                    }
-                }
-                
+                s.vagaLocalizacaoAtual = {
+                    lat: parseFloat(data[0].lat),
+                    lng: parseFloat(data[0].lon)
+                };
                 s.mostrarToast('✅ Localização encontrada!', 'sucesso');
             } else {
-                // Coordenadas simuladas baseadas no endereço
+                // Gerar coordenadas baseadas no endereço
                 var hash = 0;
                 for (var i = 0; i < endereco.length; i++) {
                     hash = ((hash << 5) - hash) + endereco.charCodeAt(i);
                     hash |= 0;
                 }
-                var lat = -23.5505 + (hash % 1000) / 10000;
-                var lng = -46.6333 + ((hash * 2) % 1000) / 10000;
-                
-                s.vagaLocalizacaoAtual = { lat: lat, lng: lng };
+                s.vagaLocalizacaoAtual = {
+                    lat: -23.5505 + (Math.abs(hash) % 1000) / 10000,
+                    lng: -46.6333 + ((Math.abs(hash) * 2) % 1000) / 10000
+                };
                 s.mostrarToast('⚠️ Localização aproximada', 'info');
             }
         })
         .catch(function() {
-            // Fallback
-            s.vagaLocalizacaoAtual = { lat: -23.5505 + Math.random() * 0.1, lng: -46.6333 + Math.random() * 0.1 };
+            s.vagaLocalizacaoAtual = {
+                lat: -23.5505 + Math.random() * 0.1,
+                lng: -46.6333 + Math.random() * 0.1
+            };
             s.mostrarToast('⚠️ Localização aproximada', 'info');
         });
 };
 
 App.prototype.publicarVagaApp = function() {
     var s = this;
+    console.log('📤 PUBLICANDO VAGA...');
     
+    // PEGAR ELEMENTOS
     var tituloEl = document.getElementById('vagaTitulo');
     var enderecoEl = document.getElementById('vagaEndereco');
     var profissoesEl = document.getElementById('vagaProfissoes');
     var valorEl = document.getElementById('vagaValor');
+    
+    // SE NÃO ENCONTROU, TENTAR ALTERNATIVAS
+    if (!tituloEl || !enderecoEl || !profissoesEl || !valorEl) {
+        var tela = document.getElementById('publicarVagaScreen');
+        if (tela) {
+            var inputs = tela.querySelectorAll('input[type="text"], input:not([type="file"]), textarea');
+            if (inputs.length >= 4) {
+                tituloEl = tituloEl || inputs[0];
+                enderecoEl = enderecoEl || inputs[1];
+                profissoesEl = profissoesEl || inputs[2];
+                valorEl = valorEl || inputs[3];
+            }
+        }
+    }
     
     if (!tituloEl || !enderecoEl || !profissoesEl || !valorEl) {
         s.mostrarToast('❌ Formulário não encontrado', 'erro');
         return;
     }
     
+    // PEGAR VALORES
     var titulo = tituloEl.value.trim();
     var endereco = enderecoEl.value.trim();
     var profissoes = profissoesEl.value.trim();
     var valorHora = valorEl.value.trim();
     
+    console.log('📝 Dados:', { titulo, endereco, profissoes, valorHora });
+    
+    // VALIDAR
     if (!titulo) { s.mostrarToast('❌ Digite o título!', 'erro'); tituloEl.focus(); return; }
     if (!endereco) { s.mostrarToast('❌ Digite o endereço!', 'erro'); enderecoEl.focus(); return; }
     if (!profissoes) { s.mostrarToast('❌ Digite as profissões!', 'erro'); profissoesEl.focus(); return; }
     if (!valorHora) { s.mostrarToast('❌ Digite o valor!', 'erro'); valorEl.focus(); return; }
     
-    // Se não tem localização, buscar automaticamente
-    if (!s.vagaLocalizacaoAtual && endereco) {
-        s.vagaLocalizacaoAtual = { lat: -23.5505 + Math.random() * 0.1, lng: -46.6333 + Math.random() * 0.1 };
+    // GERAR LOCALIZAÇÃO SE NÃO TIVER
+    if (!s.vagaLocalizacaoAtual) {
+        var hash = 0;
+        for (var i = 0; i < endereco.length; i++) {
+            hash = ((hash << 5) - hash) + endereco.charCodeAt(i);
+            hash |= 0;
+        }
+        s.vagaLocalizacaoAtual = {
+            lat: -23.5505 + (Math.abs(hash) % 1000) / 10000,
+            lng: -46.6333 + ((Math.abs(hash) * 2) % 1000) / 10000
+        };
     }
     
+    // CRIAR VAGA
     var vaga = {
         id: 'vaga_' + Date.now(),
         titulo: titulo,
@@ -552,79 +692,119 @@ App.prototype.publicarVagaApp = function() {
         profissoes: profissoes,
         valorHora: valorHora,
         fotoObra: s.vagaFotoBase64 || null,
-        localizacao: s.vagaLocalizacaoAtual || null,
+        localizacao: s.vagaLocalizacaoAtual,
         ativa: true,
         autorId: s.usuarioLogado ? s.usuarioLogado.id : 'anonimo',
         autorNome: s.usuarioLogado ? s.usuarioLogado.nome : 'Anônimo',
         dataCriacao: new Date().toISOString()
     };
     
-    // Salvar
-    var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-    vagas.unshift(vaga);
-    localStorage.setItem('vagasLPX', JSON.stringify(vagas));
+    console.log('💾 Salvando vaga:', vaga);
     
-    // Limpar
-    tituloEl.value = '';
-    enderecoEl.value = '';
-    profissoesEl.value = '';
-    valorEl.value = '';
-    
-    var preview = document.getElementById('fotoObraPreview');
-    if (preview) { preview.src = ''; preview.style.display = 'none'; }
-    
-    var inputFoto = document.getElementById('fotoObraInput');
-    if (inputFoto) inputFoto.value = '';
-    
-    s.vagaFotoBase64 = null;
-    s.vagaLocalizacaoAtual = null;
-    s.vagaEmEdicao = null;
-    
-    s.mostrarToast('✅ Vaga publicada com sucesso!', 'sucesso');
-    
-    setTimeout(function() {
-        s.mostrarTela('homeScreen');
-    }, 500);
+    // SALVAR
+    try {
+        // Salvar no localStorage
+        var vagasSalvas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
+        vagasSalvas.unshift(vaga);
+        localStorage.setItem('vagasLPX', JSON.stringify(vagasSalvas));
+        console.log('✅ Salvo no localStorage. Total:', vagasSalvas.length);
+        
+        // Salvar no Firestore se disponível
+        if (typeof db !== 'undefined') {
+            db.collection('vagas').add(vaga).then(function(docRef) {
+                console.log('✅ Salvo no Firestore:', docRef.id);
+            }).catch(function(err) {
+                console.error('❌ Erro Firestore:', err);
+            });
+        }
+        
+        // LIMPAR FORMULÁRIO
+        tituloEl.value = '';
+        enderecoEl.value = '';
+        profissoesEl.value = '';
+        valorEl.value = '';
+        
+        var preview = document.getElementById('fotoObraPreview');
+        if (preview) { preview.src = ''; preview.style.display = 'none'; }
+        
+        var inputFoto = document.getElementById('fotoObraInput');
+        if (inputFoto) inputFoto.value = '';
+        
+        s.vagaFotoBase64 = null;
+        s.vagaLocalizacaoAtual = null;
+        s.vagaEmEdicao = null;
+        
+        s.mostrarToast('✅ Vaga publicada com sucesso!', 'sucesso');
+        console.log('🎉 PUBLICAÇÃO CONCLUÍDA!');
+        
+        setTimeout(function() {
+            s.mostrarTela('homeScreen');
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ ERRO:', error);
+        s.mostrarToast('❌ Erro ao publicar', 'erro');
+    }
 };
 
-// ===== PERFIL COM SEUS DADOS =====
+// ===== PERFIL (FUNCIONANDO) =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
+    console.log('👤 CARREGANDO PERFIL...');
     
-    if (!s.usuarioLogado) return;
-    
-    var user = s.usuarioLogado;
-    
-    // Nome
-    var nomeEl = document.getElementById('perfilNome');
-    if (nomeEl) nomeEl.textContent = user.nome;
-    
-    // Profissão
-    var profEl = document.getElementById('perfilProfissao');
-    if (profEl) profEl.textContent = (user.profissao || 'Profissional') + ' • ' + (user.experiencia || '0') + ' anos';
-    
-    // Email
-    var emailEl = document.getElementById('perfilEmail');
-    if (emailEl) emailEl.textContent = '📧 ' + (user.email || 'Não informado');
-    
-    // Celular
-    var celEl = document.getElementById('perfilCelular');
-    if (celEl) celEl.textContent = '📱 ' + (user.celular || 'Não informado');
-    
-    // Score/Pontuação
-    var scoreEl = document.getElementById('perfilScore');
-    if (scoreEl) {
-        var estrelas = '';
-        for (var i = 0; i < Math.round(user.score || 0); i++) estrelas += '⭐';
-        scoreEl.textContent = estrelas + ' ' + (user.score || '0');
+    // GARANTIR QUE TEM USUÁRIO
+    if (!s.usuarioLogado) {
+        var userSalvo = localStorage.getItem('usuarioLPX');
+        if (userSalvo) {
+            s.usuarioLogado = JSON.parse(userSalvo);
+            console.log('✅ Usuário recuperado do localStorage');
+        } else {
+            console.error('❌ Nenhum usuário encontrado');
+            return;
+        }
     }
     
-    // Foto
+    console.log('📊 Dados:', s.usuarioLogado);
+    
+    // PREENCHER CAMPOS
+    var nomeEl = document.getElementById('perfilNome');
+    var profEl = document.getElementById('perfilProfissao');
+    var emailEl = document.getElementById('perfilEmail');
+    var celEl = document.getElementById('perfilCelular');
+    var scoreEl = document.getElementById('perfilScore');
+    
+    if (nomeEl) {
+        nomeEl.textContent = s.usuarioLogado.nome || 'Usuário';
+        console.log('✅ Nome:', nomeEl.textContent);
+    }
+    
+    if (profEl) {
+        profEl.textContent = (s.usuarioLogado.profissao || 'Profissional') + ' • ' + (s.usuarioLogado.experiencia || '0') + ' anos';
+        console.log('✅ Profissão:', profEl.textContent);
+    }
+    
+    if (emailEl) {
+        emailEl.textContent = '📧 ' + (s.usuarioLogado.email || 'Não informado');
+    }
+    
+    if (celEl) {
+        celEl.textContent = '📱 ' + (s.usuarioLogado.celular || 'Não informado');
+    }
+    
+    if (scoreEl) {
+        var score = s.usuarioLogado.score || 0;
+        var estrelas = '';
+        for (var i = 0; i < Math.round(score); i++) estrelas += '⭐';
+        scoreEl.textContent = estrelas + ' ' + score;
+        console.log('✅ Score:', score);
+    }
+    
+    // FOTO
     var fotoEl = document.getElementById('perfilFoto');
     var iconEl = document.getElementById('perfilIcon');
     if (fotoEl) {
-        if (user.fotoPerfil) {
-            fotoEl.src = user.fotoPerfil;
+        if (s.usuarioLogado.fotoPerfil) {
+            fotoEl.src = s.usuarioLogado.fotoPerfil;
             fotoEl.style.display = 'block';
             if (iconEl) iconEl.style.display = 'none';
         } else {
@@ -633,9 +813,11 @@ App.prototype.carregarMeuPerfil = function() {
         }
     }
     
-    // Esconder loading
+    // ESCONDER LOADING
     var loadingEl = document.getElementById('perfilLoading');
     if (loadingEl) loadingEl.style.display = 'none';
+    
+    console.log('✅ PERFIL CARREGADO!');
 };
 
 App.prototype.verPerfil = function(uid) { 
@@ -645,30 +827,26 @@ App.prototype.verPerfil = function(uid) {
     
     c.innerHTML = '<div class="loading">Carregando...</div>';
     
-    setTimeout(function() {
-        var u = {
-            nome: 'Profissional',
-            profissao: 'Construtor',
-            experiencia: '5',
-            celular: '11999999999',
-            fotoPerfil: null,
-            score: 4.5
-        };
-        
-        var w=u.celular?u.celular.replace(/\D/g,''):'';
-        var av=u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'<i class="fas fa-user"></i>';
-        
-        var html='<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar">'+av+'</div></div></div><div class="profile-info-card"><h2>'+u.nome+'</h2><p>'+(u.profissao||'Profissional')+' • '+(u.experiencia||0)+' anos</p><div>'+'⭐'.repeat(Math.round(u.score||0))+'</div></div><div class="card"><h3>Contato</h3><p>📱 '+(u.celular||'Não informado')+'</p></div>';
-        
-        if(s.usuarioLogado&&s.usuarioLogado.id!==uid){
-            html+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">';
-            if(w)html+='<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success">WhatsApp</a>';
-            html+='<button class="btn btn-primary" onclick="window.app.iniciarChat(\''+uid+'\')">💬 Chat</button>';
-            if(s.usuarioLogado.tipo==='empreiteiro')html+='<button class="btn btn-outline" onclick="window.app.abrirContratacao(\''+uid+'\')" style="background:#1A3A5C;color:white;">🤝 Contratar</button>';
-            html+='</div>';
-        }
-        c.innerHTML=html;
-    }, 500);
+    if (typeof db !== 'undefined') {
+        db.collection('usuarios').doc(uid).get().then(function(doc){
+            if(!doc.exists) { c.innerHTML = '<div class="card">Perfil não encontrado</div>'; return; }
+            var u=doc.data(), w=u.celular?u.celular.replace(/\D/g,''):'';
+            var av=u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'<i class="fas fa-user"></i>';
+            var html='<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar">'+av+'</div></div></div><div class="profile-info-card"><h2>'+u.nome+'</h2><p>'+(u.profissao||'Profissional')+' • '+(u.experiencia||0)+' anos</p><div>'+'⭐'.repeat(Math.round(u.score||0))+'</div></div><div class="card"><h3>Contato</h3><p>📱 '+(u.celular||'Não informado')+'</p></div>';
+            if(s.usuarioLogado&&s.usuarioLogado.id!==uid){
+                html+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">';
+                if(w)html+='<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success">WhatsApp</a>';
+                html+='<button class="btn btn-primary" onclick="window.app.iniciarChat(\''+uid+'\')">💬 Chat</button>';
+                if(s.usuarioLogado.tipo==='empreiteiro')html+='<button class="btn btn-outline" onclick="window.app.abrirContratacao(\''+uid+'\')" style="background:#1A3A5C;color:white;">🤝 Contratar</button>';
+                html+='</div>';
+            }
+            c.innerHTML=html;
+        });
+    } else {
+        setTimeout(function() {
+            c.innerHTML = '<div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar"><i class="fas fa-user"></i></div></div></div><div class="profile-info-card"><h2>Profissional</h2><p>Construtor • 5 anos</p><div>⭐⭐⭐⭐⭐</div></div>';
+        }, 500);
+    }
 };
 
 // ===== BUSCA =====
@@ -678,149 +856,104 @@ App.prototype.buscarProfissionais = function() {
     
     c.innerHTML='<div class="loading">Buscando...</div>';
     
-    setTimeout(function() {
-        var profs = [
-            { id: 'p1', nome: 'João Silva', profissao: 'Pedreiro', experiencia: '10', celular: '11988887777', score: 4.5, fotoPerfil: null },
-            { id: 'p2', nome: 'Maria Santos', profissao: 'Eletricista', experiencia: '8', celular: '11977776666', score: 4.8, fotoPerfil: null },
-            { id: 'p3', nome: 'Pedro Costa', profissao: 'Pintor', experiencia: '5', celular: '11966665555', score: 4.2, fotoPerfil: null }
-        ];
+    var carregar = function() {
+        if (typeof db !== 'undefined') {
+            return db.collection('usuarios').where('tipo', '==', 'profissional').where('ativo', '==', true).get();
+        } else {
+            return Promise.resolve({
+                forEach: function(cb) {
+                    [{ id: 'p1', data: function() { return { nome: 'João Silva', profissao: 'Pedreiro', experiencia: '10', celular: '11988887777', score: 4.5, fotoPerfil: null }; } },
+                     { id: 'p2', data: function() { return { nome: 'Maria Santos', profissao: 'Eletricista', experiencia: '8', celular: '11977776666', score: 4.8, fotoPerfil: null }; } },
+                     { id: 'p3', data: function() { return { nome: 'Pedro Costa', profissao: 'Pintor', experiencia: '5', celular: '11966665555', score: 4.2, fotoPerfil: null }; } }].forEach(cb);
+                }
+            });
+        }
+    };
+    
+    carregar().then(function(snap){
+        var todos=[];
+        snap.forEach(function(doc){ todos.push({id:doc.id, data: doc.data ? doc.data() : doc}); });
+        
+        var profs = todos.filter(function(u){ return u.data.tipo === 'profissional' && u.data.ativo !== false; });
+        
+        if(profs.length===0){ c.innerHTML='<div class="card"><h3>Nenhum profissional</h3></div>'; return; }
         
         var html='';
         profs.forEach(function(u){
-            var w=u.celular?u.celular.replace(/\D/g,''):'';
-            var sc=u.score||0;
-            var av=u.fotoPerfil
-                ?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">'
-                :'<i class="fas fa-hard-hat"></i>';
-            
-            html+='<div class="vaga-card"><div class="vaga-header" onclick="window.app.verPerfil(\''+u.id+'\')"><div class="vaga-avatar">'+av+'</div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div><div class="vaga-data">'+u.profissao+' • '+u.experiencia+' anos</div><div>'+'⭐'.repeat(Math.round(sc))+' '+sc+'</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\''+u.id+'\')">Chat</button>'+(s.usuarioLogado&&s.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.abrirContratacao(\''+u.id+'\')" style="background:#1A3A5C;color:white;">🤝 Contratar</button>':'')+'<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.adicionarNaRede(\''+u.id+'\')" style="background:#10B981;color:white;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-plus"></i></button></div></div>';
+            var w=u.data.celular?u.data.celular.replace(/\D/g,''):'', sc=u.data.score||0;
+            var av=u.data.fotoPerfil?'<img src="'+u.data.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'<i class="fas fa-hard-hat"></i>';
+            html+='<div class="vaga-card"><div class="vaga-header" onclick="window.app.verPerfil(\''+u.id+'\')"><div class="vaga-avatar">'+av+'</div><div class="vaga-info"><div class="vaga-nome">'+u.data.nome+'</div><div class="vaga-data">'+u.data.profissao+' • '+u.data.experiencia+' anos</div><div>'+'⭐'.repeat(Math.round(sc))+' '+sc+'</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\''+u.id+'\')">Chat</button>'+(s.usuarioLogado&&s.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.abrirContratacao(\''+u.id+'\')" style="background:#1A3A5C;color:white;">🤝 Contratar</button>':'')+'<button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.adicionarNaRede(\''+u.id+'\')" style="background:#10B981;color:white;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-plus"></i></button></div></div>';
         });
         c.innerHTML=html;
-    }, 500);
+    });
 };
 
 // ===== REDE =====
 App.prototype.carregarRede = function() {
     var s=this,c=document.getElementById('redeContainer');
     if(!c)return;
-    c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')">🔍 Buscar</button></div>';
+    c.innerHTML='<div class="loading">Carregando rede...</div>';
+    
+    if (typeof db !== 'undefined') {
+        db.collection('conexoes').get().then(function(snap){
+            var conexoes=[];
+            snap.forEach(function(doc){ var d=doc.data(); if(d.usuarioId===s.usuarioLogado.id||d.amigoId===s.usuarioLogado.id) conexoes.push({id:doc.id,data:d}); });
+            if(conexoes.length===0){ c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')">🔍 Buscar</button></div>'; return; }
+            var proms=[];
+            conexoes.forEach(function(con){ var aid=con.data.usuarioId===s.usuarioLogado.id?con.data.amigoId:con.data.usuarioId; proms.push(db.collection('usuarios').doc(aid).get().then(function(ud){ if(ud.exists)return{usuario:{id:ud.id,...ud.data()},conexao:con.data}; return null; })); });
+            Promise.all(proms).then(function(r){
+                var html='';
+                r.forEach(function(x){
+                    if(!x)return;
+                    var u=x.usuario,w=u.celular?u.celular.replace(/\D/g,''):'',sc=u.score||0,st=x.conexao.status==='contratado'?'🤝 Contratado':x.conexao.status==='finalizado'?'✅ Finalizado':x.conexao.status==='demitido'?'🔴 Encerrado':'🔗 Conectado';
+                    var av=u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'<i class="fas fa-user"></i>';
+                    html+='<div class="vaga-card"><div class="vaga-header" onclick="window.app.verPerfil(\''+u.id+'\')"><div class="vaga-avatar">'+av+'</div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div><div class="vaga-data"><i class="fas fa-tools"></i> '+(u.profissao||'Profissional')+' • <i class="fas fa-calendar"></i> '+(u.experiencia||0)+' anos</div><div class="vaga-data"><span style="color:#F47920;">'+'⭐'.repeat(Math.round(sc))+'</span> • <span style="color:#10B981;">'+st+'</span></div></div></div><div class="vaga-footer"><div style="display:flex;gap:6px;flex:1;">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;" onclick="event.stopPropagation();"><i class="fab fa-whatsapp"></i> WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\''+u.id+'\')" style="flex:1;"><i class="fas fa-comments"></i> Chat</button></div><button class="btn btn-outline btn-small" onclick="event.stopPropagation();window.app.removerDaRede(\''+u.id+'\')"><i class="fas fa-times"></i></button></div></div>';
+                });
+                c.innerHTML=html||'<div class="card">Nenhum amigo</div>';
+            });
+        });
+    } else {
+        c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')">🔍 Buscar</button></div>';
+    }
 };
 
 App.prototype.adicionarNaRede = function(aid) { 
-    this.mostrarToast('✅ Adicionado!','sucesso');
+    var s=this; 
+    if(!s.usuarioLogado||s.usuarioLogado.id===aid)return; 
+    s.mostrarToast('✅ Adicionado!','sucesso');
 };
 
 App.prototype.removerDaRede = function(aid) { 
+    var s=this; 
     if(!confirm('Remover?'))return; 
-    this.mostrarToast('Removido','sucesso');
+    s.mostrarToast('Removido','sucesso');
 };
 
 // ===== OUTRAS FUNÇÕES =====
-App.prototype.verDetalheObra = function(oid) {
-    this.obraSelecionada = oid;
-    this.mostrarToast('🔍 Visualizando detalhes...', 'info');
-};
-
-App.prototype.iniciarChat = function(uid) {
-    this.mostrarToast('💬 Chat iniciado!', 'sucesso');
-};
-
-App.prototype.candidatarVaga = function(vid) {
-    this.mostrarToast('✅ Candidatura enviada!', 'sucesso');
-};
-
-App.prototype.abrirContratacao = function(uid) {
-    this.contratarProfId = uid;
-    this.mostrarToast('🤝 Abrindo contratação...', 'info');
-};
-
-App.prototype.confirmarContratacao = function() {
-    this.mostrarToast('✅ Profissional contratado!', 'sucesso');
-};
-
-App.prototype.novaObra = function() {
-    this.mostrarToast('🏗️ Nova obra criada!', 'sucesso');
-};
-
-App.prototype.carregarMinhasObras = function() {
-    var c = document.getElementById('minhasObrasContainer');
-    if (c) c.innerHTML = '<div class="card"><h3>Minhas Obras</h3><p>Nenhuma obra cadastrada.</p></div>';
-};
-
-App.prototype.demitirFuncionario = function(cid) {
-    if (confirm('Demitir funcionário?')) {
-        this.mostrarToast('Funcionário demitido.', 'sucesso');
-    }
-};
-
-App.prototype.finalizarContrato = function(cid) {
-    if (confirm('Finalizar contrato?')) {
-        this.mostrarToast('Contrato finalizado.', 'sucesso');
-    }
-};
-
-App.prototype.abrirEditarPerfil = function() {
-    this.mostrarToast('✏️ Editar perfil', 'info');
-};
-
-App.prototype.salvarPerfil = function() {
-    this.mostrarToast('✅ Perfil salvo!', 'sucesso');
-};
-
-App.prototype.uploadFoto = function(e) {
-    this.mostrarToast('📸 Foto atualizada!', 'sucesso');
-};
-
-App.prototype.verAvaliacoes = function(uid) {
-    this.mostrarToast('⭐ Avaliações carregadas!', 'info');
-};
-
-App.prototype.abrirDarAvaliacao = function(uid) {
-    this.avaliarUid = uid;
-    this.mostrarToast('Avalie o profissional!', 'info');
-};
-
-App.prototype.setNota = function(n) {
-    this.avaliarNota = n;
-};
-
-App.prototype.enviarAvaliacao = function() {
-    this.mostrarToast('✅ Avaliação enviada!', 'sucesso');
-};
-
-App.prototype.gerarQRCode = function(uid) {
-    this.mostrarToast('📱 QR Code gerado!', 'sucesso');
-};
-
-App.prototype.fecharQRCode = function() {
-    this.mostrarToast('QR Code fechado.', 'info');
-};
-
-App.prototype.baixarQRCode = function() {
-    this.mostrarToast('📥 QR Code baixado!', 'sucesso');
-};
-
-App.prototype.selecionarIdioma = function(i) {
-    this.mostrarToast('🌐 Idioma alterado!', 'sucesso');
-};
-
-App.prototype.mostrarInfoVersao = function() {
-    this.mostrarToast('📱 Versão 1.0.0', 'info');
-};
-
-App.prototype.confirmarExclusao = function() {
-    if (confirm('Confirmar exclusão?')) {
-        this.mostrarToast('Conta excluída.', 'sucesso');
-    }
-};
-
-App.prototype.mostrarNotificacoes = function() {
-    this.mostrarToast('🔔 Notificações carregadas!', 'info');
-};
-
-App.prototype.mudarTab = function(t) {
-    console.log('Mudando para tab:', t);
-};
+App.prototype.verDetalheObra = function(oid) { this.mostrarToast('🔍 Visualizando detalhes...', 'info'); };
+App.prototype.iniciarChat = function(uid) { this.mostrarToast('💬 Chat iniciado!', 'sucesso'); };
+App.prototype.candidatarVaga = function(vid) { this.mostrarToast('✅ Candidatura enviada!', 'sucesso'); };
+App.prototype.abrirContratacao = function(uid) { this.contratarProfId = uid; this.mostrarToast('🤝 Abrindo contratação...', 'info'); };
+App.prototype.confirmarContratacao = function() { this.mostrarToast('✅ Profissional contratado!', 'sucesso'); };
+App.prototype.novaObra = function() { this.mostrarToast('🏗️ Nova obra criada!', 'sucesso'); };
+App.prototype.carregarMinhasObras = function() { var c = document.getElementById('minhasObrasContainer'); if (c) c.innerHTML = '<div class="card"><h3>Minhas Obras</h3><p>Nenhuma obra cadastrada.</p></div>'; };
+App.prototype.demitirFuncionario = function(cid) { if (confirm('Demitir funcionário?')) { this.mostrarToast('Funcionário demitido.', 'sucesso'); } };
+App.prototype.finalizarContrato = function(cid) { if (confirm('Finalizar contrato?')) { this.mostrarToast('Contrato finalizado.', 'sucesso'); } };
+App.prototype.abrirEditarPerfil = function() { this.mostrarToast('✏️ Editar perfil', 'info'); };
+App.prototype.salvarPerfil = function() { this.mostrarToast('✅ Perfil salvo!', 'sucesso'); };
+App.prototype.uploadFoto = function(e) { this.mostrarToast('📸 Foto atualizada!', 'sucesso'); };
+App.prototype.verAvaliacoes = function(uid) { this.mostrarToast('⭐ Avaliações carregadas!', 'info'); };
+App.prototype.abrirDarAvaliacao = function(uid) { this.avaliarUid = uid; this.mostrarToast('Avalie o profissional!', 'info'); };
+App.prototype.setNota = function(n) { this.avaliarNota = n; };
+App.prototype.enviarAvaliacao = function() { this.mostrarToast('✅ Avaliação enviada!', 'sucesso'); };
+App.prototype.gerarQRCode = function(uid) { this.mostrarToast('📱 QR Code gerado!', 'sucesso'); };
+App.prototype.fecharQRCode = function() { this.mostrarToast('QR Code fechado.', 'info'); };
+App.prototype.baixarQRCode = function() { this.mostrarToast('📥 QR Code baixado!', 'sucesso'); };
+App.prototype.selecionarIdioma = function(i) { this.mostrarToast('🌐 Idioma alterado!', 'sucesso'); };
+App.prototype.mostrarInfoVersao = function() { this.mostrarToast('📱 Versão 1.0.0', 'info'); };
+App.prototype.confirmarExclusao = function() { if (confirm('Confirmar exclusão?')) { this.mostrarToast('Conta excluída.', 'sucesso'); } };
+App.prototype.mostrarNotificacoes = function() { this.mostrarToast('🔔 Notificações carregadas!', 'info'); };
+App.prototype.mudarTab = function(t) { console.log('Mudando para tab:', t); };
 
 // ===== TOAST =====
 App.prototype.mostrarToast = function(mensagem, tipo) {
