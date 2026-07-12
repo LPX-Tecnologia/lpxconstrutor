@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - COMPLETO E FUNCIONAL =====
+// ===== LPXCONSTRUTOR - COMPLETO COM FOTOS NO MAPA =====
 // ==========================================================
 
 if (!window.app || !window.app._app) { window.app = window.app || {}; window.app._app = window.app._app || null; }
@@ -152,16 +152,26 @@ App.prototype.solicitarCodigo = function() { var s=this; var e=document.getEleme
 App.prototype.voltarPasso1 = function(){document.getElementById('recPasso1').style.display='block';document.getElementById('recPasso2').style.display='none';};
 App.prototype.verificarCodigo = function(){var s=this;s.mostrarToast('✅ Senha redefinida!','sucesso');setTimeout(function(){s.mostrarTela('loginScreen');},1500);};
 
-// ===== HOME (COM FOTO NA SAUDAÇÃO) =====
+// ===== HOME (COM FOTO REDONDA NA SAUDAÇÃO) =====
 App.prototype.carregarHome = function() {
     if (!this.usuarioLogado) return;
     var h = new Date().getHours();
     var sd = 'Bom dia'; if (h >= 12 && h < 18) sd = 'Boa tarde'; if (h >= 18) sd = 'Boa noite';
     var sa = document.getElementById('saudacao'); if (sa) sa.textContent = '👋 ' + sd + ', ' + this.usuarioLogado.nome + '!';
     var re = document.getElementById('resumoTexto'); if (re) re.textContent = (this.usuarioLogado.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional') + ' • ' + (this.usuarioLogado.profissao || this.usuarioLogado.tipo);
-    // Atualiza foto na saudação
+    // Atualiza foto na saudação (REDONDA)
     var fotoSaudacao = document.querySelector('#homeScreen .logo-saudacao');
-    if (fotoSaudacao && this.usuarioLogado.fotoPerfil) { fotoSaudacao.src = this.usuarioLogado.fotoPerfil; }
+    if (fotoSaudacao) {
+        if (this.usuarioLogado.fotoPerfil) {
+            fotoSaudacao.src = this.usuarioLogado.fotoPerfil;
+            fotoSaudacao.style.borderRadius = '50%';
+            fotoSaudacao.style.objectFit = 'cover';
+        } else {
+            fotoSaudacao.src = 'imagem/logo-sem-fundo-lpxconstrutor.png';
+            fotoSaudacao.style.borderRadius = '8px';
+            fotoSaudacao.style.objectFit = 'contain';
+        }
+    }
     setTimeout(function() { try { if (typeof mapaService !== 'undefined') mapaService.initMap(); } catch(e) {} }, 500);
     this.carregarFeed();
 };
@@ -222,7 +232,7 @@ App.prototype.buscarProfissionais = function() {
         var profs=todos.filter(function(u){return u.data.tipo==='profissional'&&u.data.ativo!==false&&u.id!==s.usuarioLogado.id;});
         if(profs.length===0){c.innerHTML='<div class="card" style="text-align:center;"><h3>Nenhum profissional</h3></div>';return;}
         var html='';profs.forEach(function(u){var w=u.data.celular?u.data.celular.replace(/\D/g,''):'';
-            var avatar = u.data.fotoPerfil ? '<img src="' + u.data.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<i class="fas fa-hard-hat"></i>';
+            var avatar = u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<i class="fas fa-hard-hat"></i>';
             html+='<div class="vaga-card"><div class="vaga-header" onclick="window.app.verPerfil(\''+u.id+'\')"><div class="vaga-avatar">'+avatar+'</div><div class="vaga-info"><div class="vaga-nome">'+u.data.nome+'</div><div class="vaga-data">'+(u.data.profissao||'Profissional')+' • '+(u.data.experiencia||0)+' anos</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small" onclick="event.stopPropagation();">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="event.stopPropagation();window.app.iniciarChat(\''+u.id+'\')">Chat</button></div></div>';});
         c.innerHTML=html;
     });
@@ -245,7 +255,39 @@ App.prototype.enviarMensagem = function() { var s=this,i=document.getElementById
 // ===== PUBLICAR VAGA =====
 App.prototype.abrirTelaPublicacao = function() { if(!this.usuarioLogado||this.usuarioLogado.tipo!=='empreiteiro'){this.mostrarToast('❌ Apenas empreiteiros!','erro');return;}['vagaTitulo','vagaDescricao','vagaEndereco'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var vh=document.getElementById('vagaValorHora');if(vh)vh.value='';var fp=document.getElementById('vagaFotoPreview');if(fp)fp.src='imagem/logo-sem-fundo-lpxconstrutor.png';this.vagaFotoBase64=null;document.querySelectorAll('#profissoesCheckboxes input').forEach(function(cb){cb.checked=false;});this.mostrarTela('publicarVagaScreen'); };
 App.prototype.previewFotoObra = function(e) { var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){document.getElementById('vagaFotoPreview').src=ev.target.result;};r.readAsDataURL(f);var s=this;var r2=new FileReader();r2.onload=function(ev){s.vagaFotoBase64=ev.target.result;};r2.readAsDataURL(f); };
-App.prototype.publicarVagaApp = function() { var s=this;var t=(document.getElementById('vagaTitulo')||{}).value||'',e=(document.getElementById('vagaEndereco')||{}).value||'';if(!t||!e){s.mostrarToast('❌ Preencha título e endereço!','erro');return;}var ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb){ps.push(cb.value);});var profs=ps.length>0?ps.join(', '):'Geral';s.mostrarToast('Publicando...','info');db.collection('vagas').add({titulo:t,descricao:(document.getElementById('vagaDescricao')||{}).value||'',endereco:e,profissoes:profs,valorHora:parseFloat(vh)||0,fotoObra:s.vagaFotoBase64||'',usuarioId:s.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true}).then(function(){s.mostrarToast('✅ Vaga publicada!','sucesso');s.vagaFotoBase64=null;var fp=document.getElementById('vagaFotoPreview');if(fp)fp.src='imagem/logo-sem-fundo-lpxconstrutor.png';setTimeout(function(){s.mostrarTela('homeScreen');s.carregarFeed();},1000);}).catch(function(error){s.mostrarToast('❌ Erro: '+error.message,'erro');}); };
+App.prototype.publicarVagaApp = function() {
+    var s=this;var t=(document.getElementById('vagaTitulo')||{}).value||'',e=(document.getElementById('vagaEndereco')||{}).value||'';if(!t||!e){s.mostrarToast('❌ Preencha título e endereço!','erro');return;}var ps=[];document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb){ps.push(cb.value);});var profs=ps.length>0?ps.join(', '):'Geral';
+    s.mostrarToast('Publicando...','info');
+    // Tenta obter coordenadas do endereço
+    s.geocodificarEndereco(e).then(function(coords) {
+        var vagaData = {titulo:t,descricao:(document.getElementById('vagaDescricao')||{}).value||'',endereco:e,profissoes:profs,valorHora:parseFloat((document.getElementById('vagaValorHora')||{}).value)||0,fotoObra:s.vagaFotoBase64||'',usuarioId:s.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true};
+        if (coords) { vagaData.lat = coords.lat; vagaData.lng = coords.lng; }
+        db.collection('vagas').add(vagaData).then(function(){
+            s.mostrarToast('✅ Vaga publicada!','sucesso');s.vagaFotoBase64=null;
+            var fp=document.getElementById('vagaFotoPreview');if(fp)fp.src='imagem/logo-sem-fundo-lpxconstrutor.png';
+            setTimeout(function(){s.mostrarTela('homeScreen');s.carregarFeed();},1000);
+        }).catch(function(error){s.mostrarToast('❌ Erro: '+error.message,'erro');});
+    }).catch(function() {
+        db.collection('vagas').add({titulo:t,descricao:(document.getElementById('vagaDescricao')||{}).value||'',endereco:e,profissoes:profs,valorHora:parseFloat((document.getElementById('vagaValorHora')||{}).value)||0,fotoObra:s.vagaFotoBase64||'',usuarioId:s.usuarioLogado.id,interessados:[],dataCriacao:firebase.firestore.FieldValue.serverTimestamp(),ativa:true}).then(function(){
+            s.mostrarToast('✅ Vaga publicada! (sem coordenadas)','sucesso');s.vagaFotoBase64=null;
+            setTimeout(function(){s.mostrarTela('homeScreen');s.carregarFeed();},1000);
+        });
+    });
+};
+
+// ===== GEOLOCALIZAÇÃO DO ENDEREÇO =====
+App.prototype.geocodificarEndereco = function(endereco) {
+    return new Promise(function(resolve, reject) {
+        if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) { reject('Geocoder não disponível'); return; }
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: endereco }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                resolve({ lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() });
+            } else { reject('Endereço não encontrado'); }
+        });
+    });
+};
+
 App.prototype.candidatarVaga = function(vid) { var s=this;if(!s.usuarioLogado||s.usuarioLogado.tipo!=='profissional')return;db.collection('vagas').doc(vid).get().then(function(doc){if(!doc.exists)return;var v=doc.data();if(!v.interessados)v.interessados=[];if(v.interessados.indexOf(s.usuarioLogado.id)>=0)return;v.interessados.push(s.usuarioLogado.id);db.collection('vagas').doc(vid).update({interessados:v.interessados}).then(function(){s.mostrarToast('✅ Candidatura enviada!','sucesso');});}); };
 
 App.prototype.abrirContratacao = function(profId) { var s=this;s.contratarProfId=profId;db.collection('usuarios').doc(profId).get().then(function(doc){if(!doc.exists)return;document.getElementById('contratarInfo').innerHTML='<div style="font-size:40px;">👷</div><h3>'+doc.data().nome+'</h3>';});db.collection('obras').where('usuarioId','==',s.usuarioLogado.id).where('ativa','==',true).get().then(function(snap){var sel=document.getElementById('contratarObra');sel.innerHTML='<option value="">Selecione...</option>';snap.forEach(function(doc){sel.innerHTML+='<option value="'+doc.id+'">🏗️ '+doc.data().nome+'</option>';});});s.mostrarTela('contratarScreen'); };
@@ -270,17 +312,17 @@ App.prototype.carregarMeuPerfil = function() { if(!this.usuarioLogado)return;var
 App.prototype.abrirEditarPerfil = function() { if(!this.usuarioLogado)return;var u=this.usuarioLogado;document.getElementById('editNome').value=u.nome||'';document.getElementById('editCelular').value=u.celular||'';document.getElementById('editHabilidades').value=u.habilidades||'';this.mostrarTela('editarPerfilScreen'); };
 App.prototype.salvarPerfil = function() { var s=this;var d={nome:document.getElementById('editNome').value.trim(),celular:document.getElementById('editCelular').value.trim(),habilidades:document.getElementById('editHabilidades').value.trim()};if(!d.nome){s.mostrarToast('❌ Nome obrigatório!','erro');return;}databaseService.atualizarUsuario(s.usuarioLogado.id,d).then(function(){s.usuarioLogado.nome=d.nome;s.mostrarToast('✅ Perfil atualizado!','sucesso');s.carregarMeuPerfil();s.voltarTela();}); };
 
-// ===== UPLOAD FOTO (ATUALIZA EM TODOS OS LUGARES) =====
+// ===== UPLOAD FOTO (MANTÉM REDONDA NA SAUDAÇÃO) =====
 App.prototype.uploadFoto = function(e){
     var s=this,f=e.target.files[0];if(!f)return;
     var r=new FileReader();
     r.onload=function(ev){
         databaseService.atualizarUsuario(s.usuarioLogado.id,{fotoPerfil:ev.target.result}).then(function(){
             s.usuarioLogado.fotoPerfil=ev.target.result;
-            // Atualiza no perfil
-            var fp=document.getElementById('fotoPerfilPreview');if(fp)fp.src=ev.target.result;
-            // Atualiza na saudação (home)
-            var fs=document.querySelector('#homeScreen .logo-saudacao');if(fs)fs.src=ev.target.result;
+            // Perfil
+            var fp=document.getElementById('fotoPerfilPreview');if(fp){fp.src=ev.target.result;fp.style.borderRadius='50%';fp.style.objectFit='cover';}
+            // Saudação (REDONDA)
+            var fs=document.querySelector('#homeScreen .logo-saudacao');if(fs){fs.src=ev.target.result;fs.style.borderRadius='50%';fs.style.objectFit='cover';}
             s.mostrarToast('✅ Foto atualizada!','sucesso');
         });
     };
