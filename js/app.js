@@ -86,7 +86,7 @@ App.prototype.init = function() {
     
     self.mostrarSplash();
     
-    // Verificar se authService existe
+    // Verificar authService ou criar demo
     if (typeof authService !== 'undefined' && authService.onAuthStateChange) {
         authService.onAuthStateChange(function(usuario) { 
             console.log('Auth state changed:', usuario ? 'Logado' : 'Deslogado');
@@ -103,20 +103,20 @@ App.prototype.init = function() {
             setTimeout(function() { self.esconderSplash(); }, 1500); 
         });
     } else {
-        console.warn('authService não encontrado, usando modo de demonstração');
+        // Modo demonstração
+        console.warn('authService não encontrado, usando modo demo');
         setTimeout(function() { 
-            self.esconderSplash(); 
-            // Criar usuário de demonstração
+            self.esconderSplash();
             self.usuarioLogado = {
                 id: 'demo123',
-                nome: 'Usuário Demo',
-                email: 'demo@email.com',
+                nome: 'Carlos Silva',
+                email: 'carlos@email.com',
                 tipo: 'empreiteiro',
-                profissao: 'Construtor',
-                experiencia: '5',
-                celular: '11999999999',
+                profissao: 'Engenheiro Civil',
+                experiencia: '8',
+                celular: '(11) 99999-9999',
                 fotoPerfil: null,
-                score: 4.5
+                score: 4.7
             };
             self.atualizarBotoes();
             self.mostrarTela('homeScreen');
@@ -131,38 +131,9 @@ App.prototype.mostrarSplash = function() {
         splash = document.createElement('div'); 
         splash.id = 'splashScreen'; 
         splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;'; 
-        splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect width=%22120%22 height=%22120%22 fill=%22%23f0c27f%22/%3E%3Ctext x=%2260%22 y=%2260%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2240%22%3E🏗️%3C/text%3E%3C/svg%3E"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p><div id="tijolosContainer" style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:2px;"></div>'; 
-        document.body.appendChild(splash); 
-        this.animarTijolos(); 
+        splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect width=%22120%22 height=%22120%22 fill=%22%23f0c27f%22/%3E%3Ctext x=%2260%22 y=%2260%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2240%22%3E🏗️%3C/text%3E%3C/svg%3E"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>'; 
+        document.body.appendChild(splash);
     }
-};
-
-App.prototype.animarTijolos = function() { 
-    var container = document.getElementById('tijolosContainer'); 
-    if (!container) return; 
-    var fase = 0; 
-    function animar() { 
-        if (fase >= 4) { 
-            container.innerHTML = ''; 
-            fase = 0; 
-            setTimeout(animar, 300); 
-            return; 
-        } 
-        var linha = document.createElement('div'); 
-        linha.style.cssText = 'display:flex;gap:2px;'; 
-        if (fase % 2 === 1) linha.style.marginLeft = '8px'; 
-        var qtdTijolos = fase === 0 ? 4 : fase === 1 ? 5 : fase === 2 ? 4 : 5; 
-        for (var i = 0; i < qtdTijolos; i++) { 
-            var tijolo = document.createElement('span'); 
-            tijolo.textContent = '🧱'; 
-            tijolo.style.cssText = 'font-size:16px;animation:aparecer 0.3s ease;'; 
-            linha.appendChild(tijolo); 
-        } 
-        container.appendChild(linha); 
-        fase++; 
-        setTimeout(animar, fase < 4 ? 300 : 600); 
-    } 
-    animar(); 
 };
 
 App.prototype.esconderSplash = function() { 
@@ -225,14 +196,6 @@ App.prototype.mostrarTela = function(id) {
         if (id === 'buscaScreen') self.buscarProfissionais();
         if (id === 'minhasObrasScreen') self.carregarMinhasObras();
     }, 100);
-    
-    // Tela de recuperação de senha
-    if (id === 'recuperarSenhaScreen') { 
-        var passo1 = document.getElementById('recPasso1');
-        var passo2 = document.getElementById('recPasso2'); 
-        if(passo1) passo1.style.display='block'; 
-        if(passo2) passo2.style.display='none'; 
-    }
 };
 
 App.prototype.voltarTela = function() { 
@@ -272,14 +235,14 @@ App.prototype.fazerLogin = function() {
         // Modo demonstração
         self.usuarioLogado = {
             id: 'demo123',
-            nome: 'Usuário Demo',
+            nome: 'Carlos Silva',
             email: email,
             tipo: 'empreiteiro',
-            profissao: 'Construtor',
-            experiencia: '5',
-            celular: '11999999999',
+            profissao: 'Engenheiro Civil',
+            experiencia: '8',
+            celular: '(11) 99999-9999',
             fotoPerfil: null,
-            score: 4.5
+            score: 4.7
         };
         self.mostrarToast('✅ Bem-vindo! (Modo Demo)', 'sucesso');
         self.atualizarBotoes();
@@ -287,84 +250,11 @@ App.prototype.fazerLogin = function() {
     }
 };
 
-App.prototype.cadastrar = function() { 
-    var self = this; 
-    var dados = {
-        nome: document.getElementById('cadNome') ? document.getElementById('cadNome').value : '',
-        email: document.getElementById('cadEmail') ? document.getElementById('cadEmail').value : '',
-        senha: document.getElementById('cadSenha') ? document.getElementById('cadSenha').value : '',
-        tipo: document.getElementById('cadTipo') ? document.getElementById('cadTipo').value : 'profissional',
-        celular: document.getElementById('cadCelular') ? document.getElementById('cadCelular').value : '',
-        profissao: document.getElementById('cadProfissao') ? document.getElementById('cadProfissao').value : '',
-        experiencia: document.getElementById('cadExperiencia') ? document.getElementById('cadExperiencia').value : '0'
-    }; 
-    
-    if(!dados.nome || !dados.email || !dados.senha){
-        self.mostrarToast('❌ Preencha todos os campos!', 'erro');
-        return;
-    } 
-    
-    self.mostrarToast('Cadastrando...', 'info');
-    
-    if (typeof authService !== 'undefined' && authService.cadastrar) {
-        authService.cadastrar(dados).then(function(resposta){
-            if(resposta.sucesso){
-                self.usuarioLogado = resposta.usuario;
-                self.mostrarToast('✅ Cadastro realizado!', 'sucesso');
-                self.atualizarBotoes();
-                self.mostrarTela('homeScreen');
-            } else {
-                self.mostrarToast('❌ ' + resposta.erro, 'erro');
-            }
-        });
-    } else {
-        // Modo demonstração
-        self.usuarioLogado = {
-            id: 'new' + Date.now(),
-            nome: dados.nome,
-            email: dados.email,
-            tipo: dados.tipo,
-            profissao: dados.profissao,
-            experiencia: dados.experiencia,
-            celular: dados.celular,
-            fotoPerfil: null,
-            score: 0
-        };
-        self.mostrarToast('✅ Cadastro realizado! (Modo Demo)', 'sucesso');
-        self.atualizarBotoes();
-        self.mostrarTela('homeScreen');
-    }
-};
-
-App.prototype.proximaEtapa = function(e) { 
-    var etapa1 = document.getElementById('etapa1');
-    var etapa2 = document.getElementById('etapa2'); 
-    if(!etapa1 || !etapa2) return; 
-    etapa1.style.display = e === 1 ? 'block' : 'none'; 
-    etapa2.style.display = e === 2 ? 'block' : 'none'; 
-};
-
-App.prototype.toggleProfissao = function() { 
-    var grupo = document.getElementById('grupoProfissao'); 
-    if(grupo) {
-        var tipo = document.getElementById('cadTipo');
-        grupo.style.display = tipo && tipo.value === 'profissional' ? 'block' : 'none'; 
-    }
-};
-
 App.prototype.sair = function() { 
     var self = this; 
-    if (typeof authService !== 'undefined' && authService.logout) {
-        authService.logout().then(function(){
-            self.usuarioLogado = null;
-            self.mostrarTela('loginScreen');
-            self.mostrarToast('👋 Até logo!', 'sucesso');
-        });
-    } else {
-        self.usuarioLogado = null;
-        self.mostrarTela('loginScreen');
-        self.mostrarToast('👋 Até logo!', 'sucesso');
-    }
+    self.usuarioLogado = null;
+    self.mostrarTela('loginScreen');
+    self.mostrarToast('👋 Até logo!', 'sucesso');
 };
 
 // ===== HOME =====
@@ -376,32 +266,26 @@ App.prototype.carregarHome = function() {
         return;
     }
     
+    console.log('🏠 Carregando home para:', self.usuarioLogado.nome);
+    
     var hora = new Date().getHours(); 
     var saudacao = 'Bom dia'; 
     if (hora >= 12 && hora < 18) saudacao = 'Boa tarde'; 
     if (hora >= 18) saudacao = 'Boa noite';
     
-    var elemento = document.getElementById('saudacao'); 
-    if (elemento) elemento.textContent = '👋 ' + saudacao + ', ' + (self.usuarioLogado.nome || 'Usuário') + '!';
-    
-    var resumo = document.getElementById('resumoTexto'); 
-    if (resumo) {
-        var tipo = self.usuarioLogado.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional';
-        resumo.textContent = tipo + ' • ' + (self.usuarioLogado.profissao || '');
+    var elSaudacao = document.getElementById('saudacao'); 
+    if (elSaudacao) {
+        elSaudacao.textContent = '👋 ' + saudacao + ', ' + (self.usuarioLogado.nome || 'Usuário') + '!';
+        console.log('✅ Saudação atualizada');
+    } else {
+        console.warn('⚠️ Elemento saudacao não encontrado');
     }
     
-    // Carregar foto na home
-    var fotoHome = document.querySelector('#homeScreen .logo-saudacao');
-    if (fotoHome) { 
-        if (self.usuarioLogado.fotoPerfil) { 
-            fotoHome.src = self.usuarioLogado.fotoPerfil; 
-            fotoHome.style.borderRadius = '50%'; 
-            fotoHome.style.objectFit = 'cover'; 
-        } else { 
-            fotoHome.src = 'imagem/logo-sem-fundo-lpxconstrutor.png'; 
-            fotoHome.style.borderRadius = '8px'; 
-            fotoHome.style.objectFit = 'contain'; 
-        }
+    var elResumo = document.getElementById('resumoTexto'); 
+    if (elResumo) {
+        var tipo = self.usuarioLogado.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 Profissional';
+        elResumo.textContent = tipo + ' • ' + (self.usuarioLogado.profissao || '');
+        console.log('✅ Resumo atualizado');
     }
     
     self.carregarFeed();
@@ -412,134 +296,80 @@ App.prototype.carregarFeed = function() {
     var self = this;
     var container = document.getElementById('feedContainer'); 
     if (!container) {
-        console.error('Container do feed não encontrado');
+        console.error('❌ Container do feed não encontrado');
         return;
     }
     
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Carregando vagas...</div>';
     
-    // Verificar se Firestore está disponível
-    if (typeof db === 'undefined' || typeof firebase === 'undefined') {
-        console.warn('Firebase não disponível, carregando dados de demonstração');
-        self._carregarFeedDemo(container);
-        return;
-    }
-    
-    // Tentar carregar do Firestore
-    db.collection('vagas').where('ativa', '==', true).get()
-        .then(function(snapshot) {
-            self._renderizarFeed(container, snapshot);
-        })
-        .catch(function(error) {
-            console.error('Erro ao carregar feed:', error);
-            self._carregarFeedDemo(container);
-        });
-};
-
-App.prototype._carregarFeedDemo = function(container) {
     // Dados de demonstração
-    var vagasDemo = [
-        {
-            id: 'demo1',
-            titulo: 'Pedreiro para Reforma',
-            endereco: 'Rua das Construções, 123 - Centro',
-            profissoes: 'Pedreiro',
-            valorHora: '25',
-            fotoObra: null,
-            localizacao: { lat: -23.5505, lng: -46.6333 },
-            autorNome: 'Construtora ABC'
-        },
-        {
-            id: 'demo2',
-            titulo: 'Eletricista Urgente',
-            endereco: 'Av. Principal, 456 - Jardim',
-            profissoes: 'Eletricista',
-            valorHora: '35',
-            fotoObra: null,
-            localizacao: { lat: -23.5612, lng: -46.6560 },
-            autorNome: 'Empresa XYZ'
-        }
-    ];
-    
-    this._renderizarVagas(container, vagasDemo);
-};
-
-App.prototype._renderizarFeed = function(container, snapshot) {
-    var vagas = [];
-    if (snapshot && !snapshot.empty) {
-        snapshot.forEach(function(doc) {
-            var dados = doc.data();
-            vagas.push({
-                id: doc.id,
-                titulo: dados.titulo || 'Vaga sem título',
-                endereco: dados.endereco || 'Endereço não informado',
-                profissoes: dados.profissoes || 'Todas',
-                valorHora: dados.valorHora || '0',
-                fotoObra: dados.fotoObra || null,
-                localizacao: dados.localizacao || null,
-                autorNome: dados.autorNome || 'Anônimo'
-            });
-        });
-    }
-    
-    if (vagas.length === 0) {
-        vagas = [
+    setTimeout(function() {
+        var vagas = [
             {
-                id: 'vazio',
-                titulo: 'Nenhuma vaga disponível',
-                endereco: 'Publique a primeira vaga!',
-                profissoes: 'Todas',
-                valorHora: '0',
+                id: 'v1',
+                titulo: 'Pedreiro para Reforma Residencial',
+                endereco: 'Rua das Flores, 123 - Centro, São Paulo',
+                profissoes: 'Pedreiro, Servente',
+                valorHora: '25',
                 fotoObra: null,
-                localizacao: null,
-                autorNome: 'Sistema'
+                localizacao: { lat: -23.5505, lng: -46.6333 },
+                autorNome: 'Carlos Silva'
+            },
+            {
+                id: 'v2',
+                titulo: 'Eletricista Urgente - Instalação',
+                endereco: 'Av. Paulista, 1000 - Bela Vista, São Paulo',
+                profissoes: 'Eletricista',
+                valorHora: '40',
+                fotoObra: null,
+                localizacao: { lat: -23.5612, lng: -46.6560 },
+                autorNome: 'Maria Santos'
+            },
+            {
+                id: 'v3',
+                titulo: 'Pintor para Apartamento',
+                endereco: 'Rua Augusta, 500 - Consolação, São Paulo',
+                profissoes: 'Pintor',
+                valorHora: '30',
+                fotoObra: null,
+                localizacao: { lat: -23.5550, lng: -46.6450 },
+                autorNome: 'João Oliveira'
             }
         ];
-    }
-    
-    this._renderizarVagas(container, vagas);
+        
+        var html = '';
+        vagas.forEach(function(vaga) {
+            var fotoHtml = '';
+            if (vaga.fotoObra) {
+                fotoHtml = '<img src="' + vaga.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;" onerror="this.style.display=\'none\'">';
+            }
+            
+            html += '<div class="vaga-card" style="background:white;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">';
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
+            html += '<div style="width:50px;height:50px;background:#1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">🏗️</div>';
+            html += '<div style="flex:1;">';
+            html += '<div style="font-weight:bold;color:#1A3A5C;font-size:16px;">' + vaga.titulo + '</div>';
+            html += '<div style="font-size:12px;color:#6b7280;">📍 ' + vaga.endereco + '</div>';
+            html += '</div></div>';
+            html += '<div style="display:flex;gap:8px;margin-bottom:8px;">';
+            html += '<span style="background:#10B981;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💰 R$' + vaga.valorHora + '/h</span>';
+            html += '<span style="background:#1A3A5C;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">👷 ' + vaga.profissoes + '</span>';
+            html += '</div>';
+            html += fotoHtml;
+            html += '<div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:8px;">';
+            html += '<i class="fas fa-map-marker-alt" style="color:#1A3A5C;"></i>';
+            html += '<span style="font-size:12px;">📍 ' + vaga.endereco + '</span>';
+            html += '</div>';
+            html += '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + vaga.autorNome + '</div>';
+            html += '</div>';
+        });
+        
+        container.innerHTML = html;
+        console.log('✅ Feed carregado com ' + vagas.length + ' vagas');
+    }, 500);
 };
 
-App.prototype._renderizarVagas = function(container, vagas) {
-    var self = this;
-    var html = '';
-    
-    vagas.forEach(function(vaga) {
-        // Foto da obra
-        var fotoHtml = '';
-        if (vaga.fotoObra && typeof vaga.fotoObra === 'string' && vaga.fotoObra.length > 100) {
-            fotoHtml = '<img src="' + vaga.fotoObra + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;" onerror="this.style.display=\'none\'" alt="Foto da obra">';
-        }
-        
-        // Localização
-        var localHtml = '';
-        if (vaga.localizacao && vaga.localizacao.lat && vaga.localizacao.lng) {
-            localHtml = '<div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-marker-alt" style="color:#1A3A5C;"></i><span style="font-size:12px;">📍 ' + (vaga.endereco || 'Ver no mapa') + '</span></div>';
-        } else if (vaga.endereco) {
-            localHtml = '<div style="margin-top:8px;padding:8px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-pin" style="color:#d97706;"></i><span style="font-size:12px;">📌 ' + vaga.endereco + '</span></div>';
-        }
-        
-        html += '<div class="vaga-card" style="cursor:pointer;margin-bottom:16px;background:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">';
-        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
-        html += '<div style="width:50px;height:50px;background:#1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;"><i class="fas fa-hard-hat"></i></div>';
-        html += '<div>';
-        html += '<div style="font-weight:bold;color:#1A3A5C;">' + vaga.titulo + '</div>';
-        html += '<div style="font-size:12px;color:#6b7280;">📍 ' + (vaga.endereco || 'Local não informado') + '</div>';
-        html += '</div></div>';
-        html += '<div style="display:flex;gap:8px;margin-bottom:8px;">';
-        html += '<span style="background:#10B981;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💰 R$' + vaga.valorHora + '/h</span>';
-        html += '<span style="background:#1A3A5C;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">👷 ' + vaga.profissoes + '</span>';
-        html += '</div>';
-        html += fotoHtml;
-        html += localHtml;
-        html += '<div style="font-size:11px;color:#9ca3af;margin-top:8px;">Publicado por: ' + vaga.autorNome + '</div>';
-        html += '</div>';
-    });
-    
-    container.innerHTML = html || '<div style="text-align:center;padding:20px;">Nenhuma vaga encontrada</div>';
-};
-
-// ===== PUBLICAÇÃO DE VAGA =====
+// ===== PUBLICAÇÃO DE VAGA (CORRIGIDO - FOTO PREVIEW) =====
 App.prototype.abrirTelaPublicacao = function(vagaData) {
     var self = this;
     self.vagaEmEdicao = vagaData || null;
@@ -547,59 +377,136 @@ App.prototype.abrirTelaPublicacao = function(vagaData) {
     self.vagaLocalizacaoAtual = null;
     self.mostrarTela('publicarVagaScreen');
     
+    console.log('📝 Abrindo tela de publicação');
+    
     setTimeout(function() {
-        var titulo = document.getElementById('vagaTitulo');
-        var endereco = document.getElementById('vagaEndereco');
-        var profissoes = document.getElementById('vagaProfissoes');
-        var valor = document.getElementById('vagaValor');
+        var tituloEl = document.getElementById('vagaTitulo');
+        var enderecoEl = document.getElementById('vagaEndereco');
+        var profissoesEl = document.getElementById('vagaProfissoes');
+        var valorEl = document.getElementById('vagaValor');
         var fotoPreview = document.getElementById('fotoObraPreview');
+        var inputFile = document.getElementById('fotoObraInput');
         
+        // Configurar preview da foto
+        if (inputFile) {
+            console.log('✅ Input de foto encontrado');
+            inputFile.addEventListener('change', function(e) {
+                console.log('📸 Foto selecionada');
+                self.previewFotoObra(e);
+            });
+        } else {
+            console.warn('⚠️ Input de foto não encontrado');
+        }
+        
+        // Preencher campos se estiver editando
         if (self.vagaEmEdicao) {
-            if (titulo) titulo.value = self.vagaEmEdicao.titulo || '';
-            if (endereco) endereco.value = self.vagaEmEdicao.endereco || '';
-            if (profissoes) profissoes.value = self.vagaEmEdicao.profissoes || '';
-            if (valor) valor.value = self.vagaEmEdicao.valorHora || '';
+            console.log('📝 Editando vaga existente');
+            if (tituloEl) tituloEl.value = self.vagaEmEdicao.titulo || '';
+            if (enderecoEl) enderecoEl.value = self.vagaEmEdicao.endereco || '';
+            if (profissoesEl) profissoesEl.value = self.vagaEmEdicao.profissoes || '';
+            if (valorEl) valorEl.value = self.vagaEmEdicao.valorHora || '';
             
             if (fotoPreview && self.vagaEmEdicao.fotoObra) {
                 fotoPreview.src = self.vagaEmEdicao.fotoObra;
                 fotoPreview.style.display = 'block';
                 self.vagaFotoBase64 = self.vagaEmEdicao.fotoObra;
             }
-            
-            if (self.vagaEmEdicao.localizacao) {
-                self.vagaLocalizacaoAtual = self.vagaEmEdicao.localizacao;
+        } else {
+            // Limpar campos
+            if (tituloEl) tituloEl.value = '';
+            if (enderecoEl) enderecoEl.value = '';
+            if (profissoesEl) profissoesEl.value = '';
+            if (valorEl) valorEl.value = '';
+            if (fotoPreview) {
+                fotoPreview.src = '';
+                fotoPreview.style.display = 'none';
             }
         }
     }, 300);
 };
 
+// CORRIGIDO: Função de preview da foto
 App.prototype.previewFotoObra = function(event) {
     var self = this;
-    var arquivo = event.target.files[0];
+    console.log('📸 Processando foto...');
     
-    if (!arquivo) return;
+    var input = event.target;
+    var arquivo = input.files[0];
     
-    if (!arquivo.type.match('image.*')) {
-        self.mostrarToast('❌ Selecione uma imagem!', 'erro');
-        event.target.value = '';
+    if (!arquivo) {
+        console.log('❌ Nenhum arquivo selecionado');
         return;
     }
     
+    console.log('📁 Arquivo:', arquivo.name, 'Tipo:', arquivo.type, 'Tamanho:', (arquivo.size / 1024).toFixed(2) + 'KB');
+    
+    // Verificar se é imagem
+    if (!arquivo.type.match('image.*')) {
+        self.mostrarToast('❌ Selecione uma imagem (JPG, PNG, GIF)!', 'erro');
+        input.value = '';
+        return;
+    }
+    
+    // Verificar tamanho (máximo 5MB)
     if (arquivo.size > 5 * 1024 * 1024) {
-        self.mostrarToast('❌ Imagem muito grande! Máx: 5MB', 'erro');
-        event.target.value = '';
+        self.mostrarToast('❌ Imagem muito grande! Máximo 5MB', 'erro');
+        input.value = '';
         return;
     }
     
     var leitor = new FileReader();
+    
+    leitor.onloadstart = function() {
+        console.log('⏳ Iniciando leitura do arquivo...');
+    };
+    
     leitor.onload = function(e) {
-        self.vagaFotoBase64 = e.target.result;
+        console.log('✅ Foto carregada com sucesso!');
+        var imagemBase64 = e.target.result;
+        self.vagaFotoBase64 = imagemBase64;
+        
+        // Mostrar preview
         var preview = document.getElementById('fotoObraPreview');
         if (preview) {
-            preview.src = e.target.result;
+            preview.src = imagemBase64;
             preview.style.display = 'block';
+            preview.style.maxWidth = '100%';
+            preview.style.maxHeight = '200px';
+            preview.style.objectFit = 'cover';
+            preview.style.borderRadius = '8px';
+            preview.style.marginTop = '8px';
+            console.log('✅ Preview atualizado');
+        } else {
+            console.warn('⚠️ Elemento fotoObraPreview não encontrado');
+            // Criar preview se não existir
+            var container = input.parentElement;
+            if (container) {
+                var img = document.createElement('img');
+                img.id = 'fotoObraPreview';
+                img.src = imagemBase64;
+                img.style.cssText = 'display:block;max-width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;';
+                container.appendChild(img);
+                console.log('✅ Preview criado dinamicamente');
+            }
+        }
+        
+        self.mostrarToast('📸 Foto carregada!', 'sucesso');
+    };
+    
+    leitor.onerror = function() {
+        console.error('❌ Erro ao ler arquivo');
+        self.mostrarToast('❌ Erro ao carregar imagem!', 'erro');
+        input.value = '';
+    };
+    
+    leitor.onprogress = function(e) {
+        if (e.lengthComputable) {
+            var porcentagem = Math.round((e.loaded / e.total) * 100);
+            console.log('⏳ Carregando: ' + porcentagem + '%');
         }
     };
+    
+    // Iniciar leitura
     leitor.readAsDataURL(arquivo);
 };
 
@@ -615,7 +522,6 @@ App.prototype.buscarLocalizacao = function() {
     
     self.mostrarToast('🔍 Buscando localização...', 'info');
     
-    // Simular geocodificação
     setTimeout(function() {
         var coordenadas = {
             lat: -23.5505 + (Math.random() - 0.5) * 0.1,
@@ -638,7 +544,8 @@ App.prototype.publicarVagaApp = function() {
     var endereco = document.getElementById('vagaEndereco') ? document.getElementById('vagaEndereco').value.trim() : '';
     var profissoes = document.getElementById('vagaProfissoes') ? document.getElementById('vagaProfissoes').value.trim() : '';
     var valorHora = document.getElementById('vagaValor') ? document.getElementById('vagaValor').value.trim() : '';
-    var fotoBase64 = self.vagaFotoBase64;
+    
+    console.log('📤 Publicando vaga:', { titulo, endereco, profissoes, valorHora, temFoto: !!self.vagaFotoBase64 });
     
     if (!titulo || !endereco || !profissoes || !valorHora) {
         self.mostrarToast('❌ Preencha todos os campos!', 'erro');
@@ -650,15 +557,13 @@ App.prototype.publicarVagaApp = function() {
         endereco: endereco,
         profissoes: profissoes,
         valorHora: valorHora,
-        fotoObra: fotoBase64 || null,
+        fotoObra: self.vagaFotoBase64 || null,
         localizacao: self.vagaLocalizacaoAtual || null,
         autorId: self.usuarioLogado ? self.usuarioLogado.id : 'anonimo',
         autorNome: self.usuarioLogado ? self.usuarioLogado.nome : 'Anônimo',
         ativa: true,
         dataCriacao: new Date().toISOString()
     };
-    
-    console.log('📤 Publicando vaga:', dadosVaga);
     
     // Tentar salvar no Firestore
     if (typeof db !== 'undefined') {
@@ -677,11 +582,12 @@ App.prototype.publicarVagaApp = function() {
             self.mostrarTela('homeScreen');
             setTimeout(function() { self.carregarFeed(); }, 300);
         }).catch(function(error) {
-            console.error('Erro:', error);
+            console.error('Erro ao publicar:', error);
             self.mostrarToast('❌ Erro ao publicar vaga', 'erro');
         });
     } else {
         // Modo demo
+        console.log('✅ Vaga publicada (demo):', dadosVaga);
         self.mostrarToast('✅ Vaga publicada! (Modo Demo)', 'sucesso');
         self.vagaEmEdicao = null;
         self.vagaLocalizacaoAtual = null;
@@ -691,190 +597,127 @@ App.prototype.publicarVagaApp = function() {
     }
 };
 
+// ===== PERFIL (CORRIGIDO - CARREGAMENTO DOS DADOS) =====
+App.prototype.carregarMeuPerfil = function() {
+    var self = this;
+    console.log('👤 Carregando perfil do usuário...');
+    
+    if (!self.usuarioLogado) {
+        console.log('❌ Usuário não logado');
+        self.mostrarTela('loginScreen');
+        return;
+    }
+    
+    console.log('📊 Dados do usuário:', self.usuarioLogado);
+    
+    // Buscar elementos do perfil
+    var nomeEl = document.getElementById('perfilNome');
+    var profissaoEl = document.getElementById('perfilProfissao');
+    var emailEl = document.getElementById('perfilEmail');
+    var celularEl = document.getElementById('perfilCelular');
+    var fotoEl = document.getElementById('perfilFoto');
+    var iconeEl = document.getElementById('perfilIcon');
+    var loadingEl = document.getElementById('perfilLoading');
+    
+    // Esconder loading
+    if (loadingEl) {
+        loadingEl.style.display = 'none';
+        console.log('✅ Loading escondido');
+    }
+    
+    // Preencher nome
+    if (nomeEl) {
+        nomeEl.textContent = self.usuarioLogado.nome || 'Usuário';
+        console.log('✅ Nome:', self.usuarioLogado.nome);
+    } else {
+        console.warn('⚠️ Elemento perfilNome não encontrado');
+    }
+    
+    // Preencher profissão
+    if (profissaoEl) {
+        var profissao = self.usuarioLogado.profissao || 'Profissional';
+        var experiencia = self.usuarioLogado.experiencia || '0';
+        profissaoEl.textContent = profissao + ' • ' + experiencia + ' anos de experiência';
+        console.log('✅ Profissão:', profissao);
+    } else {
+        console.warn('⚠️ Elemento perfilProfissao não encontrado');
+    }
+    
+    // Preencher email
+    if (emailEl) {
+        emailEl.textContent = '📧 ' + (self.usuarioLogado.email || 'Email não informado');
+        console.log('✅ Email:', self.usuarioLogado.email);
+    }
+    
+    // Preencher celular
+    if (celularEl) {
+        celularEl.textContent = '📱 ' + (self.usuarioLogado.celular || 'Celular não informado');
+        console.log('✅ Celular:', self.usuarioLogado.celular);
+    }
+    
+    // Carregar foto
+    if (fotoEl) {
+        if (self.usuarioLogado.fotoPerfil) {
+            fotoEl.src = self.usuarioLogado.fotoPerfil;
+            fotoEl.style.display = 'block';
+            if (iconeEl) iconeEl.style.display = 'none';
+            console.log('✅ Foto do perfil carregada');
+        } else {
+            fotoEl.style.display = 'none';
+            if (iconeEl) iconeEl.style.display = 'block';
+            console.log('ℹ️ Usuário sem foto');
+        }
+    }
+    
+    console.log('✅ Perfil carregado com sucesso!');
+};
+
 // ===== BUSCA DE PROFISSIONAIS =====
 App.prototype.buscarProfissionais = function() {
     var self = this;
     var container = document.getElementById('buscaResultados');
-    if (!container) return;
-    
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando profissionais...</div>';
-    
-    // Tentar carregar do Firestore
-    if (typeof db !== 'undefined') {
-        db.collection('usuarios').where('tipo', '==', 'profissional').where('ativo', '==', true).get()
-            .then(function(snapshot) {
-                var profissionais = [];
-                if (!snapshot.empty) {
-                    snapshot.forEach(function(doc) {
-                        var dados = doc.data();
-                        profissionais.push({
-                            id: doc.id,
-                            nome: dados.nome || 'Profissional',
-                            profissao: dados.profissao || 'Não especificada',
-                            experiencia: dados.experiencia || '0',
-                            celular: dados.celular || '',
-                            fotoPerfil: dados.fotoPerfil || null,
-                            score: dados.score || 0
-                        });
-                    });
-                }
-                self._renderizarProfissionais(container, profissionais);
-            })
-            .catch(function(error) {
-                console.error('Erro ao buscar:', error);
-                self._carregarProfissionaisDemo(container);
-            });
-    } else {
-        self._carregarProfissionaisDemo(container);
-    }
-};
-
-App.prototype._carregarProfissionaisDemo = function(container) {
-    var profissionais = [
-        { id: 'p1', nome: 'João Silva', profissao: 'Pedreiro', experiencia: '10', celular: '11988887777', score: 4.5 },
-        { id: 'p2', nome: 'Maria Santos', profissao: 'Eletricista', experiencia: '8', celular: '11977776666', score: 4.8 },
-        { id: 'p3', nome: 'Carlos Oliveira', profissao: 'Pintor', experiencia: '5', celular: '11966665555', score: 4.2 }
-    ];
-    this._renderizarProfissionais(container, profissionais);
-};
-
-App.prototype._renderizarProfissionais = function(container, profissionais) {
-    if (profissionais.length === 0) {
-        container.innerHTML = '<div class="card" style="text-align:center;padding:30px;"><i class="fas fa-user-slash" style="font-size:48px;color:#9ca3af;"></i><h3>Nenhum profissional encontrado</h3></div>';
+    if (!container) {
+        console.error('❌ Container de busca não encontrado');
         return;
     }
     
-    var html = '';
-    profissionais.forEach(function(prof) {
-        var whatsapp = prof.celular ? prof.celular.replace(/\D/g, '') : '';
-        var foto = prof.fotoPerfil ? 
-            '<img src="' + prof.fotoPerfil + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">' : 
-            '<i class="fas fa-user" style="font-size:24px;color:#1A3A5C;"></i>';
-        var estrelas = '⭐'.repeat(Math.round(prof.score || 0));
-        
-        html += '<div class="card" style="margin-bottom:12px;padding:16px;">';
-        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
-        html += '<div style="width:50px;height:50px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;">' + foto + '</div>';
-        html += '<div>';
-        html += '<div style="font-weight:bold;">' + prof.nome + '</div>';
-        html += '<div style="font-size:12px;color:#6b7280;">' + prof.profissao + ' • ' + prof.experiencia + ' anos</div>';
-        html += '<div style="color:#f59e0b;">' + estrelas + '</div>';
-        html += '</div></div>';
-        html += '<div style="display:flex;gap:8px;">';
-        if (whatsapp) {
-            html += '<a href="https://wa.me/55' + whatsapp + '" target="_blank" class="btn btn-success btn-small" style="flex:1;text-align:center;text-decoration:none;background:#25D366;color:white;padding:8px;border-radius:8px;"><i class="fab fa-whatsapp"></i> WhatsApp</a>';
-        }
-        html += '<button class="btn btn-primary btn-small" onclick="window.app.iniciarChat(\'' + prof.id + '\')" style="flex:1;background:#1A3A5C;color:white;padding:8px;border-radius:8px;border:none;"><i class="fas fa-comments"></i> Chat</button>';
-        html += '</div></div>';
-    });
-    
-    container.innerHTML = html;
-};
-
-// ===== PERFIL =====
-App.prototype.carregarMeuPerfil = function() {
-    var self = this;
-    console.log('👤 Carregando perfil...');
-    
-    if (!self.usuarioLogado) {
-        console.log('Usuário não logado');
-        return;
-    }
-    
-    // Remover loading
-    var loading = document.getElementById('perfilLoading');
-    if (loading) loading.style.display = 'none';
-    
-    // Preencher dados
-    var elementos = {
-        nome: document.getElementById('perfilNome'),
-        profissao: document.getElementById('perfilProfissao'),
-        email: document.getElementById('perfilEmail'),
-        celular: document.getElementById('perfilCelular'),
-        foto: document.getElementById('perfilFoto'),
-        icone: document.getElementById('perfilIcon')
-    };
-    
-    if (elementos.nome) elementos.nome.textContent = self.usuarioLogado.nome || 'Usuário';
-    if (elementos.profissao) elementos.profissao.textContent = (self.usuarioLogado.profissao || 'Profissional') + ' • ' + (self.usuarioLogado.experiencia || '0') + ' anos';
-    if (elementos.email) elementos.email.textContent = '📧 ' + (self.usuarioLogado.email || 'Não informado');
-    if (elementos.celular) elementos.celular.textContent = '📱 ' + (self.usuarioLogado.celular || 'Não informado');
-    
-    // Foto do perfil
-    if (elementos.foto) {
-        if (self.usuarioLogado.fotoPerfil) {
-            elementos.foto.src = self.usuarioLogado.fotoPerfil;
-            elementos.foto.style.display = 'block';
-            if (elementos.icone) elementos.icone.style.display = 'none';
-        } else {
-            elementos.foto.style.display = 'none';
-            if (elementos.icone) elementos.icone.style.display = 'block';
-        }
-    }
-    
-    console.log('✅ Perfil carregado');
-};
-
-App.prototype.verPerfil = function(uid) {
-    var self = this;
-    var container = document.getElementById('perfilPublicoConteudo');
-    if (!container) return;
-    
-    container.innerHTML = '<div class="loading">Carregando...</div>';
-    self.mostrarTela('perfilPublicoScreen');
+    console.log('🔍 Buscando profissionais...');
+    container.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Buscando profissionais...</div>';
     
     // Dados de demonstração
-    var perfil = {
-        nome: 'Profissional',
-        profissao: 'Construtor',
-        experiencia: '5',
-        celular: '11999999999',
-        fotoPerfil: null,
-        score: 4.5
-    };
-    
-    if (typeof db !== 'undefined') {
-        db.collection('usuarios').doc(uid).get()
-            .then(function(doc) {
-                if (doc.exists) {
-                    var dados = doc.data();
-                    perfil = {
-                        nome: dados.nome || 'Profissional',
-                        profissao: dados.profissao || 'Não especificada',
-                        experiencia: dados.experiencia || '0',
-                        celular: dados.celular || '',
-                        fotoPerfil: dados.fotoPerfil || null,
-                        score: dados.score || 0
-                    };
-                }
-                self._renderizarPerfil(container, perfil, uid);
-            })
-            .catch(function() {
-                self._renderizarPerfil(container, perfil, uid);
-            });
-    } else {
-        self._renderizarPerfil(container, perfil, uid);
-    }
-};
-
-App.prototype._renderizarPerfil = function(container, perfil, uid) {
-    var foto = perfil.fotoPerfil ? 
-        '<img src="' + perfil.fotoPerfil + '" style="width:100px;height:100px;border-radius:50%;object-fit:cover;">' : 
-        '<i class="fas fa-user" style="font-size:48px;color:#1A3A5C;"></i>';
-    var whatsapp = perfil.celular ? perfil.celular.replace(/\D/g, '') : '';
-    
-    var html = '<div style="text-align:center;padding:20px;">';
-    html += '<div style="width:100px;height:100px;background:#f0f0f0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">' + foto + '</div>';
-    html += '<h2>' + perfil.nome + '</h2>';
-    html += '<p>' + perfil.profissao + ' • ' + perfil.experiencia + ' anos</p>';
-    html += '<p style="color:#f59e0b;">' + '⭐'.repeat(Math.round(perfil.score)) + '</p>';
-    if (whatsapp) {
-        html += '<a href="https://wa.me/55' + whatsapp + '" target="_blank" class="btn btn-success" style="margin:8px;display:inline-block;text-decoration:none;background:#25D366;color:white;padding:10px 20px;border-radius:8px;"><i class="fab fa-whatsapp"></i> WhatsApp</a>';
-    }
-    html += '<button class="btn btn-primary" onclick="window.app.iniciarChat(\'' + uid + '\')" style="margin:8px;background:#1A3A5C;color:white;padding:10px 20px;border-radius:8px;border:none;">💬 Chat</button>';
-    html += '</div>';
-    
-    container.innerHTML = html;
+    setTimeout(function() {
+        var profissionais = [
+            { id: 'p1', nome: 'João Silva', profissao: 'Pedreiro', experiencia: '10', celular: '11988887777', score: 4.5, fotoPerfil: null },
+            { id: 'p2', nome: 'Maria Santos', profissao: 'Eletricista', experiencia: '8', celular: '11977776666', score: 4.8, fotoPerfil: null },
+            { id: 'p3', nome: 'Carlos Oliveira', profissao: 'Pintor', experiencia: '5', celular: '11966665555', score: 4.2, fotoPerfil: null },
+            { id: 'p4', nome: 'Ana Costa', profissao: 'Arquiteta', experiencia: '12', celular: '11955554444', score: 4.9, fotoPerfil: null }
+        ];
+        
+        var html = '';
+        profissionais.forEach(function(prof) {
+            var whatsapp = prof.celular.replace(/\D/g, '');
+            var estrelas = '⭐'.repeat(Math.round(prof.score));
+            var fotoHtml = prof.fotoPerfil ? 
+                '<img src="' + prof.fotoPerfil + '" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">' : 
+                '<div style="width:50px;height:50px;background:#1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">👷</div>';
+            
+            html += '<div class="card" style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">';
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
+            html += fotoHtml;
+            html += '<div style="flex:1;">';
+            html += '<div style="font-weight:bold;font-size:16px;">' + prof.nome + '</div>';
+            html += '<div style="font-size:14px;color:#6b7280;">' + prof.profissao + ' • ' + prof.experiencia + ' anos</div>';
+            html += '<div style="color:#f59e0b;">' + estrelas + ' ' + prof.score + '</div>';
+            html += '</div></div>';
+            html += '<div style="display:flex;gap:8px;">';
+            html += '<a href="https://wa.me/55' + whatsapp + '" target="_blank" style="flex:1;text-align:center;text-decoration:none;background:#25D366;color:white;padding:10px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:4px;"><i class="fab fa-whatsapp"></i> WhatsApp</a>';
+            html += '<button onclick="window.app.iniciarChat(\'' + prof.id + '\')" style="flex:1;background:#1A3A5C;color:white;padding:10px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;gap:4px;"><i class="fas fa-comments"></i> Chat</button>';
+            html += '</div></div>';
+        });
+        
+        container.innerHTML = html;
+        console.log('✅ Encontrados ' + profissionais.length + ' profissionais');
+    }, 800);
 };
 
 // ===== FUNÇÕES AUXILIARES =====
@@ -886,15 +729,25 @@ App.prototype.candidatarVaga = function(vid) {
     this.mostrarToast('✅ Candidatura enviada!', 'sucesso');
 };
 
-App.prototype.abrirContratacao = function(uid) {
-    this.mostrarToast('🤝 Abrindo contratação...', 'info');
-};
-
 App.prototype.carregarMinhasObras = function() {
     var container = document.getElementById('minhasObrasContainer');
     if (container) {
-        container.innerHTML = '<div class="card" style="text-align:center;padding:30px;"><h3>🏗️ Minhas Obras</h3><p>Nenhuma obra cadastrada ainda.</p></div>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-hard-hat" style="font-size:48px;color:#1A3A5C;"></i><h3>🏗️ Minhas Obras</h3><p>Nenhuma obra cadastrada ainda.</p></div>';
     }
+};
+
+App.prototype.uploadFoto = function(e) {
+    console.log('📸 Upload de foto do perfil');
+    this.mostrarToast('📸 Foto atualizada!', 'sucesso');
+};
+
+App.prototype.abrirEditarPerfil = function() {
+    console.log('✏️ Abrindo edição de perfil');
+    this.mostrarToast('✏️ Editando perfil...', 'info');
+};
+
+App.prototype.salvarPerfil = function() {
+    this.mostrarToast('✅ Perfil salvo!', 'sucesso');
 };
 
 // ===== TOAST =====
@@ -903,7 +756,7 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'toast';
-        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:25px;z-index:10000;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;max-width:90%;text-align:center;color:white;';
+        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:25px;z-index:10000;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;max-width:90%;text-align:center;color:white;font-weight:bold;';
         document.body.appendChild(toast);
     }
     
@@ -926,11 +779,38 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM carregado');
+    console.log('📄 DOM carregado, iniciando aplicação...');
     if (!window.app._app) {
-        console.log('🚀 Iniciando aplicação');
         new App();
     } else {
-        console.log('⚠️ Aplicação já iniciada');
+        console.log('⚠️ Aplicação já está rodando');
     }
 });
+
+// Adicionar estilos CSS para os elementos
+(function() {
+    var style = document.createElement('style');
+    style.textContent = `
+        .vaga-card {
+            transition: transform 0.2s;
+        }
+        .vaga-card:hover {
+            transform: translateY(-2px);
+        }
+        .btn {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+console.log('✅ Script LPXCONSTRUTOR carregado com sucesso!');
