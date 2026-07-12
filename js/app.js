@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - COMPLETO COM SISTEMA DE CONTRATO =====
+// ===== LPXCONSTRUTOR - COMPLETO E FUNCIONAL =====
 // ==========================================================
 
 if (!window.app || !window.app._app) { window.app = window.app || {}; window.app._app = window.app._app || null; }
@@ -27,13 +27,12 @@ window.app = {
     publicarVagaApp: function(){ if(window.app._app)window.app._app.publicarVagaApp(); },
     previewFotoObra: function(e){ if(window.app._app)window.app._app.previewFotoObra(e); },
     candidatarVaga: function(vid){ if(window.app._app)window.app._app.candidatarVaga(vid); },
-    abrirContratacao: function(param){ if(window.app._app)window.app._app.abrirContratacao(param); },
+    abrirContratacao: function(vagaId){ if(window.app._app)window.app._app.abrirContratacao(vagaId); },
     confirmarContratacao: function(){ if(window.app._app)window.app._app.confirmarContratacao(); },
     aceitarCandidato: function(cid){ if(window.app._app)window.app._app.aceitarCandidato(cid); },
     recusarCandidato: function(cid){ if(window.app._app)window.app._app.recusarCandidato(cid); },
     finalizarContratoAtivo: function(){ if(window.app._app)window.app._app.finalizarContratoAtivo(); },
     verContratoAtivo: function(){ if(window.app._app)window.app._app.verContratoAtivo(); },
-    iniciarChatContrato: function(){ if(window.app._app)window.app._app.iniciarChatContrato(); },
     verMeusContratos: function(){ if(window.app._app)window.app._app.verMeusContratos(); },
     novaObra: function(){ if(window.app._app)window.app._app.novaObra(); },
     carregarMinhasObras: function(){ if(window.app._app)window.app._app.carregarMinhasObras(); },
@@ -82,7 +81,7 @@ var App = function() {
 
 App.prototype.init = function() {
     var s = this; 
-    console.log('🚀 Iniciando LPXCONSTRUTOR...'); 
+    console.log('🚀 Iniciando...'); 
     window.app._app = this;
     
     var bottomNav = document.getElementById('bottomNav');
@@ -95,6 +94,7 @@ App.prototype.init = function() {
         else s.voltarTela(); 
     });
     
+    // Carregar dados salvos
     var dadosSalvos = localStorage.getItem('usuarioLPX');
     if (dadosSalvos) {
         try { s.usuarioLogado = JSON.parse(dadosSalvos); } catch(e) {}
@@ -114,16 +114,20 @@ App.prototype.init = function() {
                 localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
                 s.atualizarBotoes(); 
             }
-            if (s.telaAtual === 'loginScreen' || s.telaAtual === 'cadastroScreen') {
-                s.mostrarTela(s.usuarioLogado ? 'homeScreen' : 'loginScreen');
-            }
-            setTimeout(function() { s.esconderSplash(); }, 1500); 
+            setTimeout(function() { 
+                s.esconderSplash();
+                if (s.telaAtual === 'loginScreen' || s.telaAtual === 'cadastroScreen') {
+                    s.mostrarTela(s.usuarioLogado ? 'homeScreen' : 'loginScreen');
+                }
+            }, 1500); 
         });
     } else {
         setTimeout(function() {
             s.esconderSplash();
             s.atualizarBotoes();
-            s.mostrarTela(s.usuarioLogado ? 'homeScreen' : 'loginScreen');
+            if (s.usuarioLogado) {
+                s.mostrarTela('homeScreen');
+            }
         }, 1500);
     }
 };
@@ -205,11 +209,7 @@ App.prototype.mostrarTela = function(id) {
 App.prototype.voltarTela = function() { 
     if (this.historicoTelas.length > 0) { 
         var a = this.historicoTelas.pop(); 
-        document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); }); 
-        var t = document.getElementById(a); 
-        if (t) { t.classList.add('active'); this.telaAtual = a; } 
-        if (a === 'homeScreen') this.carregarHome(); 
-        if (a === 'meuPerfilScreen') this.carregarMeuPerfil(); 
+        this.mostrarTela(a);
     } else { this.mostrarTela('homeScreen'); } 
 };
 
@@ -443,12 +443,9 @@ App.prototype.carregarFeed = function() {
                 statusVaga = '<span style="background:#10B981;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:5px;">🟢 Em andamento</span>';
             }
             
-            var temLocalizacao = v.localizacao && v.localizacao.lat && v.localizacao.lng;
             var mapaHtml = '';
-            if (temLocalizacao) {
-                mapaHtml = '<div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-marker-alt" style="color:#1A3A5C;"></i><span style="font-size:12px;">📍 ' + (v.endereco || 'Localização no mapa') + '</span></div>';
-            } else if (v.endereco) {
-                mapaHtml = '<div style="margin-top:8px;padding:8px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-pin" style="color:#d97706;"></i><span style="font-size:12px;">📌 ' + v.endereco + '</span></div>';
+            if (v.endereco) {
+                mapaHtml = '<div style="margin-top:8px;padding:8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:8px;"><i class="fas fa-map-marker-alt" style="color:#1A3A5C;"></i><span style="font-size:12px;">📍 ' + v.endereco + '</span></div>';
             }
             
             var fotoHtml = '';
@@ -629,28 +626,29 @@ App.prototype.publicarVagaApp = function() {
     }
 };
 
-// ===== SISTEMA DE CONTRATO (TIPO UBER) =====
-
-// CANDIDATAR-SE A UMA VAGA
+// ===== SISTEMA DE CONTRATO =====
 App.prototype.candidatarVaga = function(vagaId) {
     var s = this;
     if (!s.usuarioLogado) { s.mostrarToast('❌ Faça login!', 'erro'); return; }
     if (s.usuarioLogado.tipo !== 'profissional') { s.mostrarToast('❌ Apenas profissionais!', 'erro'); return; }
     
-    // Verificar contrato ativo
     if (s.contratoAtual && s.contratoAtual.status === 'em_andamento') {
-        s.mostrarToast('❌ Você já está em um contrato ativo! Finalize-o primeiro.', 'erro');
+        s.mostrarToast('❌ Você já está em um contrato ativo!', 'erro');
         return;
     }
     
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-    var vaga = null;
-    for (var i = 0; i < vagas.length; i++) {
-        if (vagas[i].id === vagaId) { vaga = vagas[i]; break; }
-    }
+    var vaga = vagas.find(function(v) { return v.id === vagaId; });
     
     if (!vaga) { s.mostrarToast('❌ Vaga não encontrada!', 'erro'); return; }
-    if (vaga.status === 'em_andamento') { s.mostrarToast('❌ Esta vaga já está em andamento!', 'erro'); return; }
+    if (vaga.status === 'em_andamento') { s.mostrarToast('❌ Vaga já em andamento!', 'erro'); return; }
+    
+    var candidaturas = JSON.parse(localStorage.getItem('candidaturasLPX') || '[]');
+    var jaCandidatou = candidaturas.find(function(c) {
+        return c.vagaId === vagaId && c.profissionalId === s.usuarioLogado.id && c.status === 'pendente';
+    });
+    
+    if (jaCandidatou) { s.mostrarToast('❌ Você já se candidatou!', 'erro'); return; }
     
     var candidatura = {
         id: 'cand_' + Date.now(),
@@ -662,35 +660,12 @@ App.prototype.candidatarVaga = function(vagaId) {
         dataCandidatura: new Date().toISOString()
     };
     
-    var candidaturas = JSON.parse(localStorage.getItem('candidaturasLPX') || '[]');
-    // Verificar se já se candidatou
-    for (var i = 0; i < candidaturas.length; i++) {
-        if (candidaturas[i].vagaId === vagaId && candidaturas[i].profissionalId === s.usuarioLogado.id && candidaturas[i].status === 'pendente') {
-            s.mostrarToast('❌ Você já se candidatou a esta vaga!', 'erro');
-            return;
-        }
-    }
-    
     candidaturas.push(candidatura);
     localStorage.setItem('candidaturasLPX', JSON.stringify(candidaturas));
     
-    // Notificar empreiteiro
-    var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
-    notificacoes.unshift({
-        id: 'notif_' + Date.now(),
-        para: vaga.autorId, de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome,
-        tipo: 'candidatura', titulo: '🔔 Nova candidatura!',
-        mensagem: s.usuarioLogado.nome + ' se candidatou para: ' + vaga.titulo,
-        vagaId: vagaId, candidaturaId: candidatura.id,
-        lida: false, data: new Date().toISOString()
-    });
-    localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
-    
     s.mostrarToast('✅ Candidatura enviada! Aguarde o empreiteiro.', 'sucesso');
-    setTimeout(function() { s.carregarFeed(); }, 300);
 };
 
-// ABRIR LISTA DE CANDIDATOS
 App.prototype.abrirContratacao = function(vagaId) {
     var s = this;
     if (!s.usuarioLogado || s.usuarioLogado.tipo !== 'empreiteiro') {
@@ -698,84 +673,72 @@ App.prototype.abrirContratacao = function(vagaId) {
     }
     
     var candidaturas = JSON.parse(localStorage.getItem('candidaturasLPX') || '[]');
-    var candidatosVaga = [];
-    for (var i = 0; i < candidaturas.length; i++) {
-        if (candidaturas[i].vagaId === vagaId && candidaturas[i].status === 'pendente') {
-            candidatosVaga.push(candidaturas[i]);
-        }
-    }
+    var candidatos = candidaturas.filter(function(c) {
+        return c.vagaId === vagaId && c.status === 'pendente';
+    });
     
-    var modalHTML = '<div id="modalContratacao" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">';
-    modalHTML += '<div style="background:white;border-radius:15px;padding:20px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">';
-    modalHTML += '<h3 style="color:#1A3A5C;margin:0 0 15px 0;text-align:center;">👷 Candidatos</h3>';
+    var html = '<div id="modalContratacao" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">';
+    html += '<div style="background:white;border-radius:15px;padding:20px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">';
+    html += '<h3 style="color:#1A3A5C;margin:0 0 15px 0;text-align:center;">👷 Candidatos</h3>';
     
-    if (candidatosVaga.length === 0) {
-        modalHTML += '<p style="text-align:center;color:#999;">Nenhum candidato ainda.</p>';
+    if (candidatos.length === 0) {
+        html += '<p style="text-align:center;color:#999;">Nenhum candidato ainda.</p>';
     } else {
-        candidatosVaga.forEach(function(c) {
-            modalHTML += '<div style="background:#f9f9f9;border-radius:10px;padding:15px;margin-bottom:10px;">';
-            modalHTML += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
-            modalHTML += '<div style="width:50px;height:50px;background:#1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">👷</div>';
-            modalHTML += '<div><div style="font-weight:bold;color:#1A3A5C;">' + c.profissionalNome + '</div>';
-            modalHTML += '<div style="font-size:12px;color:#666;">' + (c.profissionalProfissao || 'Profissional') + '</div></div></div>';
-            modalHTML += '<div style="display:flex;gap:8px;">';
-            modalHTML += '<button onclick="window.app.aceitarCandidato(\'' + c.id + '\')" style="flex:1;background:#10B981;color:white;border:none;padding:10px;border-radius:8px;font-weight:bold;">✅ Contratar</button>';
-            modalHTML += '<button onclick="window.app.recusarCandidato(\'' + c.id + '\')" style="flex:1;background:#EF4444;color:white;border:none;padding:10px;border-radius:8px;font-weight:bold;">❌ Recusar</button>';
-            modalHTML += '</div></div>';
+        candidatos.forEach(function(c) {
+            html += '<div style="background:#f9f9f9;border-radius:10px;padding:15px;margin-bottom:10px;">';
+            html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+            html += '<div style="width:50px;height:50px;background:#1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">👷</div>';
+            html += '<div><div style="font-weight:bold;">' + c.profissionalNome + '</div>';
+            html += '<div style="font-size:12px;color:#666;">' + (c.profissionalProfissao || 'Profissional') + '</div></div></div>';
+            html += '<div style="display:flex;gap:8px;">';
+            html += '<button onclick="window.app.aceitarCandidato(\'' + c.id + '\')" style="flex:1;background:#10B981;color:white;border:none;padding:10px;border-radius:8px;font-weight:bold;">✅ Contratar</button>';
+            html += '<button onclick="window.app.recusarCandidato(\'' + c.id + '\')" style="flex:1;background:#EF4444;color:white;border:none;padding:10px;border-radius:8px;font-weight:bold;">❌ Recusar</button>';
+            html += '</div></div>';
         });
     }
     
-    modalHTML += '<button onclick="document.getElementById(\'modalContratacao\').remove()" style="width:100%;background:#666;color:white;border:none;padding:12px;border-radius:8px;margin-top:10px;">Fechar</button>';
-    modalHTML += '</div></div>';
+    html += '<button onclick="document.getElementById(\'modalContratacao\').remove()" style="width:100%;background:#666;color:white;border:none;padding:12px;border-radius:8px;margin-top:10px;">Fechar</button>';
+    html += '</div></div>';
     
-    var modalAntigo = document.getElementById('modalContratacao');
-    if (modalAntigo) modalAntigo.remove();
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    var antigo = document.getElementById('modalContratacao');
+    if (antigo) antigo.remove();
+    document.body.insertAdjacentHTML('beforeend', html);
 };
 
-// ACEITAR CANDIDATO
 App.prototype.aceitarCandidato = function(candidaturaId) {
     var s = this;
     var candidaturas = JSON.parse(localStorage.getItem('candidaturasLPX') || '[]');
-    var candidatura = null;
+    var cand = candidaturas.find(function(c) { return c.id === candidaturaId; });
     
-    for (var i = 0; i < candidaturas.length; i++) {
-        if (candidaturas[i].id === candidaturaId) {
-            candidatura = candidaturas[i];
-            candidatura.status = 'em_andamento';
-            candidatura.dataInicio = new Date().toISOString();
-            break;
+    if (!cand) { s.mostrarToast('❌ Candidatura não encontrada!', 'erro'); return; }
+    
+    cand.status = 'em_andamento';
+    cand.dataInicio = new Date().toISOString();
+    
+    // Recusar outros
+    candidaturas.forEach(function(c) {
+        if (c.vagaId === cand.vagaId && c.id !== candidaturaId) {
+            c.status = 'recusado';
         }
-    }
-    
-    if (!candidatura) { s.mostrarToast('❌ Candidatura não encontrada!', 'erro'); return; }
-    
-    // Recusar outras
-    for (var i = 0; i < candidaturas.length; i++) {
-        if (candidaturas[i].vagaId === candidatura.vagaId && candidaturas[i].id !== candidaturaId) {
-            candidaturas[i].status = 'recusado';
-        }
-    }
+    });
     localStorage.setItem('candidaturasLPX', JSON.stringify(candidaturas));
     
     // Atualizar vaga
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-    for (var i = 0; i < vagas.length; i++) {
-        if (vagas[i].id === candidatura.vagaId) {
-            vagas[i].status = 'em_andamento';
-            vagas[i].profissionalContratado = candidatura.profissionalId;
-            vagas[i].profissionalNome = candidatura.profissionalNome;
-            break;
-        }
+    var vaga = vagas.find(function(v) { return v.id === cand.vagaId; });
+    if (vaga) {
+        vaga.status = 'em_andamento';
+        vaga.profissionalContratado = cand.profissionalId;
+        vaga.profissionalNome = cand.profissionalNome;
     }
     localStorage.setItem('vagasLPX', JSON.stringify(vagas));
     
     // Criar contrato
     var contrato = {
         id: 'contr_' + Date.now(),
-        candidaturaId: candidaturaId, vagaId: candidatura.vagaId, vagaTitulo: candidatura.vagaTitulo,
-        empreiteiroId: candidatura.empreiteiroId, empreiteiroNome: candidatura.empreiteiroNome,
-        profissionalId: candidatura.profissionalId, profissionalNome: candidatura.profissionalNome,
+        candidaturaId: candidaturaId, vagaId: cand.vagaId, vagaTitulo: cand.vagaTitulo,
+        empreiteiroId: cand.empreiteiroId, empreiteiroNome: cand.empreiteiroNome,
+        profissionalId: cand.profissionalId, profissionalNome: cand.profissionalNome,
         status: 'em_andamento', dataInicio: new Date().toISOString(), dataFim: null
     };
     
@@ -786,106 +749,82 @@ App.prototype.aceitarCandidato = function(candidaturaId) {
     s.contratoAtual = contrato;
     localStorage.setItem('contratoAtualLPX', JSON.stringify(contrato));
     
-    // Notificar
-    var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
-    notificacoes.unshift({
-        id: 'notif_' + Date.now(),
-        para: candidatura.profissionalId, de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome,
-        tipo: 'contratado', titulo: '🎉 Você foi contratado!',
-        mensagem: 'Parabéns! Você foi contratado para: ' + candidatura.vagaTitulo,
-        lida: false, data: new Date().toISOString()
-    });
-    localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
-    
     var modal = document.getElementById('modalContratacao');
     if (modal) modal.remove();
     
     s.mostrarToast('✅ Profissional contratado!', 'sucesso');
-    setTimeout(function() { s.verContratoAtivo(); }, 500);
+    s.verContratoAtivo();
 };
 
-// RECUSAR CANDIDATO
 App.prototype.recusarCandidato = function(candidaturaId) {
     var candidaturas = JSON.parse(localStorage.getItem('candidaturasLPX') || '[]');
-    var vagaId = null;
-    for (var i = 0; i < candidaturas.length; i++) {
-        if (candidaturas[i].id === candidaturaId) {
-            candidaturas[i].status = 'recusado';
-            vagaId = candidaturas[i].vagaId;
-            break;
-        }
-    }
+    var cand = candidaturas.find(function(c) { return c.id === candidaturaId; });
+    if (cand) cand.status = 'recusado';
     localStorage.setItem('candidaturasLPX', JSON.stringify(candidaturas));
     
     var modal = document.getElementById('modalContratacao');
     if (modal) modal.remove();
-    
-    if (vagaId) this.abrirContratacao(vagaId);
+    if (cand) this.abrirContratacao(cand.vagaId);
     this.mostrarToast('Candidatura recusada.', 'info');
 };
 
-// VER CONTRATO ATIVO
 App.prototype.verContratoAtivo = function() {
     var s = this;
     
     if (!s.contratoAtual) {
-        var contratoSalvo = localStorage.getItem('contratoAtualLPX');
-        if (contratoSalvo) {
-            try { s.contratoAtual = JSON.parse(contratoSalvo); } catch(e) {}
-        }
+        var salvo = localStorage.getItem('contratoAtualLPX');
+        if (salvo) { try { s.contratoAtual = JSON.parse(salvo); } catch(e) {} }
     }
     
     if (!s.contratoAtual || s.contratoAtual.status !== 'em_andamento') {
-        s.mostrarToast('📋 Nenhum contrato ativo.', 'info');
-        return;
+        s.mostrarToast('📋 Nenhum contrato ativo.', 'info'); return;
     }
     
-    s.mostrarTela('chatScreen');
-    var telaChat = document.getElementById('chatScreen');
-    if (telaChat) {
-        var c = s.contratoAtual;
-        var isEmpreiteiro = s.usuarioLogado && s.usuarioLogado.id === c.empreiteiroId;
-        
-        telaChat.innerHTML = '<div style="padding:20px;background:#f5f5f5;min-height:100vh;">' +
-            '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:25px;border-radius:15px;text-align:center;margin-bottom:20px;">' +
-            '<div style="font-size:50px;margin-bottom:10px;">🤝</div>' +
-            '<h2 style="margin:10px 0;">Contrato Ativo</h2>' +
-            '<p style="color:#f0c27f;font-size:14px;">🟢 Em Andamento</p></div>' +
-            '<div style="background:white;border-radius:15px;padding:20px;margin-bottom:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">' +
-            '<h3 style="color:#1A3A5C;margin:0 0 15px 0;">📋 Detalhes</h3>' +
-            '<p><strong>🏗️ Obra:</strong> ' + c.vagaTitulo + '</p>' +
-            '<p><strong>👷 Profissional:</strong> ' + c.profissionalNome + '</p>' +
-            '<p><strong>🏢 Empreiteiro:</strong> ' + c.empreiteiroNome + '</p>' +
-            '<p><strong>📅 Início:</strong> ' + new Date(c.dataInicio).toLocaleDateString('pt-BR') + '</p></div>' +
-            '<div style="display:flex;gap:10px;margin-bottom:15px;">' +
-            '<button onclick="window.app.iniciarChatContrato()" style="flex:1;background:#25D366;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">💬 Conversar</button>' +
-            '<button onclick="window.app.voltarTela()" style="flex:1;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">📋 Voltar</button></div>' +
-            (isEmpreiteiro ? '<button onclick="window.app.finalizarContratoAtivo()" style="width:100%;background:#EF4444;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">🔴 Finalizar Contrato</button>' :
-            '<div style="background:#fef3c7;border-radius:10px;padding:15px;text-align:center;color:#92400e;">⚠️ Apenas o empreiteiro pode finalizar.</div>') +
-            '</div>';
+    var c = s.contratoAtual;
+    var isEmpreiteiro = s.usuarioLogado && s.usuarioLogado.id === c.empreiteiroId;
+    
+    var html = '<div style="padding:20px;background:#f5f5f5;min-height:100vh;">';
+    html += '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:25px;border-radius:15px;text-align:center;margin-bottom:20px;">';
+    html += '<div style="font-size:50px;">🤝</div>';
+    html += '<h2 style="margin:10px 0;">Contrato Ativo</h2>';
+    html += '<p style="color:#f0c27f;">🟢 Em Andamento</p></div>';
+    html += '<div style="background:white;border-radius:15px;padding:20px;margin-bottom:15px;">';
+    html += '<h3 style="color:#1A3A5C;">📋 Detalhes</h3>';
+    html += '<p><strong>🏗️ Obra:</strong> ' + c.vagaTitulo + '</p>';
+    html += '<p><strong>👷 Profissional:</strong> ' + c.profissionalNome + '</p>';
+    html += '<p><strong>🏢 Empreiteiro:</strong> ' + c.empreiteiroNome + '</p>';
+    html += '<p><strong>📅 Início:</strong> ' + new Date(c.dataInicio).toLocaleDateString('pt-BR') + '</p></div>';
+    html += '<div style="display:flex;gap:10px;margin-bottom:15px;">';
+    html += '<button onclick="window.app.iniciarChat(\'' + (isEmpreiteiro ? c.profissionalId : c.empreiteiroId) + '\')" style="flex:1;background:#25D366;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">💬 Conversar</button>';
+    html += '<button onclick="window.app.voltarTela()" style="flex:1;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">Voltar</button></div>';
+    
+    if (isEmpreiteiro) {
+        html += '<button onclick="window.app.finalizarContratoAtivo()" style="width:100%;background:#EF4444;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;">🔴 Finalizar Contrato</button>';
+    } else {
+        html += '<div style="background:#fef3c7;border-radius:10px;padding:15px;text-align:center;color:#92400e;">⚠️ Apenas o empreiteiro pode finalizar.</div>';
+    }
+    html += '</div>';
+    
+    var tela = document.getElementById('chatScreen');
+    if (tela) {
+        tela.innerHTML = html;
+        s.mostrarTela('chatScreen');
     }
 };
 
-// FINALIZAR CONTRATO
 App.prototype.finalizarContratoAtivo = function() {
     var s = this;
     if (!confirm('Finalizar este contrato?')) return;
     if (!s.contratoAtual) { s.mostrarToast('❌ Nenhum contrato ativo!', 'erro'); return; }
     
     var contratos = JSON.parse(localStorage.getItem('contratosLPX') || '[]');
-    for (var i = 0; i < contratos.length; i++) {
-        if (contratos[i].id === s.contratoAtual.id) {
-            contratos[i].status = 'finalizado';
-            contratos[i].dataFim = new Date().toISOString();
-            break;
-        }
-    }
+    var contrato = contratos.find(function(c) { return c.id === s.contratoAtual.id; });
+    if (contrato) { contrato.status = 'finalizado'; contrato.dataFim = new Date().toISOString(); }
     localStorage.setItem('contratosLPX', JSON.stringify(contratos));
     
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-    for (var i = 0; i < vagas.length; i++) {
-        if (vagas[i].id === s.contratoAtual.vagaId) { vagas[i].status = 'finalizado'; break; }
-    }
+    var vaga = vagas.find(function(v) { return v.id === s.contratoAtual.vagaId; });
+    if (vaga) vaga.status = 'finalizado';
     localStorage.setItem('vagasLPX', JSON.stringify(vagas));
     
     s.contratoAtual = null;
@@ -895,43 +834,30 @@ App.prototype.finalizarContratoAtivo = function() {
     setTimeout(function() { s.mostrarTela('homeScreen'); s.carregarFeed(); }, 500);
 };
 
-// CHAT DO CONTRATO
-App.prototype.iniciarChatContrato = function() {
-    var s = this;
-    if (!s.contratoAtual) { s.mostrarToast('❌ Nenhum contrato ativo!', 'erro'); return; }
-    
-    var outroNome = s.usuarioLogado.id === s.contratoAtual.empreiteiroId ? 
-        s.contratoAtual.profissionalNome : s.contratoAtual.empreiteiroNome;
-    
-    s.mostrarToast('💬 Chat com ' + outroNome + ' iniciado!', 'sucesso');
-};
-
-// VER CONTRATOS
 App.prototype.verMeusContratos = function() {
     var s = this;
     var contratos = JSON.parse(localStorage.getItem('contratosLPX') || '[]');
     var userId = s.usuarioLogado ? s.usuarioLogado.id : '';
     
-    var meusContratos = contratos.filter(function(c) {
+    var meus = contratos.filter(function(c) {
         return c.empreiteiroId === userId || c.profissionalId === userId;
     });
     
     var html = '<div style="padding:20px;"><h3 style="color:#1A3A5C;">📋 Meus Contratos</h3>';
     
-    if (meusContratos.length === 0) {
-        html += '<p style="text-align:center;color:#999;margin-top:40px;">Nenhum contrato encontrado.</p>';
+    if (meus.length === 0) {
+        html += '<p style="text-align:center;color:#999;margin-top:40px;">Nenhum contrato.</p>';
     } else {
-        meusContratos.forEach(function(c) {
-            var statusCor = c.status === 'em_andamento' ? '#10B981' : '#666';
-            var statusTexto = c.status === 'em_andamento' ? '🟢 Em Andamento' : '✅ Finalizado';
+        meus.forEach(function(c) {
+            var cor = c.status === 'em_andamento' ? '#10B981' : '#666';
+            var texto = c.status === 'em_andamento' ? '🟢 Em Andamento' : '✅ Finalizado';
             
-            html += '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);">';
+            html += '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;">';
             html += '<h4>' + c.vagaTitulo + '</h4>';
-            html += '<p>👷 ' + c.profissionalNome + '</p>';
-            html += '<p style="color:' + statusCor + ';">' + statusTexto + '</p>';
-            html += '<p style="font-size:11px;color:#999;">📅 ' + new Date(c.dataInicio).toLocaleDateString('pt-BR') + '</p>';
+            html += '<p>👷 ' + c.profissionalNome + ' | 🏢 ' + c.empreiteiroNome + '</p>';
+            html += '<p style="color:' + cor + ';">' + texto + '</p>';
             if (c.status === 'em_andamento') {
-                html += '<button onclick="window.app._app.contratoAtual=' + JSON.stringify(c) + ';localStorage.setItem(\'contratoAtualLPX\',JSON.stringify(' + JSON.stringify(c) + '));window.app.verContratoAtivo();" style="width:100%;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:8px;margin-top:10px;">Ver Contrato</button>';
+                html += '<button onclick="window.app._app.contratoAtual=' + JSON.stringify(c) + ';localStorage.setItem(\'contratoAtualLPX\',JSON.stringify(' + JSON.stringify(c) + '));window.app.verContratoAtivo();" style="width:100%;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:8px;">Ver Contrato</button>';
             }
             html += '</div>';
         });
@@ -947,111 +873,99 @@ App.prototype.verMeusContratos = function() {
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
     if (!s.usuarioLogado) {
-        var userSalvo = localStorage.getItem('usuarioLPX');
-        if (userSalvo) { try { s.usuarioLogado = JSON.parse(userSalvo); } catch(e) {} }
+        var salvo = localStorage.getItem('usuarioLPX');
+        if (salvo) { try { s.usuarioLogado = JSON.parse(salvo); } catch(e) {} }
         if (!s.usuarioLogado) return;
     }
     
     var user = s.usuarioLogado;
-    var telaPerfil = document.getElementById('meuPerfilScreen');
-    if (!telaPerfil) return;
+    var tela = document.getElementById('meuPerfilScreen');
+    if (!tela) return;
     
     var score = user.score || 0;
     var estrelas = '';
-    for (var i = 0; i < 5; i++) { estrelas += i < Math.round(score) ? '⭐' : '☆'; }
+    for (var i = 0; i < 5; i++) estrelas += i < Math.round(score) ? '⭐' : '☆';
     
     var html = '';
     html += '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:40px 20px 30px;text-align:center;border-radius:0 0 30px 30px;margin-bottom:20px;">';
     html += '<div style="width:100px;height:100px;background:white;border-radius:50%;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;font-size:50px;overflow:hidden;border:3px solid #f0c27f;">';
     html += user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<span>👷</span>';
     html += '</div>';
-    html += '<h2 style="margin:10px 0;font-size:22px;">' + (user.nome || 'Usuário') + '</h2>';
-    html += '<p style="font-size:15px;color:#f0c27f;margin:5px 0;">' + (user.profissao || 'Profissional') + ' • ' + (user.experiencia || '0') + ' anos</p>';
-    html += '<p style="font-size:18px;margin:5px 0;">' + estrelas + ' ' + score + '</p>';
-    html += '</div>';
+    html += '<h2 style="margin:10px 0;">' + (user.nome || 'Usuário') + '</h2>';
+    html += '<p style="color:#f0c27f;">' + (user.profissao || 'Profissional') + ' • ' + (user.experiencia || '0') + ' anos</p>';
+    html += '<p style="font-size:18px;">' + estrelas + ' ' + score + '</p></div>';
     
     html += '<div style="padding:0 15px;">';
-    html += '<div style="background:white;border-radius:15px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">';
-    html += '<div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid #f0f0f0;"><span style="font-size:22px;margin-right:12px;">📧</span><div><div style="color:#999;font-size:11px;">Email</div><div style="font-size:15px;">' + (user.email || 'Não informado') + '</div></div></div>';
-    html += '<div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid #f0f0f0;"><span style="font-size:22px;margin-right:12px;">📱</span><div><div style="color:#999;font-size:11px;">Celular</div><div style="font-size:15px;">' + (user.celular || 'Não informado') + '</div></div></div>';
-    html += '<div style="display:flex;align-items:center;padding:12px 0;"><span style="font-size:22px;margin-right:12px;">🏢</span><div><div style="color:#999;font-size:11px;">Tipo de Conta</div><div style="font-size:15px;">' + (user.tipo === 'empreiteiro' ? 'Empreiteiro' : 'Profissional') + '</div></div></div>';
-    html += '</div>';
+    html += '<div style="background:white;border-radius:15px;padding:15px;margin-bottom:15px;">';
+    html += '<p>📧 ' + (user.email || 'Não informado') + '</p>';
+    html += '<p>📱 ' + (user.celular || 'Não informado') + '</p>';
+    html += '<p>🏢 ' + (user.tipo === 'empreiteiro' ? 'Empreiteiro' : 'Profissional') + '</p></div>';
     
     html += '<div style="display:flex;gap:10px;margin-bottom:15px;">';
-    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);"><div style="font-size:24px;color:#1A3A5C;font-weight:bold;">' + (user.experiencia || '0') + '</div><div style="color:#999;font-size:11px;">Anos Exp.</div></div>';
-    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);"><div style="font-size:24px;color:#f59e0b;font-weight:bold;">' + score + '</div><div style="color:#999;font-size:11px;">Avaliação</div></div>';
-    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);"><div style="font-size:24px;color:#10B981;font-weight:bold;" onclick="window.app.verMeusContratos()">📋</div><div style="color:#999;font-size:11px;">Contratos</div></div>';
-    html += '</div>';
+    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;"><div style="font-size:24px;color:#1A3A5C;font-weight:bold;">' + (user.experiencia || '0') + '</div><div style="color:#999;font-size:11px;">Anos Exp.</div></div>';
+    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;"><div style="font-size:24px;color:#f59e0b;font-weight:bold;">' + score + '</div><div style="color:#999;font-size:11px;">Avaliação</div></div>';
+    html += '<div style="flex:1;background:white;border-radius:15px;padding:15px;text-align:center;" onclick="window.app.verMeusContratos()"><div style="font-size:24px;color:#10B981;font-weight:bold;">📋</div><div style="color:#999;font-size:11px;">Contratos</div></div></div>';
     
-    html += '<button onclick="window.app.verMeusContratos()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-size:15px;font-weight:bold;margin-bottom:10px;">📋 Meus Contratos</button>';
-    html += '<button onclick="window.app.mostrarNotificacoes()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-size:15px;font-weight:bold;margin-bottom:10px;">🔔 Notificações</button>';
-    html += '<button onclick="window.app.abrirEditarPerfil()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-size:15px;font-weight:bold;margin-bottom:10px;">✏️ Editar Perfil</button>';
-    html += '<button onclick="window.app.sair()" style="width:100%;background:white;color:#EF4444;border:2px solid #EF4444;padding:15px;border-radius:10px;font-size:15px;font-weight:bold;">🚪 Sair</button>';
-    html += '</div>';
+    html += '<button onclick="window.app.verMeusContratos()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">📋 Meus Contratos</button>';
+    html += '<button onclick="window.app.mostrarNotificacoes()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">🔔 Notificações</button>';
+    html += '<button onclick="window.app.abrirEditarPerfil()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;margin-bottom:10px;">✏️ Editar Perfil</button>';
+    html += '<button onclick="window.app.sair()" style="width:100%;background:white;color:#EF4444;border:2px solid #EF4444;padding:15px;border-radius:10px;font-weight:bold;">🚪 Sair</button></div>';
     
-    telaPerfil.innerHTML = html;
-    var loadingEl = document.getElementById('perfilLoading');
-    if (loadingEl) loadingEl.style.display = 'none';
+    tela.innerHTML = html;
+    var loading = document.getElementById('perfilLoading');
+    if (loading) loading.style.display = 'none';
 };
 
 // ===== BUSCA =====
 App.prototype.buscarProfissionais = function() {
-    var s=this,c=document.getElementById('buscaResultados');
-    if(!c)return;
-    c.innerHTML='<div class="loading">Buscando...</div>';
+    var c = document.getElementById('buscaResultados');
+    if (!c) return;
+    c.innerHTML = '<div class="loading">Buscando...</div>';
     
     setTimeout(function() {
         var profs = [
-            { id: 'p1', nome: 'João Silva', profissao: 'Pedreiro', experiencia: '10', celular: '11988887777', score: 4.5, fotoPerfil: null },
-            { id: 'p2', nome: 'Maria Santos', profissao: 'Eletricista', experiencia: '8', celular: '11977776666', score: 4.8, fotoPerfil: null },
-            { id: 'p3', nome: 'Pedro Costa', profissao: 'Pintor', experiencia: '5', celular: '11966665555', score: 4.2, fotoPerfil: null }
+            { id: 'p1', nome: 'João Silva', profissao: 'Pedreiro', experiencia: '10', celular: '11988887777', score: 4.5 },
+            { id: 'p2', nome: 'Maria Santos', profissao: 'Eletricista', experiencia: '8', celular: '11977776666', score: 4.8 },
+            { id: 'p3', nome: 'Pedro Costa', profissao: 'Pintor', experiencia: '5', celular: '11966665555', score: 4.2 }
         ];
         
-        var html='';
-        profs.forEach(function(u){
-            var w=u.celular.replace(/\D/g,''), sc=u.score;
-            var av=u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'<i class="fas fa-hard-hat"></i>';
-            html+='<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar">'+av+'</div><div class="vaga-info"><div class="vaga-nome">'+u.nome+'</div><div class="vaga-data">'+u.profissao+' • '+u.experiencia+' anos</div><div>'+'⭐'.repeat(Math.round(sc))+' '+sc+'</div></div></div><div class="vaga-footer">'+(w?'<a href="https://wa.me/55'+w+'" target="_blank" class="btn btn-success btn-small">WhatsApp</a>':'')+'<button class="btn btn-primary btn-small" onclick="window.app.iniciarChat(\''+u.id+'\')">Chat</button>'+(s.usuarioLogado&&s.usuarioLogado.tipo==='empreiteiro'?'<button class="btn btn-outline btn-small" onclick="window.app.abrirContratacao(\''+u.id+'\')" style="background:#1A3A5C;color:white;">🤝 Contratar</button>':'')+'</div></div>';
+        var html = '';
+        profs.forEach(function(p) {
+            html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar"><i class="fas fa-hard-hat"></i></div><div class="vaga-info"><div class="vaga-nome">' + p.nome + '</div><div class="vaga-data">' + p.profissao + ' • ' + p.experiencia + ' anos</div><div>' + '⭐'.repeat(Math.round(p.score)) + ' ' + p.score + '</div></div></div><div class="vaga-footer"><a href="https://wa.me/55' + p.celular + '" target="_blank" class="btn btn-success btn-small">WhatsApp</a><button class="btn btn-primary btn-small" onclick="window.app.iniciarChat(\'' + p.id + '\')">Chat</button></div></div>';
         });
-        c.innerHTML=html;
+        c.innerHTML = html;
     }, 500);
 };
 
 App.prototype.verPerfil = function(uid) { 
-    var c=document.getElementById('perfilPublicoConteudo');
-    if(!c)return;
-    c.innerHTML='<div class="profile-info-card"><h2>Profissional</h2><p>Construtor • 5 anos</p><div>⭐⭐⭐⭐⭐</div></div>';
+    var c = document.getElementById('perfilPublicoConteudo');
+    if (c) c.innerHTML = '<div class="profile-info-card"><h2>Profissional</h2><p>Construtor • 5 anos</p><div>⭐⭐⭐⭐⭐</div></div>';
 };
 
 App.prototype.carregarRede = function() {
-    var c=document.getElementById('redeContainer');
-    if(!c)return;
-    c.innerHTML='<div class="card" style="text-align:center;"><h3>Rede vazia</h3><button class="btn btn-primary" onclick="window.app.mostrarTela(\'buscaScreen\')">🔍 Buscar</button></div>';
+    var c = document.getElementById('redeContainer');
+    if (c) c.innerHTML = '<div class="card" style="text-align:center;"><h3>Rede vazia</h3></div>';
 };
 
-App.prototype.adicionarNaRede = function(aid) { this.mostrarToast('✅ Adicionado!','sucesso'); };
-App.prototype.removerDaRede = function(aid) { if(!confirm('Remover?'))return; this.mostrarToast('Removido','sucesso'); };
+App.prototype.adicionarNaRede = function(aid) { this.mostrarToast('✅ Adicionado!', 'sucesso'); };
+App.prototype.removerDaRede = function(aid) { if (!confirm('Remover?')) return; this.mostrarToast('Removido', 'sucesso'); };
 
 // ===== NOTIFICAÇÕES =====
 App.prototype.mostrarNotificacoes = function() {
     var s = this;
     var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
     var userId = s.usuarioLogado ? s.usuarioLogado.id : '';
-    
-    var minhasNotif = notificacoes.filter(function(n) { return n.para === userId; });
+    var minhas = notificacoes.filter(function(n) { return n.para === userId; });
     
     var html = '<div style="padding:20px;"><h3 style="color:#1A3A5C;">🔔 Notificações</h3>';
     
-    if (minhasNotif.length === 0) {
+    if (minhas.length === 0) {
         html += '<p style="text-align:center;color:#999;margin-top:40px;">Nenhuma notificação.</p>';
     } else {
-        minhasNotif.forEach(function(n) {
-            var bg = n.lida ? '#f9f9f9' : '#f0f9ff';
-            html += '<div style="background:' + bg + ';border-radius:10px;padding:15px;margin-bottom:10px;' + (n.lida ? '' : 'border-left:3px solid #1A3A5C;') + '">';
-            html += '<h4 style="margin:0 0 5px 0;">' + n.titulo + '</h4>';
-            html += '<p style="margin:0;color:#666;">' + n.mensagem + '</p>';
-            html += '<p style="font-size:11px;color:#999;margin:5px 0 0 0;">' + new Date(n.data).toLocaleDateString('pt-BR') + '</p>';
-            html += '</div>';
+        minhas.forEach(function(n) {
+            html += '<div style="background:' + (n.lida ? '#f9f9f9' : '#f0f9ff') + ';border-radius:10px;padding:15px;margin-bottom:10px;">';
+            html += '<h4>' + n.titulo + '</h4><p style="color:#666;">' + n.mensagem + '</p>';
+            html += '<p style="font-size:11px;color:#999;">' + new Date(n.data).toLocaleDateString('pt-BR') + '</p></div>';
         });
     }
     
@@ -1064,26 +978,29 @@ App.prototype.mostrarNotificacoes = function() {
 // ===== OUTRAS FUNÇÕES =====
 App.prototype.verDetalheObra = function(oid) { this.mostrarToast('🔍 Visualizando detalhes...', 'info'); };
 App.prototype.iniciarChat = function(uid) { this.mostrarToast('💬 Chat iniciado!', 'sucesso'); };
-App.prototype.confirmarContratacao = function() { this.mostrarToast('✅ Profissional contratado!', 'sucesso'); };
-App.prototype.novaObra = function() { this.mostrarToast('🏗️ Nova obra criada!', 'sucesso'); };
-App.prototype.carregarMinhasObras = function() { var c = document.getElementById('minhasObrasContainer'); if (c) c.innerHTML = '<div class="card"><h3>Minhas Obras</h3><p>Nenhuma obra cadastrada.</p></div>'; };
-App.prototype.demitirFuncionario = function(cid) { if (confirm('Demitir?')) { this.mostrarToast('Funcionário demitido.', 'sucesso'); } };
-App.prototype.finalizarContrato = function(cid) { if (confirm('Finalizar?')) { this.mostrarToast('Contrato finalizado.', 'sucesso'); } };
+App.prototype.confirmarContratacao = function() { this.mostrarToast('✅ Contratado!', 'sucesso'); };
+App.prototype.novaObra = function() { this.mostrarToast('🏗️ Nova obra!', 'sucesso'); };
+App.prototype.carregarMinhasObras = function() { 
+    var c = document.getElementById('minhasObrasContainer'); 
+    if (c) c.innerHTML = '<div class="card"><h3>Minhas Obras</h3><p>Nenhuma obra.</p></div>'; 
+};
+App.prototype.demitirFuncionario = function(cid) { if (confirm('Demitir?')) this.mostrarToast('Demitido.', 'sucesso'); };
+App.prototype.finalizarContrato = function(cid) { if (confirm('Finalizar?')) this.mostrarToast('Finalizado.', 'sucesso'); };
 App.prototype.abrirEditarPerfil = function() { this.mostrarToast('✏️ Editar perfil', 'info'); };
 App.prototype.salvarPerfil = function() { this.mostrarToast('✅ Perfil salvo!', 'sucesso'); };
 App.prototype.uploadFoto = function(e) { this.mostrarToast('📸 Foto atualizada!', 'sucesso'); };
-App.prototype.verAvaliacoes = function(uid) { this.mostrarToast('⭐ Avaliações carregadas!', 'info'); };
-App.prototype.abrirDarAvaliacao = function(uid) { this.avaliarUid = uid; this.mostrarToast('Avalie!', 'info'); };
+App.prototype.verAvaliacoes = function(uid) { this.mostrarToast('⭐ Avaliações!', 'info'); };
+App.prototype.abrirDarAvaliacao = function(uid) { this.mostrarToast('Avalie!', 'info'); };
 App.prototype.setNota = function(n) { this.avaliarNota = n; };
-App.prototype.enviarAvaliacao = function() { this.mostrarToast('✅ Avaliação enviada!', 'sucesso'); };
-App.prototype.gerarQRCode = function(uid) { this.mostrarToast('📱 QR Code gerado!', 'sucesso'); };
-App.prototype.fecharQRCode = function() { this.mostrarToast('QR Code fechado.', 'info'); };
-App.prototype.baixarQRCode = function() { this.mostrarToast('📥 QR Code baixado!', 'sucesso'); };
+App.prototype.enviarAvaliacao = function() { this.mostrarToast('✅ Enviada!', 'sucesso'); };
+App.prototype.gerarQRCode = function(uid) { this.mostrarToast('📱 QR Code!', 'sucesso'); };
+App.prototype.fecharQRCode = function() {};
+App.prototype.baixarQRCode = function() { this.mostrarToast('📥 Baixado!', 'sucesso'); };
 App.prototype.selecionarIdioma = function(i) { this.mostrarToast('🌐 Idioma alterado!', 'sucesso'); };
 App.prototype.mostrarInfoVersao = function() { this.mostrarToast('📱 Versão 1.0.0', 'info'); };
-App.prototype.confirmarExclusao = function() { if (confirm('Confirmar exclusão?')) { this.mostrarToast('Conta excluída.', 'sucesso'); } };
-App.prototype.mudarTab = function(t) { console.log('Tab:', t); };
-App.prototype.enviarMensagem = function() { this.mostrarToast('📨 Mensagem enviada!', 'sucesso'); };
+App.prototype.confirmarExclusao = function() { if (confirm('Excluir?')) this.mostrarToast('Excluída.', 'sucesso'); };
+App.prototype.mudarTab = function(t) {};
+App.prototype.enviarMensagem = function() { this.mostrarToast('📨 Enviada!', 'sucesso'); };
 
 // ===== TOAST =====
 App.prototype.mostrarToast = function(mensagem, tipo) {
