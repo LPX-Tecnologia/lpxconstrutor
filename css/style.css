@@ -17,7 +17,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .login-container{text-align:center;padding:40px 20px}
 .login-logo{font-size:0;background:transparent;display:flex;justify-content:center;align-items:center;margin-bottom:16px}
-.login-logo img{width:200px;height:200px;object-fit:contain!important;background:transparent!important;border-radius:0!important;padding:0!important;box-shadow:none!important;animation:float 3s ease-in-out infinite}
+.login-logo img{width:150px;height:150px;object-fit:contain!important;background:transparent!important;border-radius:0!important;padding:0!important;box-shadow:none!important;animation:float 3s ease-in-out infinite}
 .login-container h2{font-size:28px;color:var(--primary);margin-top:16px}
 .login-subtitle{color:var(--gray);margin:8px 0 24px}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -90,11 +90,6 @@ textarea.input-field{resize:vertical;min-height:80px}
 .checkbox-item input[type="checkbox"]{width:18px;height:18px;accent-color:var(--secondary)}
 .checkbox-item:has(input:checked){border-color:var(--secondary);background:#fff7ed;color:var(--secondary);font-weight:600}
 .loading{text-align:center;padding:40px;color:var(--gray)}
-#recEmail{text-align:center;font-size:16px}
-#recEmail::placeholder{text-align:center}
-.termos-content{max-height:calc(100vh - 80px);overflow-y:auto;padding-bottom:20px}
-.termos-content h2{font-size:16px;margin-top:16px}
-.termos-content p,.termos-content li{font-size:13px;line-height:1.6}
 
 /* ===== FOTO DA OBRA ===== */
 .foto-obra-container{position:relative;cursor:pointer;border-radius:12px;overflow:hidden;border:2px dashed #ccc;transition:.3s;margin-top:8px}
@@ -112,14 +107,6 @@ textarea.input-field{resize:vertical;min-height:80px}
 .avaliacao-card{background:white;border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid var(--secondary)}
 .avaliacao-card.positiva{border-left-color:var(--success)}
 .avaliacao-card.melhorar{border-left-color:var(--warning)}
-.avaliacao-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.avaliacao-avatar{width:40px;height:40px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:18px}
-
-/* ===== HISTÓRICO ===== */
-.trabalho-card{background:#f9fafb;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid #e5e7eb}
-.trabalho-card .status-ativo{color:#10B981;font-weight:600}
-.trabalho-card .status-finalizado{color:#6B7280;font-weight:600}
-.trabalho-card .status-demitido{color:#EF4444;font-weight:600}
 
 /* ===== MODAL ===== */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;animation:fadeIn .2s ease}
@@ -152,7 +139,13 @@ input:checked+.slider:before{transform:translateX(20px)}
 
 /* ===== SPLASH / ANIMAÇÕES ===== */
 @keyframes aparecer{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* ===== LOGO NA SAUDAÇÃO (HOME) ===== */
+#homeScreen .card:first-child{padding:16px 20px!important}
+#homeScreen .card:first-child>div{gap:12px!important;align-items:center!important}
+#homeScreen .card:first-child img,.logo-saudacao{width:50px!important;height:50px!important;object-fit:contain!important;background:rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px!important;box-shadow:none!important}
+#homeScreen #saudacao{font-size:18px!important;font-weight:700!important;margin-bottom:2px!important}
+#homeScreen #resumoTexto{font-size:13px!important;opacity:.9!important}
 
 /* ===== TEMA ESCURO ===== */
 body.dark-theme{--primary:#0D1B2A;--dark:#E5E7EB;--gray:#9CA3AF;--light:#1F2937;--white:#111827;background:#0F172A;color:#E5E7EB}
@@ -179,10 +172,14 @@ body.dark-theme .message-received{background:#374151;color:#E5E7EB}
 body.dark-theme .message-content{color:#E5E7EB}
 body.dark-theme .search-input{background:#374151;border-color:#4B5563;color:#E5E7EB}
 body.dark-theme .toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
+body.dark-theme .foto-obra-container{background:#374151;border-color:#4B5563}
+body.dark-theme .foto-obra-overlay{background:rgba(0,0,0,.8)}
 
 /* ===== RESPONSIVO ===== */
 @media(max-width:480px){
     .app-container{border-radius:0}
     .app-header h1 img{height:36px}
-    .login-logo img{width:150px;height:150px}
+    .login-logo img{width:120px;height:120px}
+    #homeScreen .card:first-child img,.logo-saudacao{width:40px!important;height:40px!important}
+    #homeScreen #saudacao{font-size:16px!important}
 }
