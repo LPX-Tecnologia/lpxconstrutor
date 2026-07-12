@@ -103,11 +103,6 @@ textarea.input-field{resize:vertical;min-height:80px}
 .estrelas-avaliacao i.fas{color:#F59E0B}
 .estrelas-avaliacao i:hover{transform:scale(1.2)}
 
-/* ===== AVALIAÇÕES ===== */
-.avaliacao-card{background:white;border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid var(--secondary)}
-.avaliacao-card.positiva{border-left-color:var(--success)}
-.avaliacao-card.melhorar{border-left-color:var(--warning)}
-
 /* ===== MODAL ===== */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;animation:fadeIn .2s ease}
 .modal-content{background:white;border-radius:20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
@@ -120,32 +115,21 @@ textarea.input-field{resize:vertical;min-height:80px}
 .profile-avatar-perfil{width:80px;height:80px;border-radius:50%;background:white;margin:0 auto;cursor:pointer;overflow:hidden;border:3px solid #F47920}
 
 /* ===== MENU ITEMS ===== */
-.menu-section{border-bottom:1px solid #f0f0f0}
-.menu-section:last-child{border-bottom:none}
-.menu-section-title{padding:12px 16px;font-size:12px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px;background:#f9fafb}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:.2s;font-size:14px;color:#333}
 .menu-item:hover{background:#f9fafb}
 .menu-item i:first-child{width:24px;text-align:center;font-size:16px;color:#666}
 .menu-arrow{margin-left:auto;color:#ccc;font-size:14px}
 .menu-badge{margin-left:auto;font-size:12px;color:#999;margin-right:4px}
 
-/* ===== SWITCH TOGGLE ===== */
-.switch{position:relative;display:inline-block;width:44px;height:24px;margin-left:auto}
-.switch input{opacity:0;width:0;height:0}
-.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.3s;border-radius:24px}
-.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.3s;border-radius:50%}
-input:checked+.slider{background-color:#10B981}
-input:checked+.slider:before{transform:translateX(20px)}
-
 /* ===== SPLASH / ANIMAÇÕES ===== */
 @keyframes aparecer{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 
-/* ===== LOGO NA SAUDAÇÃO (HOME) ===== */
+/* ===== LOGO NA SAUDAÇÃO (HOME) - CORRIGIDO ===== */
 #homeScreen .card:first-child{padding:16px 20px!important}
 #homeScreen .card:first-child>div{gap:12px!important;align-items:center!important}
-#homeScreen .card:first-child img,.logo-saudacao{width:50px!important;height:50px!important;object-fit:contain!important;background:rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px!important;box-shadow:none!important}
-#homeScreen #saudacao{font-size:18px!important;font-weight:700!important;margin-bottom:2px!important}
-#homeScreen #resumoTexto{font-size:13px!important;opacity:.9!important}
+#homeScreen .card:first-child img,.logo-saudacao{width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important;max-width:50px!important;max-height:50px!important;object-fit:contain!important;background:rgba(255,255,255,.15)!important;border-radius:10px!important;padding:6px!important;box-shadow:none!important;flex-shrink:0!important}
+#homeScreen #saudacao{font-size:18px!important;font-weight:700!important;margin-bottom:2px!important;line-height:1.2!important}
+#homeScreen #resumoTexto{font-size:13px!important;opacity:.9!important;line-height:1.2!important}
 
 /* ===== TEMA ESCURO ===== */
 body.dark-theme{--primary:#0D1B2A;--dark:#E5E7EB;--gray:#9CA3AF;--light:#1F2937;--white:#111827;background:#0F172A;color:#E5E7EB}
@@ -166,7 +150,6 @@ body.dark-theme .tab{background:#374151;color:#9CA3AF}
 body.dark-theme .tab.active{background:#F47920;color:white}
 body.dark-theme .menu-item{color:#E5E7EB}
 body.dark-theme .menu-item:hover{background:#374151}
-body.dark-theme .menu-section-title{background:#1F2937;color:#9CA3AF}
 body.dark-theme .chat-messages{background:#0F172A}
 body.dark-theme .message-received{background:#374151;color:#E5E7EB}
 body.dark-theme .message-content{color:#E5E7EB}
@@ -180,6 +163,6 @@ body.dark-theme .foto-obra-overlay{background:rgba(0,0,0,.8)}
     .app-container{border-radius:0}
     .app-header h1 img{height:36px}
     .login-logo img{width:120px;height:120px}
-    #homeScreen .card:first-child img,.logo-saudacao{width:40px!important;height:40px!important}
+    #homeScreen .card:first-child img,.logo-saudacao{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;max-width:40px!important;max-height:40px!important}
     #homeScreen #saudacao{font-size:16px!important}
 }
