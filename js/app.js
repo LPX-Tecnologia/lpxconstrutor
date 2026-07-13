@@ -77,126 +77,99 @@ App.prototype.init = function() {
     }, 2000);
 };
 
-// ===== CONFIGURAR NAVEGAÇÃO (SINO, BUSCAR, CHAT, PERFIL) =====
+// ===== CONFIGURAR NAVEGAÇÃO =====
 App.prototype.configurarNavegacao = function() {
     var s = this;
     
-    setTimeout(function() {
-        console.log('🔧 Configurando botões de navegação...');
+    function configurar() {
+        var elementos = document.body.querySelectorAll('*');
+        var encontrados = { sino: 0, buscar: 0, chat: 0, perfil: 0, home: 0 };
         
-        // SINO - Procura QUALQUER elemento com ícone de sino
-        var todos = document.querySelectorAll('button, a, div, span, i, [onclick]');
-        for (var i = 0; i < todos.length; i++) {
-            var el = todos[i];
-            var texto = (el.textContent || el.innerText || '').trim();
-            var onclick = el.getAttribute('onclick') || '';
-            var classe = el.className || '';
-            var id = el.id || '';
+        for (var i = 0; i < elementos.length; i++) {
+            var el = elementos[i];
+            var texto = (el.textContent || el.innerText || '').trim().toLowerCase();
+            var onclick = (el.getAttribute('onclick') || '').toLowerCase();
+            var id = (el.id || '').toLowerCase();
+            var classe = (el.className || '').toLowerCase();
+            var href = (el.getAttribute('href') || '').toLowerCase();
             
-            // SINO 🔔
-            if (texto === '🔔' || texto.indexOf('🔔') >= 0 || 
-                onclick.indexOf('notif') >= 0 || onclick.indexOf('Notif') >= 0 ||
-                onclick.indexOf('sino') >= 0 || onclick.indexOf('Sino') >= 0 ||
-                id.indexOf('notif') >= 0 || id.indexOf('sino') >= 0 ||
-                classe.indexOf('bell') >= 0 || classe.indexOf('notif') >= 0) {
+            // SINO
+            if (texto === '🔔' || texto.indexOf('🔔') >= 0 || onclick.indexOf('notif') >= 0 || onclick.indexOf('sino') >= 0 ||
+                id.indexOf('notif') >= 0 || id.indexOf('sino') >= 0 || id.indexOf('bell') >= 0 ||
+                classe.indexOf('bell') >= 0 || classe.indexOf('notif') >= 0 || classe.indexOf('sino') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarNotificacoes(); };
-                el.style.cursor = 'pointer';
-                console.log('✅ Sino configurado:', texto || classe || id);
+                el.style.cursor = 'pointer'; encontrados.sino++;
             }
             
-            // BUSCAR 🔍
-            if (texto.toLowerCase().indexOf('buscar') >= 0 || texto.toLowerCase().indexOf('busca') >= 0 ||
-                texto === '🔍' || 
-                onclick.toLowerCase().indexOf('buscar') >= 0 || onclick.toLowerCase().indexOf('busca') >= 0 ||
-                id.toLowerCase().indexOf('buscar') >= 0 || id.toLowerCase().indexOf('busca') >= 0) {
+            // BUSCAR
+            if (texto.indexOf('buscar') >= 0 || texto.indexOf('busca') >= 0 || texto === '🔍' ||
+                onclick.indexOf('buscar') >= 0 || onclick.indexOf('busca') >= 0 ||
+                id.indexOf('buscar') >= 0 || id.indexOf('busca') >= 0 || id.indexOf('search') >= 0 ||
+                classe.indexOf('search') >= 0 || classe.indexOf('fa-search') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('buscaScreen'); };
-                el.style.cursor = 'pointer';
-                console.log('✅ Buscar configurado:', texto || id);
+                el.style.cursor = 'pointer'; encontrados.buscar++;
             }
             
-            // CHAT 💬
-            if (texto.toLowerCase().indexOf('chat') >= 0 || texto === '💬' ||
-                onclick.toLowerCase().indexOf('chat') >= 0 ||
-                id.toLowerCase().indexOf('chat') >= 0 ||
-                classe.indexOf('fa-comment') >= 0 || classe.indexOf('fa-comments') >= 0) {
+            // CHAT
+            if (texto.indexOf('chat') >= 0 || texto === '💬' || onclick.indexOf('chat') >= 0 ||
+                id.indexOf('chat') >= 0 || classe.indexOf('chat') >= 0 || classe.indexOf('fa-comment') >= 0 || classe.indexOf('fa-comments') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('chatScreen'); };
-                el.style.cursor = 'pointer';
-                console.log('✅ Chat configurado:', texto || id);
+                el.style.cursor = 'pointer'; encontrados.chat++;
             }
             
-            // PERFIL 👤
-            if (texto.toLowerCase().indexOf('perfil') >= 0 || texto === '👤' ||
-                onclick.toLowerCase().indexOf('perfil') >= 0 || onclick.toLowerCase().indexOf('meuperfil') >= 0 ||
-                id.toLowerCase().indexOf('perfil') >= 0 ||
-                classe.indexOf('fa-user') >= 0) {
+            // PERFIL
+            if (texto.indexOf('perfil') >= 0 || texto === '👤' || onclick.indexOf('perfil') >= 0 || onclick.indexOf('meuperfil') >= 0 ||
+                id.indexOf('perfil') >= 0 || id.indexOf('profile') >= 0 || classe.indexOf('fa-user') >= 0 || classe.indexOf('profile') >= 0 || classe.indexOf('perfil') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('meuPerfilScreen'); };
-                el.style.cursor = 'pointer';
-                console.log('✅ Perfil configurado:', texto || id);
+                el.style.cursor = 'pointer'; encontrados.perfil++;
             }
             
-            // HOME 🏠
-            if (texto.toLowerCase().indexOf('home') >= 0 || texto === '🏠' ||
-                texto.toLowerCase().indexOf('início') >= 0 || texto.toLowerCase().indexOf('inicio') >= 0 ||
-                onclick.toLowerCase().indexOf('home') >= 0 ||
-                id.toLowerCase().indexOf('home') >= 0 ||
-                classe.indexOf('fa-home') >= 0) {
+            // HOME
+            if (texto.indexOf('home') >= 0 || texto === '🏠' || texto.indexOf('início') >= 0 || texto.indexOf('inicio') >= 0 ||
+                onclick.indexOf('home') >= 0 || id.indexOf('home') >= 0 || classe.indexOf('fa-home') >= 0 || classe.indexOf('home') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('homeScreen'); };
-                el.style.cursor = 'pointer';
-                console.log('✅ Home configurado:', texto || id);
+                el.style.cursor = 'pointer'; encontrados.home++;
             }
             
-            // OBRAS 🏗️
-            if (texto.toLowerCase().indexOf('obra') >= 0 || texto === '🏗️' ||
-                onclick.toLowerCase().indexOf('obra') >= 0 ||
-                id.toLowerCase().indexOf('obra') >= 0) {
+            // OBRAS
+            if (texto.indexOf('obra') >= 0 || texto === '🏗️' || onclick.indexOf('obra') >= 0 || id.indexOf('obra') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('minhasObrasScreen'); };
                 el.style.cursor = 'pointer';
-                console.log('✅ Obras configurado:', texto || id);
             }
             
-            // PUBLICAR 📢
-            if (texto.toLowerCase().indexOf('publicar') >= 0 || texto === '📢' ||
-                onclick.toLowerCase().indexOf('publicar') >= 0 ||
-                id.toLowerCase().indexOf('publicar') >= 0 ||
-                classe.indexOf('fa-plus') >= 0) {
+            // PUBLICAR
+            if (texto.indexOf('publicar') >= 0 || texto === '📢' || onclick.indexOf('publicar') >= 0 || id.indexOf('publicar') >= 0 || classe.indexOf('fa-plus') >= 0) {
                 el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); abrirTelaPublicacao(); };
                 el.style.cursor = 'pointer';
-                console.log('✅ Publicar configurado:', texto || id);
             }
         }
         
-        // Configurar BottomNav também
-        var bottomNav = document.getElementById('bottomNav');
-        if (bottomNav) {
-            var botoesNav = bottomNav.querySelectorAll('button, a, div, span, i');
-            for (var j = 0; j < botoesNav.length; j++) {
-                var btn = botoesNav[j];
-                var txt = (btn.textContent || btn.innerText || '').toLowerCase().trim();
+        // Configurar BottomNav
+        var nav = document.getElementById('bottomNav');
+        if (nav) {
+            var botoes = nav.querySelectorAll('button, a, div, span');
+            for (var j = 0; j < botoes.length; j++) {
+                var btn = botoes[j];
+                var txt = (btn.textContent || btn.innerText || '').trim().toLowerCase();
+                if (btn.getAttribute('data-nav-ok')) continue;
                 
-                // Se já tem onclick configurado, pular
-                if (btn.getAttribute('data-nav-config')) continue;
-                
-                if (txt.indexOf('home') >= 0 || txt === '🏠') {
-                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('homeScreen'); };
-                } else if (txt.indexOf('buscar') >= 0 || txt.indexOf('busca') >= 0 || txt === '🔍') {
-                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('buscaScreen'); };
-                } else if (txt.indexOf('chat') >= 0 || txt === '💬') {
-                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('chatScreen'); };
-                } else if (txt.indexOf('perfil') >= 0 || txt === '👤') {
-                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('meuPerfilScreen'); };
-                } else if (txt.indexOf('obra') >= 0 || txt === '🏗️') {
-                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('minhasObrasScreen'); };
-                } else if (txt.indexOf('publicar') >= 0 || txt === '📢') {
-                    btn.onclick = function(e) { e.preventDefault(); abrirTelaPublicacao(); };
-                }
+                if (txt.indexOf('home') >= 0 || txt === '🏠') btn.onclick = function(e) { e.preventDefault(); mostrarTela('homeScreen'); };
+                else if (txt.indexOf('buscar') >= 0 || txt.indexOf('busca') >= 0 || txt === '🔍') btn.onclick = function(e) { e.preventDefault(); mostrarTela('buscaScreen'); };
+                else if (txt.indexOf('chat') >= 0 || txt === '💬') btn.onclick = function(e) { e.preventDefault(); mostrarTela('chatScreen'); };
+                else if (txt.indexOf('perfil') >= 0 || txt === '👤') btn.onclick = function(e) { e.preventDefault(); mostrarTela('meuPerfilScreen'); };
+                else if (txt.indexOf('obra') >= 0 || txt === '🏗️') btn.onclick = function(e) { e.preventDefault(); mostrarTela('minhasObrasScreen'); };
+                else if (txt.indexOf('publicar') >= 0 || txt === '📢') btn.onclick = function(e) { e.preventDefault(); abrirTelaPublicacao(); };
                 btn.style.cursor = 'pointer';
-                btn.setAttribute('data-nav-config', 'true');
+                btn.setAttribute('data-nav-ok', 'true');
             }
         }
         
-        console.log('🔧 Navegação configurada!');
-        
-    }, 1000);
+        console.log('📊 Botões configurados:', encontrados);
+    }
+    
+    configurar();
+    setTimeout(configurar, 1000);
+    setTimeout(configurar, 2500);
 };
 
 // ===== NAVEGAÇÃO =====
@@ -368,12 +341,14 @@ App.prototype.carregarHome = function() {
 
 App.prototype.mudarTab = function(tab) {
     this.tabAtual = tab;
-    document.getElementById('tabFeed').style.background = tab === 'feed' ? '#1A3A5C' : '#e5e7eb';
-    document.getElementById('tabFeed').style.color = tab === 'feed' ? 'white' : '#1A3A5C';
-    document.getElementById('tabRede').style.background = tab === 'rede' ? '#1A3A5C' : '#e5e7eb';
-    document.getElementById('tabRede').style.color = tab === 'rede' ? 'white' : '#1A3A5C';
-    document.getElementById('feedContainer').style.display = tab === 'feed' ? 'block' : 'none';
-    document.getElementById('redeContainer').style.display = tab === 'rede' ? 'block' : 'none';
+    var btnFeed = document.getElementById('tabFeed');
+    var btnRede = document.getElementById('tabRede');
+    if (btnFeed) { btnFeed.style.background = tab === 'feed' ? '#1A3A5C' : '#e5e7eb'; btnFeed.style.color = tab === 'feed' ? 'white' : '#1A3A5C'; }
+    if (btnRede) { btnRede.style.background = tab === 'rede' ? '#1A3A5C' : '#e5e7eb'; btnRede.style.color = tab === 'rede' ? 'white' : '#1A3A5C'; }
+    var fc = document.getElementById('feedContainer');
+    var rc = document.getElementById('redeContainer');
+    if (fc) fc.style.display = tab === 'feed' ? 'block' : 'none';
+    if (rc) rc.style.display = tab === 'rede' ? 'block' : 'none';
     if (tab === 'feed') this.carregarFeed();
     if (tab === 'rede') this.carregarRede();
 };
@@ -783,8 +758,7 @@ App.prototype.publicarVaga = function() {
     var vaga = {
         id: 'vaga_' + Date.now(),
         titulo: titulo, endereco: endereco, profissoes: profissoes, valorHora: valor,
-        descricao: descricao,
-        fotoObra: s.vagaFotoBase64 || null, status: 'disponivel',
+        descricao: descricao, fotoObra: s.vagaFotoBase64 || null, status: 'disponivel',
         autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome,
         autorFoto: s.usuarioLogado.fotoPerfil || null, dataCriacao: new Date().toISOString()
     };
@@ -1090,12 +1064,37 @@ App.prototype.mostrarToast = function(m, t) {
     this._tt = setTimeout(function() { toast.style.display = 'none'; }, 3000);
 };
 
+// ===== FORÇA BRUTA FINAL =====
+function forcarNavegacao() {
+    console.log('💪 Forçando navegação...');
+    var tudo = document.body.querySelectorAll('*');
+    
+    for (var i = 0; i < tudo.length; i++) {
+        var el = tudo[i];
+        var txt = (el.textContent || el.innerText || '').trim();
+        
+        if (txt === '🔔') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarNotificacoes(); }; el.style.cursor = 'pointer'; }
+        if (txt === '🔍' || txt === 'Buscar' || txt === 'Busca') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('buscaScreen'); }; el.style.cursor = 'pointer'; }
+        if (txt === '💬' || txt === 'Chat') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('chatScreen'); }; el.style.cursor = 'pointer'; }
+        if (txt === '👤' || txt === 'Perfil') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('meuPerfilScreen'); }; el.style.cursor = 'pointer'; }
+        if (txt === '🏠' || txt === 'Home' || txt === 'Início') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('homeScreen'); }; el.style.cursor = 'pointer'; }
+        if (txt === '🏗️' || txt === 'Obras') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('minhasObrasScreen'); }; el.style.cursor = 'pointer'; }
+        if (txt === '📢' || txt === 'Publicar') { el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); abrirTelaPublicacao(); }; el.style.cursor = 'pointer'; }
+    }
+}
+
 // ===== INICIAR =====
 document.addEventListener('DOMContentLoaded', function() {
     var splashAntigo = document.getElementById('splashScreen');
     if (splashAntigo) splashAntigo.remove();
     
     appInstancia = new App();
+    
+    // Forçar navegação várias vezes
+    setTimeout(forcarNavegacao, 500);
+    setTimeout(forcarNavegacao, 1500);
+    setTimeout(forcarNavegacao, 3000);
+    
     console.log('✅ LPXCONSTRUTOR COMPLETO!');
-    console.log('✅ Navegação: Sino, Buscar, Chat, Perfil configurados');
+    console.log('✅ Navegação: Sino, Buscar, Chat, Perfil - CONFIGURADOS');
 });
