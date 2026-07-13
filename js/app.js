@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - COMPLETO E FUNCIONAL =====
+// ===== LPXCONSTRUTOR - COMPLETO RESTAURADO =====
 // ==========================================================
 
 var appInstancia = null;
@@ -21,7 +21,9 @@ function abrirEditarPerfil() { if(appInstancia) appInstancia.abrirEditarPerfil()
 function salvarPerfil() { if(appInstancia) appInstancia.salvarPerfil(); }
 function mostrarSecao(s) { if(appInstancia) appInstancia.mostrarSecao(s); }
 function selecionarTema(t) { if(appInstancia) appInstancia.selecionarTema(t); }
+function selecionarIdioma(i) { if(appInstancia) appInstancia.selecionarIdioma(i); }
 function mostrarDocumento(t) { if(appInstancia) appInstancia.mostrarDocumento(t); }
+function mostrarInfoVersao() { if(appInstancia) appInstancia.mostrarInfoVersao(); }
 function mudarTab(t) { if(appInstancia) appInstancia.mudarTab(t); }
 function adicionarNaRede(uid) { if(appInstancia) appInstancia.adicionarNaRede(uid); }
 function removerDaRede(uid) { if(appInstancia) appInstancia.removerDaRede(uid); }
@@ -39,12 +41,13 @@ var App = function() {
     this.usuarioSelecionado = null;
     this.tabAtual = 'feed';
     this.temaAtual = localStorage.getItem('tema') || 'claro';
+    this.idiomaAtual = localStorage.getItem('idioma') || 'pt';
     this.init();
 };
 
 App.prototype.init = function() {
     var s = this;
-    console.log('🚀 LPXCONSTRUTOR - COMPLETO');
+    console.log('🚀 LPXCONSTRUTOR');
     appInstancia = s;
     
     if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
@@ -58,7 +61,7 @@ App.prototype.init = function() {
     var splash = document.createElement('div');
     splash.id = 'splashScreen';
     splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.5s;';
-    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>';
+    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>';
     document.body.appendChild(splash);
     
     setTimeout(function() {
@@ -133,7 +136,7 @@ App.prototype.fazerLogin = function() {
     var s = this;
     var email = document.getElementById('loginEmail');
     var senha = document.getElementById('loginSenha');
-    if (!email || !senha) { s.mostrarToast('Campos não encontrados!', 'erro'); return; }
+    if (!email || !senha) return;
     
     var e = email.value.trim();
     var p = senha.value.trim();
@@ -165,13 +168,11 @@ App.prototype.cadastrar = function() {
         celular: document.getElementById('cadCelular')?.value?.trim() || '',
         profissao: document.getElementById('cadProfissao')?.value?.trim() || '',
         experiencia: document.getElementById('cadExperiencia')?.value?.trim() || '0',
-        score: 0,
-        fotoPerfil: null,
-        dataCadastro: new Date().toISOString()
+        score: 0, fotoPerfil: null, dataCadastro: new Date().toISOString()
     };
     
     if (!dados.nome || !dados.email || !dados.senha) {
-        s.mostrarToast('Preencha todos os campos obrigatórios!', 'erro'); return;
+        s.mostrarToast('Preencha todos os campos!', 'erro'); return;
     }
     
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
@@ -183,7 +184,7 @@ App.prototype.cadastrar = function() {
     
     usuarios.push(dados);
     localStorage.setItem('usuariosLPX', JSON.stringify(usuarios));
-    console.log('✅ Cadastrado:', dados.nome, 'Total:', usuarios.length);
+    console.log('✅ Cadastrado:', dados.nome, '| Tipo:', dados.tipo, '| Total:', usuarios.length);
     
     s.usuarioLogado = dados;
     localStorage.setItem('usuarioLPX', JSON.stringify(dados));
@@ -197,7 +198,6 @@ App.prototype.sair = function() {
     localStorage.removeItem('usuarioLPX');
     this.historicoTelas = [];
     this.mostrarTela('loginScreen');
-    this.mostrarToast('👋 Até logo!', 'sucesso');
 };
 
 // ===== HOME =====
@@ -214,7 +214,14 @@ App.prototype.carregarHome = function() {
     
     var html = '';
     html += '<div style="background:#1A3A5C;color:white;padding:12px 15px;display:flex;align-items:center;">';
-    html += '<div style="flex:1;"><span style="font-size:16px;">👋 ' + sd + ', <b>' + user.nome + '</b>!</span></div>';
+    html += '<div class="foto-usuario" style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #f0c27f;margin-right:10px;">';
+    if (user.fotoPerfil) {
+        html += '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+    } else {
+        html += '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;">';
+    }
+    html += '</div>';
+    html += '<div style="flex:1;"><span style="font-size:15px;">👋 ' + sd + ', <b>' + user.nome + '</b>!</span></div>';
     html += '<span style="font-size:12px;">' + (user.tipo === 'empreiteiro' ? '🏢' : '👷') + '</span>';
     html += '</div>';
     
@@ -290,7 +297,6 @@ App.prototype.carregarFeed = function() {
     c.innerHTML = html;
 };
 
-// ===== APAGAR OBRA =====
 App.prototype.apagarObra = function(oid, event) {
     if (event) event.stopPropagation();
     if (!confirm('Apagar esta obra?')) return;
@@ -310,11 +316,8 @@ App.prototype.adicionarNotificacao = function(usuarioId, titulo, mensagem) {
     var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
     notificacoes.unshift({
         id: 'notif_' + Date.now(),
-        usuarioId: usuarioId,
-        titulo: titulo,
-        mensagem: mensagem,
-        lida: false,
-        data: new Date().toISOString()
+        usuarioId: usuarioId, titulo: titulo, mensagem: mensagem,
+        lida: false, data: new Date().toISOString()
     });
     localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
 };
@@ -391,7 +394,9 @@ App.prototype.carregarRede = function() {
         
         if (amigo) {
             html += '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
-            html += '<div style="width:45px;height:45px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')">👷</div>';
+            html += '<div style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')">';
+            html += amigo.fotoPerfil ? '<img src="' + amigo.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;">👷</div>';
+            html += '</div>';
             html += '<div style="flex:1;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')"><strong>' + amigo.nome + '</strong><br><small>' + (amigo.profissao || '') + '</small></div>';
             html += '<button onclick="event.stopPropagation();iniciarChat(\'' + amigoId + '\')" style="background:#1A3A5C;color:white;border:none;padding:5px 10px;border-radius:15px;font-size:11px;cursor:pointer;margin-right:5px;">💬</button>';
             html += '<button onclick="event.stopPropagation();removerDaRede(\'' + amigoId + '\')" style="color:#EF4444;border:none;background:none;cursor:pointer;">✕</button>';
@@ -422,9 +427,7 @@ App.prototype.adicionarNaRede = function(amigoId) {
     for (var i = 0; i < usuarios.length; i++) {
         if (usuarios[i].id === amigoId) { amigo = usuarios[i]; break; }
     }
-    if (amigo) {
-        s.adicionarNotificacao(amigoId, '🔗 Nova conexão!', s.usuarioLogado.nome + ' adicionou você.');
-    }
+    if (amigo) s.adicionarNotificacao(amigoId, '🔗 Nova conexão!', s.usuarioLogado.nome + ' adicionou você.');
     s.mostrarToast('Adicionado!', 'sucesso');
 };
 
@@ -456,12 +459,7 @@ App.prototype.iniciarChat = function(uid) {
     s.usuarioSelecionado = user;
     
     var tela = document.getElementById('chatScreen');
-    if (!tela) {
-        tela = document.createElement('div');
-        tela.id = 'chatScreen';
-        tela.className = 'screen';
-        document.body.appendChild(tela);
-    }
+    if (!tela) { tela = document.createElement('div'); tela.id = 'chatScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
     
     tela.innerHTML = 
         '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
@@ -520,10 +518,8 @@ App.prototype.enviarMensagem = function() {
     var mensagens = JSON.parse(localStorage.getItem('mensagensLPX') || '[]');
     mensagens.push({
         id: 'msg_' + Date.now(),
-        remetenteId: s.usuarioLogado.id,
-        destinatarioId: s.usuarioSelecionado.id,
-        conteudo: texto,
-        data: new Date().toISOString()
+        remetenteId: s.usuarioLogado.id, destinatarioId: s.usuarioSelecionado.id,
+        conteudo: texto, data: new Date().toISOString()
     });
     localStorage.setItem('mensagensLPX', JSON.stringify(mensagens));
     
@@ -532,13 +528,16 @@ App.prototype.enviarMensagem = function() {
     s.carregarMensagens();
 };
 
-// ===== BUSCA =====
+// ===== BUSCA (CORRIGIDA - MOSTRA PROFISSIONAIS CADASTRADOS) =====
 App.prototype.buscarProfissionais = function() {
     var s = this;
     var c = document.getElementById('buscaResultados');
     if (!c) return;
     
     var todos = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
+    console.log('🔍 Busca - Total de usuários:', todos.length);
+    console.log('📋 Lista:', todos.map(function(u) { return u.nome + ' (' + u.tipo + ')'; }));
+    
     var profissionais = [];
     var meuId = s.usuarioLogado ? s.usuarioLogado.id : '';
     
@@ -548,19 +547,25 @@ App.prototype.buscarProfissionais = function() {
         }
     }
     
-    console.log('🔍 Busca - Total:', todos.length, 'Profissionais:', profissionais.length);
+    console.log('👷 Profissionais encontrados:', profissionais.length);
     
     if (profissionais.length === 0) {
-        c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;"><div style="font-size:50px;">👷</div><h3>Nenhum profissional</h3><p style="color:#666;">Total de usuários: ' + todos.length + '</p></div>';
+        c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
+            '<div style="font-size:50px;">👷</div>' +
+            '<h3>Nenhum profissional encontrado</h3>' +
+            '<p style="color:#666;">Total de usuários no sistema: <b>' + todos.length + '</b></p>' +
+            '<p style="color:#999;font-size:12px;">Cadastre outros usuários como "profissional" para aparecer aqui</p></div>';
         return;
     }
     
-    var html = '<div style="text-align:center;padding:8px;color:#666;">' + profissionais.length + ' profissional(is)</div>';
+    var html = '<div style="text-align:center;padding:8px;color:#666;">' + profissionais.length + ' profissional(is) encontrado(s)</div>';
     
     for (var i = 0; i < profissionais.length; i++) {
         var p = profissionais[i];
         html += '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
-        html += '<div style="width:50px;height:50px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;" onclick="verPerfil(\'' + p.id + '\')">👷</div>';
+        html += '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;flex-shrink:0;" onclick="verPerfil(\'' + p.id + '\')">';
+        html += p.fotoPerfil ? '<img src="' + p.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;">👷</div>';
+        html += '</div>';
         html += '<div style="flex:1;cursor:pointer;" onclick="verPerfil(\'' + p.id + '\')">';
         html += '<div style="font-weight:bold;">' + p.nome + '</div>';
         html += '<div style="font-size:13px;color:#666;">🔧 ' + (p.profissao || 'Profissional') + ' • 📅 ' + (p.experiencia || '0') + ' anos</div>';
@@ -589,14 +594,17 @@ App.prototype.verPerfil = function(uid) {
     
     tela.innerHTML = 
         '<div style="background:#1A3A5C;color:white;padding:30px;text-align:center;">' +
-        '<div style="font-size:60px;">👷</div><h2>' + user.nome + '</h2>' +
+        '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #f0c27f;">' +
+        (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:white;display:flex;align-items:center;justify-content:center;font-size:50px;">👷</div>') +
+        '</div><h2>' + user.nome + '</h2>' +
         '<p>🔧 ' + (user.profissao || 'Profissional') + ' | 📅 ' + (user.experiencia || '0') + ' anos</p>' +
         '<p>⭐ ' + (user.score || 0).toFixed(1) + '</p></div>' +
         '<div style="padding:20px;">' +
         '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:15px;">' +
-        '<p>📧 ' + (user.email || '') + '</p><p>📱 ' + (user.celular || '') + '</p></div>' +
+        '<p><strong>📧 Email:</strong> ' + (user.email || '') + '</p>' +
+        '<p><strong>📱 Celular:</strong> ' + (user.celular || '') + '</p></div>' +
         '<button onclick="iniciarChat(\'' + user.id + '\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">💬 Chat</button>' +
-        '<button onclick="adicionarNaRede(\'' + user.id + '\')" style="width:100%;background:#10B981;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🔗 Adicionar</button>' +
+        '<button onclick="adicionarNaRede(\'' + user.id + '\')" style="width:100%;background:#10B981;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🔗 Adicionar à Rede</button>' +
         '<button onclick="voltarTela()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">⬅ Voltar</button></div>';
     
     s.mostrarTela('perfilPublicoScreen');
@@ -613,7 +621,7 @@ App.prototype.abrirTelaPublicacao = function() {
     tela.innerHTML = 
         '<div style="padding:20px;">' +
         '<h2 style="text-align:center;color:#1A3A5C;">📢 PUBLICAR OBRA</h2>' +
-        '<p style="text-align:center;color:#666;font-size:12px;">Publicado por: ' + s.usuarioLogado.nome + '</p>' +
+        '<p style="text-align:center;color:#666;font-size:12px;">Publicado por: <b>' + s.usuarioLogado.nome + '</b></p>' +
         '<input id="pubTitulo" placeholder="📌 Título *" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
         '<input id="pubEndereco" placeholder="📍 Endereço *" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
         '<input id="pubProfissoes" placeholder="👷 Profissões" value="Geral" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
@@ -733,7 +741,7 @@ App.prototype.verDetalheObra = function(oid) {
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
-// ===== PERFIL DO USUÁRIO =====
+// ===== PERFIL DO USUÁRIO (COMPLETO COM TUDO) =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
     if (!s.usuarioLogado) return;
@@ -746,12 +754,14 @@ App.prototype.carregarMeuPerfil = function() {
     for (var i = 0; i < vagas.length; i++) { if (vagas[i].autorId === user.id) totalObras++; }
     
     tela.innerHTML = 
-        '<div style="background:#1A3A5C;color:white;padding:30px;text-align:center;">' +
-        '<div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:3px solid #f0c27f;cursor:pointer;" onclick="document.getElementById(\'inputFoto\').click()">' +
-        (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:white;display:flex;align-items:center;justify-content:center;font-size:35px;">👷</div>') +
+        '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:30px;text-align:center;">' +
+        '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:3px solid #f0c27f;cursor:pointer;" onclick="document.getElementById(\'inputFoto\').click()">' +
+        (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;" id="fotoPerfilPreview">' : 
+        '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;" id="fotoPerfilPreview">') +
         '</div><input type="file" id="inputFoto" accept="image/*" onchange="uploadFotoPerfil(event)" style="display:none;">' +
         '<p style="font-size:10px;color:#ccc;">Toque para alterar foto</p>' +
-        '<h2>' + user.nome + '</h2><p style="color:#f0c27f;">' + (user.profissao || user.tipo || '') + '</p></div>' +
+        '<h2>' + user.nome + '</h2>' +
+        '<p style="color:#f0c27f;">' + (user.profissao || user.tipo || 'Usuário') + '</p></div>' +
         
         '<div style="display:flex;gap:5px;padding:15px;">' +
         '<button id="btnInfo" onclick="mostrarSecao(\'info\')" style="flex:1;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">📋 INFORMAÇÕES</button>' +
@@ -784,44 +794,56 @@ App.prototype.mostrarSecao = function(secao) {
     if (secao === 'info') {
         c.innerHTML = 
             '<div style="display:flex;gap:10px;margin-bottom:15px;">' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b style="font-size:20px;">' + (user.experiencia || '0') + '</b><br><small>Anos Exp.</small></div>' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b style="font-size:20px;color:#f59e0b;">' + (user.score || 0).toFixed(1) + '</b><br><small>Avaliação</small></div>' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;cursor:pointer;" onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();"><b style="font-size:20px;color:#10B981;">' + totalObras + '</b><br><small>Obras</small></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.1);"><b style="font-size:22px;color:#1A3A5C;">' + (user.experiencia || '0') + '</b><br><small>Anos Exp.</small></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.1);"><b style="font-size:22px;color:#f59e0b;">' + (user.score || 0).toFixed(1) + '</b><br><small>Avaliação</small></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);" onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();"><b style="font-size:22px;color:#10B981;">' + totalObras + '</b><br><small>Obras</small></div>' +
             '</div>' +
-            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;">' +
-            '<p><strong>📧 Email:</strong> ' + (user.email || '') + '</p>' +
-            '<p><strong>📱 Celular:</strong> ' + (user.celular || '') + '</p>' +
+            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
+            '<h3 style="color:#1A3A5C;">👤 Dados Pessoais</h3>' +
+            '<p><strong>📧 Email:</strong> ' + (user.email || 'Não informado') + '</p>' +
+            '<p><strong>📱 Celular:</strong> ' + (user.celular || 'Não informado') + '</p>' +
             '<p><strong>🏢 Tipo:</strong> ' + (user.tipo === 'empreiteiro' ? 'Empreiteiro' : 'Profissional') + '</p>' +
-            '<p><strong>🔧 Profissão:</strong> ' + (user.profissao || '') + '</p></div>' +
+            '<p><strong>🔧 Profissão:</strong> ' + (user.profissao || 'Não informada') + '</p></div>' +
             '<button onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🏗️ Minhas Obras (' + totalObras + ')</button>' +
             '<button onclick="abrirEditarPerfil()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;">✏️ Editar Perfil</button>';
     } else if (secao === 'config') {
         c.innerHTML = 
-            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;">' +
+            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
             '<h3 style="color:#1A3A5C;">🎨 Tema</h3>' +
             '<div style="display:flex;gap:10px;">' +
             '<button onclick="selecionarTema(\'claro\')" style="flex:1;background:' + (s.temaAtual === 'claro' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.temaAtual === 'claro' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">☀️ Claro</button>' +
             '<button onclick="selecionarTema(\'escuro\')" style="flex:1;background:' + (s.temaAtual === 'escuro' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.temaAtual === 'escuro' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">🌙 Escuro</button></div></div>' +
-            '<div style="background:white;border-radius:10px;padding:15px;">' +
+            
+            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
+            '<h3 style="color:#1A3A5C;">🌐 Idioma</h3>' +
+            '<div style="display:flex;gap:10px;">' +
+            '<button onclick="selecionarIdioma(\'pt\')" style="flex:1;background:' + (s.idiomaAtual === 'pt' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.idiomaAtual === 'pt' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">🇧🇷 PT</button>' +
+            '<button onclick="selecionarIdioma(\'en\')" style="flex:1;background:' + (s.idiomaAtual === 'en' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.idiomaAtual === 'en' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">🇺🇸 EN</button>' +
+            '<button onclick="selecionarIdioma(\'es\')" style="flex:1;background:' + (s.idiomaAtual === 'es' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.idiomaAtual === 'es' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">🇪🇸 ES</button></div></div>' +
+            
+            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
             '<h3 style="color:#1A3A5C;">📄 Documentos</h3>' +
             '<button onclick="mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos de Uso</button>' +
             '<button onclick="mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">🔒 Política de Privacidade</button>' +
-            '<button onclick="mostrarDocumento(\'diretrizes\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">📋 Diretrizes</button>' +
-            '<button onclick="mostrarDocumento(\'sobre\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">ℹ️ Sobre</button></div>';
+            '<button onclick="mostrarDocumento(\'diretrizes\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">📋 Diretrizes da Comunidade</button>' +
+            '<button onclick="mostrarDocumento(\'sobre\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">ℹ️ Sobre o LPXCONSTRUTOR</button></div>' +
+            
+            '<div style="background:white;border-radius:10px;padding:15px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
+            '<h3 style="color:#1A3A5C;">📱 Versão</h3>' +
+            '<button onclick="mostrarInfoVersao()" style="width:100%;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">🏗️ LPXConstrutor v1.0.0</button></div>';
     } else if (secao === 'alertas') {
         c.innerHTML = 
-            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;">' +
+            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
             '<h3 style="color:#1A3A5C;">🔔 Central de Notificações</h3>' +
-            '<div style="text-align:center;padding:30px;"><div style="font-size:50px;">🔔</div><p>Nenhuma notificação no momento</p></div></div>' +
-            '<div style="background:white;border-radius:10px;padding:15px;">' +
+            '<div style="text-align:center;padding:30px;"><div style="font-size:50px;">🔔</div><p style="color:#666;">Nenhuma notificação no momento</p></div></div>' +
+            '<div style="background:white;border-radius:10px;padding:15px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
             '<h3 style="color:#1A3A5C;">⚙️ Preferências</h3>' +
-            '<label style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><input type="checkbox" checked>Novas vagas</label>' +
-            '<label style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><input type="checkbox" checked>Candidaturas</label>' +
-            '<label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" checked>Mensagens</label></div>';
+            '<label style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><input type="checkbox" checked> Novas vagas publicadas</label>' +
+            '<label style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><input type="checkbox" checked> Candidaturas recebidas</label>' +
+            '<label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" checked> Mensagens novas</label></div>';
     }
 };
 
-// ===== UPLOAD FOTO PERFIL =====
 App.prototype.uploadFotoPerfil = function(event) {
     var s = this;
     var file = event.target.files[0];
@@ -845,7 +867,6 @@ App.prototype.uploadFotoPerfil = function(event) {
     reader.readAsDataURL(file);
 };
 
-// ===== EDITAR PERFIL =====
 App.prototype.abrirEditarPerfil = function() {
     var s = this;
     if (!s.usuarioLogado) return;
@@ -895,10 +916,10 @@ App.prototype.mostrarDocumento = function(tipo) {
     
     var titulos = { termos: '📄 Termos de Uso', privacidade: '🔒 Política de Privacidade', diretrizes: '📋 Diretrizes da Comunidade', sobre: 'ℹ️ Sobre o LPXCONSTRUTOR' };
     var conteudos = {
-        termos: '<h3 style="color:#1A3A5C;">1. Aceitação</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda com estes termos.</p><h3 style="color:#1A3A5C;">2. Conduta</h3><p>É proibido: discriminação, assédio, informações falsas.</p><h3 style="color:#1A3A5C;">3. Contato</h3><p>contato@lpxconstrutor.com.br</p>',
-        privacidade: '<h3 style="color:#1A3A5C;">1. LGPD</h3><p>Protegemos seus dados conforme a Lei 13.709/2018.</p><h3 style="color:#1A3A5C;">2. Dados Coletados</h3><p>Nome, email, telefone, profissão.</p><h3 style="color:#1A3A5C;">3. Direitos</h3><p>Acessar, corrigir e excluir dados.</p>',
-        diretrizes: '<h3 style="color:#1A3A5C;">1. Respeito</h3><p>Trate todos com profissionalismo.</p><h3 style="color:#1A3A5C;">2. Segurança</h3><p>Use EPIs e siga normas.</p><h3 style="color:#1A3A5C;">3. Qualidade</h3><p>Entregue no prazo combinado.</p>',
-        sobre: '<div style="text-align:center;"><div style="font-size:80px;">🏗️</div><h2 style="color:#1A3A5C;">LPXCONSTRUTOR</h2><p><strong>Versão 1.0.0</strong></p><p>Rede Profissional da Construção Civil</p><hr><p><strong>Email:</strong> contato@lpxconstrutor.com.br</p><p style="color:#999;">© 2024 LPXCONSTRUTOR</p></div>'
+        termos: '<h3 style="color:#1A3A5C;">1. Aceitação dos Termos</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda integralmente com estes Termos de Uso.</p><h3 style="color:#1A3A5C;">2. Cadastro</h3><p>O cadastro é gratuito e requer informações verídicas.</p><h3 style="color:#1A3A5C;">3. Conduta</h3><p>É proibido: discriminação, assédio, informações falsas.</p><h3 style="color:#1A3A5C;">4. Contato</h3><p>contato@lpxconstrutor.com.br</p>',
+        privacidade: '<h3 style="color:#1A3A5C;">1. LGPD</h3><p>Protegemos seus dados conforme a Lei 13.709/2018.</p><h3 style="color:#1A3A5C;">2. Dados Coletados</h3><p>Nome, email, telefone, profissão.</p><h3 style="color:#1A3A5C;">3. Seus Direitos</h3><p>Acessar, corrigir e excluir dados.</p>',
+        diretrizes: '<h3 style="color:#1A3A5C;">1. Respeito Mútuo</h3><p>Trate todos com profissionalismo.</p><h3 style="color:#1A3A5C;">2. Segurança</h3><p>Use EPIs e siga normas.</p><h3 style="color:#1A3A5C;">3. Qualidade</h3><p>Entregue no prazo combinado.</p>',
+        sobre: '<div style="text-align:center;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100px;"><h2 style="color:#1A3A5C;">LPXCONSTRUTOR</h2><p><strong>Versão 1.0.0</strong></p><p>Rede Profissional da Construção Civil</p><hr><p><strong>Desenvolvido por:</strong> LPX Tecnologia</p><p><strong>Email:</strong> contato@lpxconstrutor.com.br</p><p style="color:#999;">© 2024 LPXCONSTRUTOR</p></div>'
     };
     
     tela.innerHTML = '<div style="min-height:100vh;background:#f5f5f5;">' +
@@ -910,7 +931,7 @@ App.prototype.mostrarDocumento = function(tipo) {
     s.mostrarTela('documentoScreen');
 };
 
-// ===== TEMA =====
+// ===== TEMA E IDIOMA =====
 App.prototype.selecionarTema = function(tema) {
     this.temaAtual = tema;
     localStorage.setItem('tema', tema);
@@ -918,6 +939,18 @@ App.prototype.selecionarTema = function(tema) {
     else document.body.classList.remove('dark-theme');
     this.mostrarToast('🎨 Tema ' + (tema === 'escuro' ? 'escuro' : 'claro') + '!', 'sucesso');
     this.carregarMeuPerfil();
+};
+
+App.prototype.selecionarIdioma = function(idioma) {
+    this.idiomaAtual = idioma;
+    localStorage.setItem('idioma', idioma);
+    var nomes = { pt: 'Português', en: 'English', es: 'Español' };
+    this.mostrarToast('🌐 Idioma: ' + (nomes[idioma] || idioma), 'sucesso');
+    this.carregarMeuPerfil();
+};
+
+App.prototype.mostrarInfoVersao = function() {
+    this.mostrarToast('🏗️ LPXConstrutor v1.0.0 - Rede Profissional da Construção', 'info');
 };
 
 // ===== TOAST =====
@@ -949,10 +982,10 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('  ✅ Feed com obras');
     console.log('  ✅ Rede de conexões');
     console.log('  ✅ Busca de profissionais');
-    console.log('  ✅ Chat em tempo real');
+    console.log('  ✅ Chat');
     console.log('  ✅ Perfil completo');
-    console.log('  ✅ Publicar obra com foto');
-    console.log('  ✅ Notificações');
-    console.log('  ✅ Documentos');
     console.log('  ✅ Tema claro/escuro');
+    console.log('  ✅ Idiomas PT/EN/ES');
+    console.log('  ✅ Documentos');
+    console.log('  ✅ Versão do app');
 });
