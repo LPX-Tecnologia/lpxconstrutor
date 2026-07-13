@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - CORRIGIDO (BUSCA + REDE + PUBLICAR) =====
+// ===== LPXCONSTRUTOR - CORRIGIDO REDE + VOLTAR + BUSCA =====
 // ==========================================================
 
 var appInstancia = null;
@@ -64,6 +64,9 @@ App.prototype.init = function() {
     splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>';
     document.body.appendChild(splash);
     
+    // NÃO adicionar popstate - isso fecha o app
+    // window.addEventListener('popstate', ...) REMOVIDO
+    
     setTimeout(function() {
         splash.style.opacity = '0';
         setTimeout(function() {
@@ -74,7 +77,7 @@ App.prototype.init = function() {
     }, 2000);
 };
 
-// ===== NAVEGAÇÃO =====
+// ===== NAVEGAÇÃO (SEM FECHAR O APP) =====
 App.prototype.mostrarTela = function(id) {
     var s = this;
     console.log('📱 Tela:', id);
@@ -121,6 +124,7 @@ App.prototype.voltarTela = function() {
         this.telaAtual = null;
         this.mostrarTela(ant);
     } else {
+        // NÃO FECHAR O APP - apenas voltar para home
         this.mostrarTela('homeScreen');
     }
 };
@@ -136,6 +140,35 @@ App.prototype.fazerLogin = function() {
     var p = senha.value.trim();
     if (!e || !p) { s.mostrarToast('Preencha todos os campos!', 'erro'); return; }
     
+    // Tentar Firebase primeiro
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        firebase.auth().signInWithEmailAndPassword(e, p).then(function(userCredential) {
+            var user = userCredential.user;
+            // Buscar dados no Firestore
+            if (typeof db !== 'undefined') {
+                db.collection('usuarios').doc(user.uid).get().then(function(doc) {
+                    if (doc.exists) {
+                        var userData = doc.data();
+                        userData.id = doc.id;
+                        s.usuarioLogado = userData;
+                        localStorage.setItem('usuarioLPX', JSON.stringify(userData));
+                        s.historicoTelas = [];
+                        s.mostrarToast('Bem-vindo, ' + userData.nome + '!', 'sucesso');
+                        s.mostrarTela('homeScreen');
+                    }
+                });
+            }
+        }).catch(function() {
+            // Fallback para localStorage
+            s.loginLocal(e, p);
+        });
+    } else {
+        s.loginLocal(e, p);
+    }
+};
+
+App.prototype.loginLocal = function(e, p) {
+    var s = this;
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
     for (var i = 0; i < usuarios.length; i++) {
         if (usuarios[i].email.toLowerCase() === e.toLowerCase() && usuarios[i].senha === p) {
@@ -169,17 +202,25 @@ App.prototype.cadastrar = function() {
         s.mostrarToast('Preencha todos os campos!', 'erro'); return;
     }
     
+    // Salvar no localStorage
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
     for (var i = 0; i < usuarios.length; i++) {
         if (usuarios[i].email.toLowerCase() === dados.email.toLowerCase()) {
             s.mostrarToast('Email já cadastrado!', 'erro'); return;
         }
     }
-    
     usuarios.push(dados);
     localStorage.setItem('usuariosLPX', JSON.stringify(usuarios));
-    console.log('✅ Cadastrado:', dados.nome, '| Tipo:', dados.tipo, '| Total:', usuarios.length);
     
+    // Salvar no Firebase também
+    if (typeof db !== 'undefined') {
+        db.collection('usuarios').add(dados).then(function(docRef) {
+            dados.id = docRef.id;
+            localStorage.setItem('usuarioLPX', JSON.stringify(dados));
+        }).catch(function() {});
+    }
+    
+    console.log('✅ Cadastrado:', dados.nome, '| Tipo:', dados.tipo);
     s.usuarioLogado = dados;
     localStorage.setItem('usuarioLPX', JSON.stringify(dados));
     s.historicoTelas = [];
@@ -190,6 +231,7 @@ App.prototype.cadastrar = function() {
 App.prototype.sair = function() {
     this.usuarioLogado = null;
     localStorage.removeItem('usuarioLPX');
+    if (typeof firebase !== 'undefined' && firebase.auth) firebase.auth().signOut();
     this.historicoTelas = [];
     this.mostrarTela('loginScreen');
 };
@@ -257,6 +299,25 @@ App.prototype.carregarFeed = function() {
     
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
     
+    // Também buscar do Firebase
+    if (typeof db !== 'undefined') {
+        db.collection('vagas').orderBy('dataCriacao', 'desc').get().then(function(snap) {
+            snap.forEach(function(doc) {
+                var v = doc.data(); v.id = doc.id;
+                if (!vagas.find(function(x) { return x.id === v.id; })) vagas.push(v);
+            });
+            s.renderizarFeed(c, vagas);
+        }).catch(function() {
+            s.renderizarFeed(c, vagas);
+        });
+    } else {
+        s.renderizarFeed(c, vagas);
+    }
+};
+
+App.prototype.renderizarFeed = function(c, vagas) {
+    var s = this;
+    
     if (vagas.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>' +
             (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button onclick="abrirTelaPublicacao()" style="background:#f59e0b;color:white;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;margin-top:10px;">📢 PUBLICAR</button>' : '') + '</div>';
@@ -298,6 +359,7 @@ App.prototype.apagarObra = function(oid, event) {
         if (vagas[i].id !== oid) novas.push(vagas[i]);
     }
     localStorage.setItem('vagasLPX', JSON.stringify(novas));
+    if (typeof db !== 'undefined') db.collection('vagas').doc(oid).delete().catch(function(){});
     this.mostrarToast('Obra apagada!', 'sucesso');
     this.carregarFeed();
 };
@@ -346,7 +408,7 @@ App.prototype.mostrarNotificacoes = function() {
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
-// ===== REDE (CORRIGIDA) =====
+// ===== REDE (CORRIGIDA - BUSCA NO FIREBASE E LOCALSTORAGE) =====
 App.prototype.carregarRede = function() {
     var s = this;
     var c = document.getElementById('redeContainer');
@@ -355,19 +417,54 @@ App.prototype.carregarRede = function() {
         return;
     }
     
-    console.log('🔗 Carregando rede...');
+    if (!s.usuarioLogado) {
+        c.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Faça login</h3></div>';
+        return;
+    }
     
-    var conexoes = JSON.parse(localStorage.getItem('conexoesLPX') || '[]');
-    var minhas = [];
-    for (var i = 0; i < conexoes.length; i++) {
-        if (conexoes[i].usuarioId === s.usuarioLogado.id || conexoes[i].amigoId === s.usuarioLogado.id) {
-            minhas.push(conexoes[i]);
+    c.innerHTML = '<div style="text-align:center;padding:30px;">🔗 Carregando rede...</div>';
+    
+    console.log('🔗 Buscando conexões...');
+    
+    // Buscar conexões do localStorage
+    var conexoesLocal = JSON.parse(localStorage.getItem('conexoesLPX') || '[]');
+    var minhasConexoes = [];
+    for (var i = 0; i < conexoesLocal.length; i++) {
+        if (conexoesLocal[i].usuarioId === s.usuarioLogado.id || conexoesLocal[i].amigoId === s.usuarioLogado.id) {
+            minhasConexoes.push(conexoesLocal[i]);
         }
     }
     
-    console.log('📊 Conexões encontradas:', minhas.length);
+    // Buscar do Firebase também
+    if (typeof db !== 'undefined') {
+        db.collection('conexoes').get().then(function(snap) {
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                if (d.usuarioId === s.usuarioLogado.id || d.amigoId === s.usuarioLogado.id) {
+                    var existe = minhasConexoes.find(function(c) {
+                        return (c.usuarioId === d.usuarioId && c.amigoId === d.amigoId) ||
+                               (c.usuarioId === d.amigoId && c.amigoId === d.usuarioId);
+                    });
+                    if (!existe) {
+                        minhasConexoes.push({ id: doc.id, usuarioId: d.usuarioId, amigoId: d.amigoId, status: d.status || 'ativo' });
+                    }
+                }
+            });
+            
+            console.log('📊 Conexões encontradas:', minhasConexoes.length);
+            s.renderizarRede(c, minhasConexoes);
+        }).catch(function() {
+            s.renderizarRede(c, minhasConexoes);
+        });
+    } else {
+        s.renderizarRede(c, minhasConexoes);
+    }
+};
+
+App.prototype.renderizarRede = function(c, conexoes) {
+    var s = this;
     
-    if (minhas.length === 0) {
+    if (conexoes.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
             '<div style="font-size:50px;">🔗</div>' +
             '<h3 style="color:#1A3A5C;">Sua rede está vazia</h3>' +
@@ -377,31 +474,66 @@ App.prototype.carregarRede = function() {
         return;
     }
     
-    var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    var html = '<div style="text-align:center;padding:10px;color:#1A3A5C;font-weight:bold;">🔗 ' + minhas.length + ' conexão(ões)</div>';
+    // Buscar dados dos amigos
+    var usuariosLocal = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
+    var html = '<div style="text-align:center;padding:10px;color:#1A3A5C;font-weight:bold;">🔗 ' + conexoes.length + ' conexão(ões)</div>';
     
-    for (var i = 0; i < minhas.length; i++) {
-        var amigoId = minhas[i].usuarioId === s.usuarioLogado.id ? minhas[i].amigoId : minhas[i].usuarioId;
-        var amigo = null;
-        for (var j = 0; j < usuarios.length; j++) {
-            if (usuarios[j].id === amigoId) { amigo = usuarios[j]; break; }
-        }
+    var processados = 0;
+    
+    for (var i = 0; i < conexoes.length; i++) {
+        var con = conexoes[i];
+        var amigoId = con.usuarioId === s.usuarioLogado.id ? con.amigoId : con.usuarioId;
+        
+        // Buscar no localStorage primeiro
+        var amigo = usuariosLocal.find(function(u) { return u.id === amigoId; });
         
         if (amigo) {
-            html += '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
-            html += '<div style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')">';
-            html += amigo.fotoPerfil ? '<img src="' + amigo.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;">👷</div>';
-            html += '</div>';
-            html += '<div style="flex:1;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')"><strong>' + amigo.nome + '</strong><br><small>' + (amigo.profissao || 'Profissional') + '</small></div>';
-            html += '<button onclick="event.stopPropagation();iniciarChat(\'' + amigoId + '\')" style="background:#1A3A5C;color:white;border:none;padding:5px 10px;border-radius:15px;font-size:11px;cursor:pointer;margin-right:5px;">💬</button>';
-            html += '<button onclick="event.stopPropagation();removerDaRede(\'' + amigoId + '\')" style="color:#EF4444;border:none;background:none;cursor:pointer;font-size:18px;">✕</button>';
-            html += '</div>';
+            html += s.criarCardAmigo(amigo, amigoId, con);
+            processados++;
+        } else if (typeof db !== 'undefined') {
+            // Buscar no Firebase
+            db.collection('usuarios').doc(amigoId).get().then(function(doc) {
+                if (doc.exists) {
+                    var amigoData = doc.data();
+                    amigoData.id = doc.id;
+                    // Salvar no localStorage
+                    if (!usuariosLocal.find(function(u) { return u.id === amigoData.id; })) {
+                        usuariosLocal.push(amigoData);
+                        localStorage.setItem('usuariosLPX', JSON.stringify(usuariosLocal));
+                    }
+                    html += s.criarCardAmigo(amigoData, amigoId, con);
+                }
+                processados++;
+                if (processados >= conexoes.length) {
+                    c.innerHTML = html + '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
+                }
+            }).catch(function() {
+                processados++;
+                if (processados >= conexoes.length) {
+                    c.innerHTML = html + '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
+                }
+            });
+        } else {
+            processados++;
         }
     }
     
-    html += '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
-    
-    c.innerHTML = html;
+    // Se todos foram processados (localStorage)
+    if (processados >= conexoes.length) {
+        c.innerHTML = html + '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
+    }
+};
+
+App.prototype.criarCardAmigo = function(amigo, amigoId, con) {
+    var html = '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
+    html += '<div style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')">';
+    html += amigo.fotoPerfil ? '<img src="' + amigo.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;">👷</div>';
+    html += '</div>';
+    html += '<div style="flex:1;cursor:pointer;" onclick="verPerfil(\'' + amigoId + '\')"><strong>' + (amigo.nome || 'Usuário') + '</strong><br><small>' + (amigo.profissao || 'Profissional') + '</small></div>';
+    html += '<button onclick="event.stopPropagation();iniciarChat(\'' + amigoId + '\')" style="background:#1A3A5C;color:white;border:none;padding:5px 10px;border-radius:15px;font-size:11px;cursor:pointer;margin-right:5px;">💬</button>';
+    html += '<button onclick="event.stopPropagation();removerDaRede(\'' + amigoId + '\')" style="color:#EF4444;border:none;background:none;cursor:pointer;font-size:18px;">✕</button>';
+    html += '</div>';
+    return html;
 };
 
 App.prototype.adicionarNaRede = function(amigoId) {
@@ -416,20 +548,27 @@ App.prototype.adicionarNaRede = function(amigoId) {
         }
     }
     
-    conexoes.push({ id: 'con_' + Date.now(), usuarioId: s.usuarioLogado.id, amigoId: amigoId, status: 'ativo' });
+    var novaConexao = { id: 'con_' + Date.now(), usuarioId: s.usuarioLogado.id, amigoId: amigoId, status: 'ativo' };
+    conexoes.push(novaConexao);
     localStorage.setItem('conexoesLPX', JSON.stringify(conexoes));
     
-    var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    var amigo = null;
-    for (var i = 0; i < usuarios.length; i++) {
-        if (usuarios[i].id === amigoId) { amigo = usuarios[i]; break; }
+    if (typeof db !== 'undefined') {
+        db.collection('conexoes').add({
+            usuarioId: s.usuarioLogado.id,
+            amigoId: amigoId,
+            status: 'ativo',
+            dataCriacao: new Date().toISOString()
+        }).catch(function(){});
     }
-    if (amigo) s.adicionarNotificacao(amigoId, '🔗 Nova conexão!', s.usuarioLogado.nome + ' adicionou você.');
+    
     s.mostrarToast('✅ Adicionado à rede!', 'sucesso');
+    s.carregarRede();
 };
 
 App.prototype.removerDaRede = function(amigoId) {
     var s = this;
+    if (!confirm('Remover esta conexão?')) return;
+    
     var conexoes = JSON.parse(localStorage.getItem('conexoesLPX') || '[]');
     var novas = [];
     for (var i = 0; i < conexoes.length; i++) {
@@ -439,6 +578,18 @@ App.prototype.removerDaRede = function(amigoId) {
         }
     }
     localStorage.setItem('conexoesLPX', JSON.stringify(novas));
+    
+    if (typeof db !== 'undefined') {
+        db.collection('conexoes').get().then(function(snap) {
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                if ((d.usuarioId === s.usuarioLogado.id && d.amigoId === amigoId) || (d.usuarioId === amigoId && d.amigoId === s.usuarioLogado.id)) {
+                    db.collection('conexoes').doc(doc.id).delete();
+                }
+            });
+        }).catch(function(){});
+    }
+    
     s.mostrarToast('Removido', 'sucesso');
     s.carregarRede();
 };
@@ -447,13 +598,26 @@ App.prototype.removerDaRede = function(amigoId) {
 App.prototype.iniciarChat = function(uid) {
     var s = this;
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    var user = null;
-    for (var i = 0; i < usuarios.length; i++) {
-        if (usuarios[i].id === uid) { user = usuarios[i]; break; }
-    }
-    if (!user) return;
+    var user = usuarios.find(function(u) { return u.id === uid; });
     
+    if (!user && typeof db !== 'undefined') {
+        db.collection('usuarios').doc(uid).get().then(function(doc) {
+            if (doc.exists) {
+                var u = doc.data(); u.id = doc.id;
+                s.usuarioSelecionado = u;
+                s.abrirChat(u);
+            }
+        });
+        return;
+    }
+    
+    if (!user) return;
     s.usuarioSelecionado = user;
+    s.abrirChat(user);
+};
+
+App.prototype.abrirChat = function(user) {
+    var s = this;
     
     var tela = document.getElementById('chatScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'chatScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
@@ -508,7 +672,6 @@ App.prototype.enviarMensagem = function() {
     var s = this;
     var input = document.getElementById('chatInput');
     if (!input || !s.usuarioSelecionado) return;
-    
     var texto = input.value.trim();
     if (!texto) return;
     
@@ -519,88 +682,83 @@ App.prototype.enviarMensagem = function() {
         conteudo: texto, data: new Date().toISOString()
     });
     localStorage.setItem('mensagensLPX', JSON.stringify(mensagens));
-    
     s.adicionarNotificacao(s.usuarioSelecionado.id, '💬 Nova mensagem', s.usuarioLogado.nome + ' enviou uma mensagem.');
     input.value = '';
     s.carregarMensagens();
 };
 
-// ===== BUSCA (CORRIGIDA - MOSTRA PERFIS CADASTRADOS) =====
+// ===== BUSCA (CORRIGIDA) =====
 App.prototype.buscarProfissionais = function() {
     var s = this;
     var c = document.getElementById('buscaResultados');
-    if (!c) {
-        console.log('❌ buscaResultados não encontrado');
-        return;
-    }
+    if (!c) return;
     
-    // LER TODOS OS USUÁRIOS DO LOCALSTORAGE
+    c.innerHTML = '<div style="text-align:center;padding:30px;">🔍 Buscando...</div>';
+    
+    // Buscar do localStorage
     var todos = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    console.log('🔍 BUSCA - Total de usuários no sistema:', todos.length);
     
-    // Mostrar todos os usuários para debug
-    for (var i = 0; i < todos.length; i++) {
-        console.log('  [' + i + '] ' + todos[i].nome + ' | Tipo: ' + todos[i].tipo + ' | Profissão: ' + (todos[i].profissao || 'N/A'));
+    // Buscar do Firebase também
+    if (typeof db !== 'undefined') {
+        db.collection('usuarios').where('tipo', '==', 'profissional').get().then(function(snap) {
+            snap.forEach(function(doc) {
+                var u = doc.data(); u.id = doc.id;
+                if (!todos.find(function(x) { return x.id === u.id; })) {
+                    todos.push(u);
+                }
+            });
+            // Salvar no localStorage
+            localStorage.setItem('usuariosLPX', JSON.stringify(todos));
+            s.renderizarBusca(c, todos);
+        }).catch(function() {
+            s.renderizarBusca(c, todos);
+        });
+    } else {
+        s.renderizarBusca(c, todos);
     }
-    
-    // Filtrar apenas profissionais (não mostrar o próprio usuário)
-    var profissionais = [];
+};
+
+App.prototype.renderizarBusca = function(c, todos) {
+    var s = this;
     var meuId = s.usuarioLogado ? s.usuarioLogado.id : '';
     
+    // Filtrar profissionais (não mostrar o próprio)
+    var profissionais = [];
     for (var i = 0; i < todos.length; i++) {
-        var u = todos[i];
-        // MOSTRAR TODOS que são profissionais, incluindo se não tiver profissao definida
-        if (u.tipo === 'profissional' && u.id !== meuId) {
-            profissionais.push(u);
+        if (todos[i].tipo === 'profissional' && todos[i].id !== meuId) {
+            profissionais.push(todos[i]);
         }
     }
     
-    console.log('👷 Profissionais encontrados:', profissionais.length);
+    console.log('👷 Profissionais:', profissionais.length, 'de', todos.length, 'usuários');
     
     if (profissionais.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
             '<div style="font-size:50px;">👷</div>' +
-            '<h3 style="color:#1A3A5C;">Nenhum profissional encontrado</h3>' +
-            '<p style="color:#666;">Total de usuários cadastrados: <b>' + todos.length + '</b></p>' +
-            '<p style="color:#999;font-size:12px;">Cadastre outros usuários como "profissional" para aparecerem aqui.</p>' +
-            '<p style="color:#999;font-size:11px;">DEBUG: Seu ID: ' + meuId + '</p>' +
-            '</div>';
+            '<h3>Nenhum profissional encontrado</h3>' +
+            '<p style="color:#666;">Total de usuários: <b>' + todos.length + '</b></p>' +
+            '<p style="color:#999;font-size:12px;">Cadastre outros usuários como "profissional"</p></div>';
         return;
     }
     
-    var html = '<div style="text-align:center;padding:10px;color:#1A3A5C;font-weight:bold;">👷 ' + profissionais.length + ' profissional(is) encontrado(s)</div>';
+    var html = '<div style="text-align:center;padding:10px;">👷 ' + profissionais.length + ' profissional(is)</div>';
     
     for (var i = 0; i < profissionais.length; i++) {
         var p = profissionais[i];
         var score = p.score || 0;
-        var estrelas = '';
-        for (var s = 0; s < 5; s++) estrelas += s < Math.round(score) ? '⭐' : '☆';
         
         html += '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
-        
-        // Foto do profissional
-        html += '<div style="width:55px;height:55px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;flex-shrink:0;" onclick="verPerfil(\'' + p.id + '\')">';
-        if (p.fotoPerfil) {
-            html += '<img src="' + p.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">';
-        } else {
-            html += '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;">👷</div>';
-        }
+        html += '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;flex-shrink:0;" onclick="verPerfil(\'' + p.id + '\')">';
+        html += p.fotoPerfil ? '<img src="' + p.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;">👷</div>';
         html += '</div>';
-        
-        // Informações
         html += '<div style="flex:1;cursor:pointer;" onclick="verPerfil(\'' + p.id + '\')">';
-        html += '<div style="font-weight:bold;font-size:15px;color:#1A3A5C;">' + (p.nome || 'Sem nome') + '</div>';
+        html += '<div style="font-weight:bold;">' + (p.nome || 'Sem nome') + '</div>';
         html += '<div style="font-size:13px;color:#666;">🔧 ' + (p.profissao || 'Profissional') + '</div>';
-        html += '<div style="font-size:12px;color:#999;">📅 ' + (p.experiencia || '0') + ' anos de experiência</div>';
-        html += '<div style="color:#f59e0b;font-size:14px;">' + estrelas + ' ' + (score > 0 ? score.toFixed(1) : 'Novo') + '</div>';
+        html += '<div style="font-size:12px;color:#999;">📅 ' + (p.experiencia || '0') + ' anos</div>';
+        html += '<div style="color:#f59e0b;">⭐ ' + (score > 0 ? score.toFixed(1) : 'Novo') + '</div>';
         html += '</div>';
-        
-        // Botões
-        html += '<div style="display:flex;flex-direction:column;gap:5px;">';
-        html += '<button onclick="event.stopPropagation();iniciarChat(\'' + p.id + '\')" style="background:#1A3A5C;color:white;border:none;padding:6px 12px;border-radius:15px;font-size:11px;cursor:pointer;">💬 Chat</button>';
-        html += '<button onclick="event.stopPropagation();adicionarNaRede(\'' + p.id + '\')" style="background:#10B981;color:white;border:none;padding:6px 12px;border-radius:15px;font-size:11px;cursor:pointer;">🔗 Rede</button>';
-        html += '</div>';
-        
+        html += '<button onclick="event.stopPropagation();iniciarChat(\'' + p.id + '\')" style="background:#1A3A5C;color:white;border:none;padding:5px 10px;border-radius:15px;font-size:11px;cursor:pointer;">💬</button>';
+        html += '<button onclick="event.stopPropagation();adicionarNaRede(\'' + p.id + '\')" style="background:#10B981;color:white;border:none;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;">+</button>';
         html += '</div>';
     }
     
@@ -611,12 +769,26 @@ App.prototype.buscarProfissionais = function() {
 App.prototype.verPerfil = function(uid) {
     var s = this;
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    var user = null;
-    for (var i = 0; i < usuarios.length; i++) {
-        if (usuarios[i].id === uid) { user = usuarios[i]; break; }
-    }
-    if (!user) { s.mostrarToast('Não encontrado', 'erro'); return; }
+    var user = usuarios.find(function(u) { return u.id === uid; });
     
+    if (!user && typeof db !== 'undefined') {
+        db.collection('usuarios').doc(uid).get().then(function(doc) {
+            if (doc.exists) {
+                var u = doc.data(); u.id = doc.id;
+                s.mostrarPerfilPublico(u);
+            } else {
+                s.mostrarToast('Não encontrado', 'erro');
+            }
+        });
+        return;
+    }
+    
+    if (!user) { s.mostrarToast('Não encontrado', 'erro'); return; }
+    s.mostrarPerfilPublico(user);
+};
+
+App.prototype.mostrarPerfilPublico = function(user) {
+    var s = this;
     var tela = document.getElementById('perfilPublicoScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'perfilPublicoScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
     
@@ -624,13 +796,13 @@ App.prototype.verPerfil = function(uid) {
         '<div style="background:#1A3A5C;color:white;padding:30px;text-align:center;">' +
         '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #f0c27f;">' +
         (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:white;display:flex;align-items:center;justify-content:center;font-size:50px;">👷</div>') +
-        '</div><h2>' + user.nome + '</h2>' +
+        '</div><h2>' + (user.nome || 'Usuário') + '</h2>' +
         '<p>🔧 ' + (user.profissao || 'Profissional') + ' | 📅 ' + (user.experiencia || '0') + ' anos</p>' +
         '<p>⭐ ' + (user.score || 0).toFixed(1) + '</p></div>' +
         '<div style="padding:20px;">' +
         '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:15px;">' +
-        '<p><strong>📧 Email:</strong> ' + (user.email || '') + '</p>' +
-        '<p><strong>📱 Celular:</strong> ' + (user.celular || '') + '</p></div>' +
+        '<p><strong>📧</strong> ' + (user.email || '') + '</p>' +
+        '<p><strong>📱</strong> ' + (user.celular || '') + '</p></div>' +
         '<button onclick="iniciarChat(\'' + user.id + '\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">💬 Chat</button>' +
         '<button onclick="adicionarNaRede(\'' + user.id + '\')" style="width:100%;background:#10B981;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🔗 Adicionar à Rede</button>' +
         '<button onclick="voltarTela()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">⬅ Voltar</button></div>';
@@ -638,12 +810,10 @@ App.prototype.verPerfil = function(uid) {
     s.mostrarTela('perfilPublicoScreen');
 };
 
-// ===== PUBLICAR (CORRIGIDO - FUNCIONAL) =====
+// ===== PUBLICAR =====
 App.prototype.abrirTelaPublicacao = function() {
     var s = this;
     if (!s.usuarioLogado) { s.mostrarToast('Faça login!', 'erro'); return; }
-    
-    console.log('📢 Abrindo tela de publicação para:', s.usuarioLogado.nome);
     
     var tela = document.getElementById('publicarVagaScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'publicarVagaScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
@@ -652,42 +822,22 @@ App.prototype.abrirTelaPublicacao = function() {
         '<div style="padding:20px;max-width:500px;margin:0 auto;">' +
         '<h2 style="text-align:center;color:#1A3A5C;">📢 PUBLICAR OBRA</h2>' +
         '<p style="text-align:center;color:#666;font-size:12px;margin-bottom:20px;">Publicado por: <b>' + s.usuarioLogado.nome + '</b></p>' +
-        
-        '<div style="margin-bottom:12px;">' +
-        '<label style="font-weight:bold;color:#1A3A5C;display:block;margin-bottom:5px;">📌 Título da Obra *</label>' +
-        '<input id="pubTitulo" type="text" placeholder="Ex: Construção de Muro" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px;">' +
-        '</div>' +
-        
-        '<div style="margin-bottom:12px;">' +
-        '<label style="font-weight:bold;color:#1A3A5C;display:block;margin-bottom:5px;">📍 Endereço *</label>' +
-        '<input id="pubEndereco" type="text" placeholder="Ex: Rua Exemplo, 123 - Cidade" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px;">' +
-        '</div>' +
-        
-        '<div style="margin-bottom:12px;">' +
-        '<label style="font-weight:bold;color:#1A3A5C;display:block;margin-bottom:5px;">👷 Profissões Necessárias</label>' +
-        '<input id="pubProfissoes" type="text" placeholder="Ex: Pedreiro, Eletricista" value="Geral" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px;">' +
-        '</div>' +
-        
-        '<div style="margin-bottom:12px;">' +
-        '<label style="font-weight:bold;color:#1A3A5C;display:block;margin-bottom:5px;">💰 Valor por Hora (R$) *</label>' +
-        '<input id="pubValor" type="number" placeholder="Ex: 25" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px;">' +
-        '</div>' +
-        
-        '<div style="margin-bottom:12px;">' +
-        '<label style="font-weight:bold;color:#1A3A5C;display:block;margin-bottom:5px;">📝 Descrição</label>' +
-        '<textarea id="pubDescricao" placeholder="Descreva os detalhes da obra..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;min-height:80px;box-sizing:border-box;font-size:14px;"></textarea>' +
-        '</div>' +
-        
-        '<div style="margin-bottom:15px;">' +
-        '<label style="font-weight:bold;color:#1A3A5C;display:block;margin-bottom:5px;">📸 Foto da Obra</label>' +
-        '<img id="pubFotoPreview" src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:2px dashed #ddd;margin-bottom:8px;">' +
+        '<label style="font-weight:bold;color:#1A3A5C;">📌 Título *</label>' +
+        '<input id="pubTitulo" placeholder="Ex: Construção de Muro" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+        '<label style="font-weight:bold;color:#1A3A5C;">📍 Endereço *</label>' +
+        '<input id="pubEndereco" placeholder="Ex: Rua Exemplo, 123" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+        '<label style="font-weight:bold;color:#1A3A5C;">👷 Profissões</label>' +
+        '<input id="pubProfissoes" placeholder="Pedreiro, Eletricista" value="Geral" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+        '<label style="font-weight:bold;color:#1A3A5C;">💰 Valor/hora (R$) *</label>' +
+        '<input id="pubValor" type="number" placeholder="25" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+        '<label style="font-weight:bold;color:#1A3A5C;">📝 Descrição</label>' +
+        '<textarea id="pubDescricao" placeholder="Detalhes da obra..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;min-height:60px;box-sizing:border-box;"></textarea>' +
+        '<label style="font-weight:bold;color:#1A3A5C;">📸 Foto</label>' +
+        '<img id="pubFotoPreview" src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;max-height:150px;object-fit:contain;border-radius:8px;border:2px dashed #ddd;margin-bottom:8px;">' +
         '<input type="file" id="pubFotoInput" accept="image/*" onchange="previewFotoObra(event)" style="display:none;">' +
-        '<button onclick="document.getElementById(\'pubFotoInput\').click()" style="background:#e5e7eb;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">📁 Escolher Foto</button>' +
-        '</div>' +
-        
-        '<button onclick="publicarVaga()" style="width:100%;background:linear-gradient(135deg,#f59e0b,#e67e22);color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;box-shadow:0 4px 15px rgba(245,158,11,0.4);">📢 PUBLICAR OBRA</button>' +
-        '<button onclick="voltarTela()" style="width:100%;background:#6b7280;color:white;border:none;padding:12px;border-radius:10px;margin-top:8px;cursor:pointer;">Cancelar</button>' +
-        '</div>';
+        '<button onclick="document.getElementById(\'pubFotoInput\').click()" style="background:#e5e7eb;border:none;padding:10px;border-radius:8px;cursor:pointer;margin-bottom:15px;">📁 Escolher Foto</button>' +
+        '<button onclick="publicarVaga()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;">📢 PUBLICAR</button>' +
+        '<button onclick="voltarTela()" style="width:100%;background:#6b7280;color:white;border:none;padding:10px;border-radius:10px;margin-top:8px;cursor:pointer;">Cancelar</button></div>';
     
     s.vagaFotoBase64 = null;
     s.mostrarTela('publicarVagaScreen');
@@ -698,11 +848,7 @@ App.prototype.previewFotoObra = function(event) {
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function(e) {
-        var preview = document.getElementById('pubFotoPreview');
-        if (preview) {
-            preview.src = e.target.result;
-            preview.style.objectFit = 'cover';
-        }
+        document.getElementById('pubFotoPreview').src = e.target.result;
         appInstancia.vagaFotoBase64 = e.target.result;
     };
     reader.readAsDataURL(file);
@@ -710,96 +856,46 @@ App.prototype.previewFotoObra = function(event) {
 
 App.prototype.publicarVaga = function() {
     var s = this;
+    var titulo = document.getElementById('pubTitulo')?.value?.trim() || '';
+    var endereco = document.getElementById('pubEndereco')?.value?.trim() || '';
+    var profissoes = document.getElementById('pubProfissoes')?.value?.trim() || 'Geral';
+    var valor = document.getElementById('pubValor')?.value?.trim() || '';
+    var descricao = document.getElementById('pubDescricao')?.value?.trim() || '';
     
-    // Pegar elementos
-    var tituloEl = document.getElementById('pubTitulo');
-    var enderecoEl = document.getElementById('pubEndereco');
-    var profissoesEl = document.getElementById('pubProfissoes');
-    var valorEl = document.getElementById('pubValor');
-    var descricaoEl = document.getElementById('pubDescricao');
+    if (!titulo) { s.mostrarToast('Digite o título!', 'erro'); return; }
+    if (!endereco) { s.mostrarToast('Digite o endereço!', 'erro'); return; }
+    if (!valor) { s.mostrarToast('Digite o valor!', 'erro'); return; }
     
-    // Verificar se os elementos existem
-    if (!tituloEl || !enderecoEl || !valorEl) {
-        console.error('❌ Campos não encontrados!');
-        s.mostrarToast('❌ Erro no formulário. Recarregue a página.', 'erro');
-        return;
-    }
-    
-    // Pegar valores
-    var titulo = tituloEl.value.trim();
-    var endereco = enderecoEl.value.trim();
-    var profissoes = profissoesEl ? profissoesEl.value.trim() || 'Geral' : 'Geral';
-    var valor = valorEl.value.trim();
-    var descricao = descricaoEl ? descricaoEl.value.trim() : '';
-    
-    console.log('📝 Dados da publicação:');
-    console.log('  Título:', titulo);
-    console.log('  Endereço:', endereco);
-    console.log('  Profissões:', profissoes);
-    console.log('  Valor:', valor);
-    
-    // Validar
-    if (!titulo) {
-        s.mostrarToast('❌ Digite o título da obra!', 'erro');
-        tituloEl.focus();
-        return;
-    }
-    if (!endereco) {
-        s.mostrarToast('❌ Digite o endereço!', 'erro');
-        enderecoEl.focus();
-        return;
-    }
-    if (!valor || isNaN(parseFloat(valor)) || parseFloat(valor) <= 0) {
-        s.mostrarToast('❌ Digite um valor válido!', 'erro');
-        valorEl.focus();
-        return;
-    }
-    
-    // Criar vaga
     var vaga = {
         id: 'vaga_' + Date.now(),
-        titulo: titulo,
-        endereco: endereco,
-        profissoes: profissoes,
-        valorHora: valor,
-        descricao: descricao,
-        fotoObra: s.vagaFotoBase64 || null,
-        status: 'disponivel',
-        autorId: s.usuarioLogado.id,
-        autorNome: s.usuarioLogado.nome,
-        autorFoto: s.usuarioLogado.fotoPerfil || null,
-        dataCriacao: new Date().toISOString(),
-        interessados: []
+        titulo: titulo, endereco: endereco, profissoes: profissoes, valorHora: valor,
+        descricao: descricao, fotoObra: s.vagaFotoBase64 || null, status: 'disponivel',
+        autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome,
+        autorFoto: s.usuarioLogado.fotoPerfil || null, dataCriacao: new Date().toISOString()
     };
     
-    // Salvar no localStorage
-    var vagasSalvas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-    vagasSalvas.unshift(vaga);
-    localStorage.setItem('vagasLPX', JSON.stringify(vagasSalvas));
+    var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
+    vagas.unshift(vaga);
+    localStorage.setItem('vagasLPX', JSON.stringify(vagas));
     
-    console.log('✅ Vaga salva! Total de vagas:', vagasSalvas.length);
-    console.log('📦 Vaga:', vaga);
+    if (typeof db !== 'undefined') {
+        db.collection('vagas').add(vaga).then(function(docRef) {
+            vaga.id = docRef.id;
+            vagas[0].id = docRef.id;
+            localStorage.setItem('vagasLPX', JSON.stringify(vagas));
+        }).catch(function(){});
+    }
     
-    // Limpar formulário
-    tituloEl.value = '';
-    enderecoEl.value = '';
-    if (profissoesEl) profissoesEl.value = 'Geral';
-    valorEl.value = '';
-    if (descricaoEl) descricaoEl.value = '';
-    
-    var preview = document.getElementById('pubFotoPreview');
-    if (preview) preview.src = 'imagem/logo-sem-fundo-lpxconstrutor.png';
-    
+    document.getElementById('pubTitulo').value = '';
+    document.getElementById('pubEndereco').value = '';
+    document.getElementById('pubProfissoes').value = 'Geral';
+    document.getElementById('pubValor').value = '';
+    document.getElementById('pubDescricao').value = '';
+    document.getElementById('pubFotoPreview').src = 'imagem/logo-sem-fundo-lpxconstrutor.png';
     s.vagaFotoBase64 = null;
     
-    s.mostrarToast('✅ Obra publicada com sucesso! 🏗️', 'sucesso');
-    
-    // Voltar para home
-    setTimeout(function() {
-        s.historicoTelas = [];
-        s.mostrarTela('homeScreen');
-        s.carregarFeed();
-    }, 800);
+    s.mostrarToast('✅ Obra publicada! 🏗️', 'sucesso');
+    setTimeout(function() { s.historicoTelas = []; s.mostrarTela('homeScreen'); s.carregarFeed(); }, 800);
 };
 
 // ===== MINHAS OBRAS =====
@@ -843,11 +939,9 @@ App.prototype.verDetalheObra = function(oid) {
     html += '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;">';
     if (v.fotoObra && v.fotoObra.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;">';
     html += '<div style="padding:20px;"><h2>' + v.titulo + '</h2>';
-    html += '<p><strong>📍</strong> ' + v.endereco + '</p>';
-    html += '<p><strong>👷</strong> ' + v.profissoes + '</p>';
-    html += '<p><strong>💰</strong> R$' + v.valorHora + '/h</p>';
-    if (v.descricao) html += '<p><strong>📝</strong> ' + v.descricao + '</p>';
-    html += '<p><strong>👤</strong> ' + (v.autorNome || 'Anônimo') + '</p>';
+    html += '<p>📍 ' + v.endereco + '</p><p>👷 ' + v.profissoes + '</p><p>💰 R$' + v.valorHora + '/h</p>';
+    if (v.descricao) html += '<p>📝 ' + v.descricao + '</p>';
+    html += '<p>👤 ' + (v.autorNome || 'Anônimo') + '</p>';
     html += '<button onclick="document.getElementById(\'modalObra\').remove()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">⬅ Fechar</button>';
     html += '</div></div></div>';
     
@@ -870,18 +964,14 @@ App.prototype.carregarMeuPerfil = function() {
     tela.innerHTML = 
         '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:30px;text-align:center;">' +
         '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:3px solid #f0c27f;cursor:pointer;" onclick="document.getElementById(\'inputFoto\').click()">' +
-        (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;" id="fotoPerfilPreview">' : 
-        '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;" id="fotoPerfilPreview">') +
+        (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;">') +
         '</div><input type="file" id="inputFoto" accept="image/*" onchange="uploadFotoPerfil(event)" style="display:none;">' +
         '<p style="font-size:10px;color:#ccc;">Toque para alterar foto</p>' +
-        '<h2>' + user.nome + '</h2>' +
-        '<p style="color:#f0c27f;">' + (user.profissao || user.tipo || 'Usuário') + '</p></div>' +
-        
+        '<h2>' + user.nome + '</h2><p style="color:#f0c27f;">' + (user.profissao || user.tipo || '') + '</p></div>' +
         '<div style="display:flex;gap:5px;padding:15px;">' +
-        '<button id="btnInfo" onclick="mostrarSecao(\'info\')" style="flex:1;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">📋 INFORMAÇÕES</button>' +
-        '<button id="btnConfig" onclick="mostrarSecao(\'config\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:8px;cursor:pointer;">⚙️ CONFIGURAÇÕES</button>' +
-        '<button id="btnAlertas" onclick="mostrarSecao(\'alertas\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:8px;cursor:pointer;">🔔 ALERTAS</button>' +
-        '</div>' +
+        '<button id="btnInfo" onclick="mostrarSecao(\'info\')" style="flex:1;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">📋 INFO</button>' +
+        '<button id="btnConfig" onclick="mostrarSecao(\'config\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:8px;cursor:pointer;">⚙️ CONFIG</button>' +
+        '<button id="btnAlertas" onclick="mostrarSecao(\'alertas\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:8px;cursor:pointer;">🔔 ALERTAS</button></div>' +
         '<div id="secaoConteudo" style="padding:15px;"></div>';
     
     s.mostrarSecao('info');
@@ -894,10 +984,7 @@ App.prototype.mostrarSecao = function(secao) {
     
     ['info', 'config', 'alertas'].forEach(function(sec) {
         var btn = document.getElementById('btn' + sec.charAt(0).toUpperCase() + sec.slice(1));
-        if (btn) {
-            btn.style.background = sec === secao ? '#1A3A5C' : '#e5e7eb';
-            btn.style.color = sec === secao ? 'white' : '#1A3A5C';
-        }
+        if (btn) { btn.style.background = sec === secao ? '#1A3A5C' : '#e5e7eb'; btn.style.color = sec === secao ? 'white' : '#1A3A5C'; }
     });
     
     var user = s.usuarioLogado;
@@ -908,12 +995,10 @@ App.prototype.mostrarSecao = function(secao) {
     if (secao === 'info') {
         c.innerHTML = 
             '<div style="display:flex;gap:10px;margin-bottom:15px;">' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b style="font-size:22px;color:#1A3A5C;">' + (user.experiencia || '0') + '</b><br><small>Anos Exp.</small></div>' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b style="font-size:22px;color:#f59e0b;">' + (user.score || 0).toFixed(1) + '</b><br><small>Avaliação</small></div>' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;cursor:pointer;" onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();"><b style="font-size:22px;color:#10B981;">' + totalObras + '</b><br><small>Obras</small></div>' +
-            '</div>' +
-            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;">' +
-            '<h3>👤 Dados</h3><p>📧 ' + (user.email || '') + '</p><p>📱 ' + (user.celular || '') + '</p><p>🔧 ' + (user.profissao || '') + '</p></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b>' + (user.experiencia || '0') + '</b><br><small>Anos</small></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b>' + (user.score || 0).toFixed(1) + '</b><br><small>Score</small></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;cursor:pointer;" onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();"><b style="color:#10B981;">' + totalObras + '</b><br><small>Obras</small></div></div>' +
+            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;"><p>📧 ' + (user.email || '') + '</p><p>📱 ' + (user.celular || '') + '</p><p>🔧 ' + (user.profissao || '') + '</p></div>' +
             '<button onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🏗️ Minhas Obras (' + totalObras + ')</button>' +
             '<button onclick="abrirEditarPerfil()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;">✏️ Editar Perfil</button>';
     } else if (secao === 'config') {
@@ -925,15 +1010,12 @@ App.prototype.mostrarSecao = function(secao) {
             '<button onclick="selecionarIdioma(\'pt\')" style="background:' + (s.idiomaAtual === 'pt' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.idiomaAtual === 'pt' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;margin-right:5px;">🇧🇷 PT</button>' +
             '<button onclick="selecionarIdioma(\'en\')" style="background:' + (s.idiomaAtual === 'en' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.idiomaAtual === 'en' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;margin-right:5px;">🇺🇸 EN</button>' +
             '<button onclick="selecionarIdioma(\'es\')" style="background:' + (s.idiomaAtual === 'es' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.idiomaAtual === 'es' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">🇪🇸 ES</button></div>' +
-            '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;"><h3>📄 Documentos</h3>' +
-            '<button onclick="mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos de Uso</button>' +
+            '<div style="background:white;border-radius:10px;padding:15px;"><h3>📄 Documentos</h3>' +
+            '<button onclick="mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos</button>' +
             '<button onclick="mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">🔒 Privacidade</button>' +
-            '<button onclick="mostrarDocumento(\'diretrizes\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">📋 Diretrizes</button>' +
-            '<button onclick="mostrarDocumento(\'sobre\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">ℹ️ Sobre</button></div>' +
-            '<div style="background:white;border-radius:10px;padding:15px;"><h3>📱 Versão</h3>' +
-            '<button onclick="mostrarInfoVersao()" style="width:100%;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">🏗️ LPXConstrutor v1.0.0</button></div>';
+            '<button onclick="mostrarDocumento(\'sobre\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">ℹ️ Sobre</button></div>';
     } else {
-        c.innerHTML = '<div style="background:white;border-radius:10px;padding:15px;text-align:center;"><h3>🔔 Central de Notificações</h3><p>Nenhuma notificação</p></div>';
+        c.innerHTML = '<div style="text-align:center;padding:30px;"><div style="font-size:50px;">🔔</div><h3>Nenhuma notificação</h3></div>';
     }
 };
 
@@ -945,6 +1027,9 @@ App.prototype.uploadFotoPerfil = function(event) {
     reader.onload = function(e) {
         s.usuarioLogado.fotoPerfil = e.target.result;
         localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+        if (typeof db !== 'undefined' && s.usuarioLogado.id) {
+            db.collection('usuarios').doc(s.usuarioLogado.id).update({ fotoPerfil: e.target.result }).catch(function(){});
+        }
         s.mostrarToast('✅ Foto atualizada!', 'sucesso');
         s.carregarMeuPerfil();
     };
@@ -976,6 +1061,12 @@ App.prototype.salvarPerfil = function() {
     s.usuarioLogado.profissao = document.getElementById('editProfissao')?.value?.trim() || '';
     s.usuarioLogado.experiencia = document.getElementById('editExperiencia')?.value?.trim() || '0';
     localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+    if (typeof db !== 'undefined' && s.usuarioLogado.id) {
+        db.collection('usuarios').doc(s.usuarioLogado.id).update({
+            nome: s.usuarioLogado.nome, celular: s.usuarioLogado.celular,
+            profissao: s.usuarioLogado.profissao, experiencia: s.usuarioLogado.experiencia
+        }).catch(function(){});
+    }
     fecharModal('modalEditar');
     s.mostrarToast('✅ Perfil atualizado!', 'sucesso');
     s.carregarMeuPerfil();
@@ -984,7 +1075,7 @@ App.prototype.salvarPerfil = function() {
 App.prototype.mostrarDocumento = function(tipo) {
     var tela = document.getElementById('documentoScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'documentoScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
-    var c = { termos: '<h3>Termos de Uso</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda com os termos.</p>', privacidade: '<h3>Privacidade</h3><p>Seus dados são protegidos pela LGPD.</p>', diretrizes: '<h3>Diretrizes</h3><p>Respeito e profissionalismo.</p>', sobre: '<h3>Sobre</h3><p>LPXCONSTRUTOR v1.0.0</p>' };
+    var c = { termos: '<h3>Termos de Uso</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda com os termos.</p>', privacidade: '<h3>Privacidade</h3><p>Seus dados são protegidos pela LGPD.</p>', sobre: '<h3>Sobre</h3><p>LPXCONSTRUTOR v1.0.0</p>' };
     tela.innerHTML = '<div style="background:#1A3A5C;color:white;padding:20px;"><button onclick="voltarTela()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅ Voltar</button></div><div style="padding:20px;">' + (c[tipo] || '') + '</div>';
     this.mostrarTela('documentoScreen');
 };
@@ -1003,9 +1094,7 @@ App.prototype.selecionarIdioma = function(idioma) {
     this.mostrarToast('🌐 Idioma alterado!', 'sucesso');
 };
 
-App.prototype.mostrarInfoVersao = function() {
-    this.mostrarToast('🏗️ LPXConstrutor v1.0.0', 'info');
-};
+App.prototype.mostrarInfoVersao = function() { this.mostrarToast('🏗️ LPXConstrutor v1.0.0', 'info'); };
 
 App.prototype.mostrarToast = function(m, t) {
     var toast = document.getElementById('toast');
@@ -1030,7 +1119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     appInstancia = new App();
     console.log('✅ LPXCONSTRUTOR CORRIGIDO!');
+    console.log('✅ Rede - busca Firebase + localStorage');
+    console.log('✅ Voltar - não fecha o app');
     console.log('✅ Busca - encontra perfis cadastrados');
-    console.log('✅ Rede - abre e mostra conexões');
-    console.log('✅ Publicar - formulário funcional');
 });
