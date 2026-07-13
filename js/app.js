@@ -1,5 +1,6 @@
 // ==========================================================
 // ===== LPXCONSTRUTOR - CORRIGIDO REDE + VOLTAR + BUSCA =====
+// ===== + MENU INFERIOR (BUSCAR / CHAT / PERFIL) FUNCIONANDO =====
 // ==========================================================
 
 var appInstancia = null;
@@ -32,6 +33,10 @@ function mostrarNotificacoes() { if(appInstancia) appInstancia.mostrarNotificaco
 function iniciarChat(uid) { if(appInstancia) appInstancia.iniciarChat(uid); }
 function enviarMensagem() { if(appInstancia) appInstancia.enviarMensagem(); }
 function fecharModal(id) { var m = document.getElementById(id); if(m) m.remove(); }
+function abrirBusca() { if(appInstancia) appInstancia.abrirBusca(); }
+function abrirListaChats() { if(appInstancia) appInstancia.abrirListaChats(); }
+function abrirMeuPerfil() { if(appInstancia) appInstancia.abrirMeuPerfil(); }
+function irParaHome() { if(appInstancia) appInstancia.irParaHome(); }
 
 var App = function() {
     this.usuarioLogado = null;
@@ -49,24 +54,21 @@ App.prototype.init = function() {
     var s = this;
     console.log('🚀 LPXCONSTRUTOR');
     appInstancia = s;
-    
+
     if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
-    
+
     var splashAntigo = document.getElementById('splashScreen');
     if (splashAntigo) splashAntigo.remove();
-    
+
     var salvo = localStorage.getItem('usuarioLPX');
     if (salvo) { try { s.usuarioLogado = JSON.parse(salvo); } catch(e) {} }
-    
+
     var splash = document.createElement('div');
     splash.id = 'splashScreen';
     splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.5s;';
     splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>';
     document.body.appendChild(splash);
-    
-    // NÃO adicionar popstate - isso fecha o app
-    // window.addEventListener('popstate', ...) REMOVIDO
-    
+
     setTimeout(function() {
         splash.style.opacity = '0';
         setTimeout(function() {
@@ -81,20 +83,20 @@ App.prototype.init = function() {
 App.prototype.mostrarTela = function(id) {
     var s = this;
     console.log('📱 Tela:', id);
-    
+
     var splash = document.getElementById('splashScreen');
     if (splash) splash.remove();
-    
+
     if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen') {
         s.historicoTelas.push(s.telaAtual);
     }
-    
+
     var telas = document.querySelectorAll('.screen');
     for (var i = 0; i < telas.length; i++) {
         telas[i].classList.remove('active');
         telas[i].style.display = 'none';
     }
-    
+
     var tela = document.getElementById(id);
     if (!tela) {
         tela = document.createElement('div');
@@ -103,29 +105,70 @@ App.prototype.mostrarTela = function(id) {
         tela.style.display = 'none';
         document.body.appendChild(tela);
     }
-    
+
     tela.classList.add('active');
     tela.style.display = 'block';
     s.telaAtual = id;
-    
+
     if (id === 'homeScreen') s.carregarHome();
     if (id === 'meuPerfilScreen') s.carregarMeuPerfil();
     if (id === 'buscaScreen') s.buscarProfissionais();
     if (id === 'minhasObrasScreen') s.carregarMinhasObras();
+    if (id === 'chatListScreen') s.carregarListaChats();
     if (id === 'chatScreen' && s.usuarioSelecionado) s.carregarMensagens();
+
+    s.atualizarMenuInferior(id);
 };
 
 App.prototype.voltarTela = function() {
     var splash = document.getElementById('splashScreen');
     if (splash) splash.remove();
-    
+
     if (this.historicoTelas.length > 0) {
         var ant = this.historicoTelas.pop();
         this.telaAtual = null;
         this.mostrarTela(ant);
     } else {
-        // NÃO FECHAR O APP - apenas voltar para home
         this.mostrarTela('homeScreen');
+    }
+};
+
+// ===== MENU INFERIOR =====
+App.prototype.irParaHome = function() {
+    this.historicoTelas = [];
+    this.mostrarTela('homeScreen');
+};
+
+App.prototype.abrirBusca = function() {
+    this.mostrarTela('buscaScreen');
+};
+
+App.prototype.abrirListaChats = function() {
+    this.mostrarTela('chatListScreen');
+};
+
+App.prototype.abrirMeuPerfil = function() {
+    this.mostrarTela('meuPerfilScreen');
+};
+
+App.prototype.atualizarMenuInferior = function(telaAtualId) {
+    var mapa = {
+        homeScreen: 'menuHome',
+        buscaScreen: 'menuBusca',
+        chatListScreen: 'menuChat',
+        chatScreen: 'menuChat',
+        meuPerfilScreen: 'menuPerfil'
+    };
+    var idAtivo = mapa[telaAtualId];
+    var botoes = document.querySelectorAll('.menu-inferior-btn');
+    for (var i = 0; i < botoes.length; i++) {
+        if (botoes[i].id === idAtivo) botoes[i].classList.add('ativo');
+        else botoes[i].classList.remove('ativo');
+    }
+    var menu = document.getElementById('menuInferior');
+    if (menu) {
+        var mostrar = !!this.usuarioLogado && telaAtualId !== 'loginScreen' && telaAtualId !== 'cadastroScreen';
+        menu.style.display = mostrar ? 'flex' : 'none';
     }
 };
 
@@ -135,16 +178,14 @@ App.prototype.fazerLogin = function() {
     var email = document.getElementById('loginEmail');
     var senha = document.getElementById('loginSenha');
     if (!email || !senha) return;
-    
+
     var e = email.value.trim();
     var p = senha.value.trim();
     if (!e || !p) { s.mostrarToast('Preencha todos os campos!', 'erro'); return; }
-    
-    // Tentar Firebase primeiro
+
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().signInWithEmailAndPassword(e, p).then(function(userCredential) {
             var user = userCredential.user;
-            // Buscar dados no Firestore
             if (typeof db !== 'undefined') {
                 db.collection('usuarios').doc(user.uid).get().then(function(doc) {
                     if (doc.exists) {
@@ -159,7 +200,6 @@ App.prototype.fazerLogin = function() {
                 });
             }
         }).catch(function() {
-            // Fallback para localStorage
             s.loginLocal(e, p);
         });
     } else {
@@ -197,12 +237,11 @@ App.prototype.cadastrar = function() {
         experiencia: document.getElementById('cadExperiencia')?.value?.trim() || '0',
         score: 0, fotoPerfil: null, dataCadastro: new Date().toISOString()
     };
-    
+
     if (!dados.nome || !dados.email || !dados.senha) {
         s.mostrarToast('Preencha todos os campos!', 'erro'); return;
     }
-    
-    // Salvar no localStorage
+
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
     for (var i = 0; i < usuarios.length; i++) {
         if (usuarios[i].email.toLowerCase() === dados.email.toLowerCase()) {
@@ -211,15 +250,14 @@ App.prototype.cadastrar = function() {
     }
     usuarios.push(dados);
     localStorage.setItem('usuariosLPX', JSON.stringify(usuarios));
-    
-    // Salvar no Firebase também
+
     if (typeof db !== 'undefined') {
         db.collection('usuarios').add(dados).then(function(docRef) {
             dados.id = docRef.id;
             localStorage.setItem('usuarioLPX', JSON.stringify(dados));
         }).catch(function() {});
     }
-    
+
     console.log('✅ Cadastrado:', dados.nome, '| Tipo:', dados.tipo);
     s.usuarioLogado = dados;
     localStorage.setItem('usuarioLPX', JSON.stringify(dados));
@@ -240,14 +278,14 @@ App.prototype.sair = function() {
 App.prototype.carregarHome = function() {
     var s = this;
     if (!s.usuarioLogado) { s.mostrarTela('loginScreen'); return; }
-    
+
     var user = s.usuarioLogado;
     var home = document.getElementById('homeScreen');
     if (!home) return;
-    
+
     var h = new Date().getHours();
     var sd = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-    
+
     var html = '';
     html += '<div style="background:#1A3A5C;color:white;padding:12px 15px;display:flex;align-items:center;">';
     html += '<div class="foto-usuario" style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #f0c27f;margin-right:10px;">';
@@ -258,21 +296,22 @@ App.prototype.carregarHome = function() {
     }
     html += '</div>';
     html += '<div style="flex:1;"><span style="font-size:15px;">👋 ' + sd + ', <b>' + user.nome + '</b>!</span></div>';
+    html += '<button onclick="mostrarNotificacoes()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-right:8px;">🔔</button>';
     html += '<span style="font-size:12px;">' + (user.tipo === 'empreiteiro' ? '🏢' : '👷') + '</span>';
     html += '</div>';
-    
+
     html += '<div style="display:flex;background:white;padding:8px;gap:5px;">';
     html += '<button id="tabFeed" onclick="mudarTab(\'feed\')" style="flex:1;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:20px;font-weight:bold;cursor:pointer;">📋 FEED</button>';
     html += '<button id="tabRede" onclick="mudarTab(\'rede\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:20px;font-weight:bold;cursor:pointer;">🔗 REDE</button>';
     html += '</div>';
-    
+
     html += '<div id="feedContainer" style="padding:10px;"></div>';
     html += '<div id="redeContainer" style="padding:10px;display:none;"></div>';
-    
+
     if (user.tipo === 'empreiteiro') {
         html += '<button onclick="abrirTelaPublicacao()" style="position:fixed;bottom:80px;right:20px;width:55px;height:55px;background:#f59e0b;color:white;border:none;border-radius:50%;font-size:24px;box-shadow:0 4px 15px rgba(0,0,0,0.3);z-index:998;cursor:pointer;">📢</button>';
     }
-    
+
     home.innerHTML = html;
     s.carregarFeed();
 };
@@ -296,10 +335,9 @@ App.prototype.carregarFeed = function() {
     var s = this;
     var c = document.getElementById('feedContainer');
     if (!c) return;
-    
+
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
-    
-    // Também buscar do Firebase
+
     if (typeof db !== 'undefined') {
         db.collection('vagas').orderBy('dataCriacao', 'desc').get().then(function(snap) {
             snap.forEach(function(doc) {
@@ -317,18 +355,18 @@ App.prototype.carregarFeed = function() {
 
 App.prototype.renderizarFeed = function(c, vagas) {
     var s = this;
-    
+
     if (vagas.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>' +
             (s.usuarioLogado && s.usuarioLogado.tipo === 'empreiteiro' ? '<button onclick="abrirTelaPublicacao()" style="background:#f59e0b;color:white;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;margin-top:10px;">📢 PUBLICAR</button>' : '') + '</div>';
         return;
     }
-    
+
     var html = '';
     for (var i = 0; i < vagas.length; i++) {
         var v = vagas[i];
         var destaque = s.usuarioLogado && v.autorId === s.usuarioLogado.id;
-        
+
         html += '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;' + (destaque ? 'border:3px solid #f59e0b;' : '') + '">';
         if (destaque) {
             html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
@@ -383,14 +421,14 @@ App.prototype.mostrarNotificacoes = function() {
         if (notificacoes[i].usuarioId === s.usuarioLogado.id) notificacoes[i].lida = true;
     }
     localStorage.setItem('notificacoesLPX', JSON.stringify(notificacoes));
-    
+
     var html = '<div id="modalNotificacoes" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;" onclick="if(event.target===this)fecharModal(\'modalNotificacoes\')">';
     html += '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;">';
     html += '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;justify-content:space-between;">';
     html += '<h3 style="margin:0;">🔔 Notificações</h3>';
     html += '<button onclick="fecharModal(\'modalNotificacoes\')" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">✕</button>';
     html += '</div><div style="padding:15px;">';
-    
+
     if (minhasNotif.length === 0) {
         html += '<div style="text-align:center;padding:40px;"><div style="font-size:50px;">🔔</div><h3>Nenhuma notificação</h3></div>';
     } else {
@@ -416,17 +454,16 @@ App.prototype.carregarRede = function() {
         console.log('❌ redeContainer não encontrado');
         return;
     }
-    
+
     if (!s.usuarioLogado) {
         c.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Faça login</h3></div>';
         return;
     }
-    
+
     c.innerHTML = '<div style="text-align:center;padding:30px;">🔗 Carregando rede...</div>';
-    
+
     console.log('🔗 Buscando conexões...');
-    
-    // Buscar conexões do localStorage
+
     var conexoesLocal = JSON.parse(localStorage.getItem('conexoesLPX') || '[]');
     var minhasConexoes = [];
     for (var i = 0; i < conexoesLocal.length; i++) {
@@ -434,8 +471,7 @@ App.prototype.carregarRede = function() {
             minhasConexoes.push(conexoesLocal[i]);
         }
     }
-    
-    // Buscar do Firebase também
+
     if (typeof db !== 'undefined') {
         db.collection('conexoes').get().then(function(snap) {
             snap.forEach(function(doc) {
@@ -450,7 +486,7 @@ App.prototype.carregarRede = function() {
                     }
                 }
             });
-            
+
             console.log('📊 Conexões encontradas:', minhasConexoes.length);
             s.renderizarRede(c, minhasConexoes);
         }).catch(function() {
@@ -463,40 +499,36 @@ App.prototype.carregarRede = function() {
 
 App.prototype.renderizarRede = function(c, conexoes) {
     var s = this;
-    
+
     if (conexoes.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
             '<div style="font-size:50px;">🔗</div>' +
             '<h3 style="color:#1A3A5C;">Sua rede está vazia</h3>' +
             '<p style="color:#666;">Conecte-se com profissionais</p>' +
-            '<button onclick="mostrarTela(\'buscaScreen\')" style="background:#1A3A5C;color:white;border:none;padding:12px 24px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Profissionais</button>' +
+            '<button onclick="abrirBusca()" style="background:#1A3A5C;color:white;border:none;padding:12px 24px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Profissionais</button>' +
             '</div>';
         return;
     }
-    
-    // Buscar dados dos amigos
+
     var usuariosLocal = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
     var html = '<div style="text-align:center;padding:10px;color:#1A3A5C;font-weight:bold;">🔗 ' + conexoes.length + ' conexão(ões)</div>';
-    
+
     var processados = 0;
-    
+
     for (var i = 0; i < conexoes.length; i++) {
         var con = conexoes[i];
         var amigoId = con.usuarioId === s.usuarioLogado.id ? con.amigoId : con.usuarioId;
-        
-        // Buscar no localStorage primeiro
+
         var amigo = usuariosLocal.find(function(u) { return u.id === amigoId; });
-        
+
         if (amigo) {
             html += s.criarCardAmigo(amigo, amigoId, con);
             processados++;
         } else if (typeof db !== 'undefined') {
-            // Buscar no Firebase
             db.collection('usuarios').doc(amigoId).get().then(function(doc) {
                 if (doc.exists) {
                     var amigoData = doc.data();
                     amigoData.id = doc.id;
-                    // Salvar no localStorage
                     if (!usuariosLocal.find(function(u) { return u.id === amigoData.id; })) {
                         usuariosLocal.push(amigoData);
                         localStorage.setItem('usuariosLPX', JSON.stringify(usuariosLocal));
@@ -505,22 +537,21 @@ App.prototype.renderizarRede = function(c, conexoes) {
                 }
                 processados++;
                 if (processados >= conexoes.length) {
-                    c.innerHTML = html + '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
+                    c.innerHTML = html + '<button onclick="abrirBusca()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
                 }
             }).catch(function() {
                 processados++;
                 if (processados >= conexoes.length) {
-                    c.innerHTML = html + '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
+                    c.innerHTML = html + '<button onclick="abrirBusca()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
                 }
             });
         } else {
             processados++;
         }
     }
-    
-    // Se todos foram processados (localStorage)
+
     if (processados >= conexoes.length) {
-        c.innerHTML = html + '<button onclick="mostrarTela(\'buscaScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
+        c.innerHTML = html + '<button onclick="abrirBusca()" style="width:100%;background:#1A3A5C;color:white;border:none;padding:12px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Mais</button>';
     }
 };
 
@@ -539,7 +570,7 @@ App.prototype.criarCardAmigo = function(amigo, amigoId, con) {
 App.prototype.adicionarNaRede = function(amigoId) {
     var s = this;
     if (!s.usuarioLogado || s.usuarioLogado.id === amigoId) return;
-    
+
     var conexoes = JSON.parse(localStorage.getItem('conexoesLPX') || '[]');
     for (var i = 0; i < conexoes.length; i++) {
         var c = conexoes[i];
@@ -547,11 +578,11 @@ App.prototype.adicionarNaRede = function(amigoId) {
             s.mostrarToast('Já está na rede!', 'erro'); return;
         }
     }
-    
+
     var novaConexao = { id: 'con_' + Date.now(), usuarioId: s.usuarioLogado.id, amigoId: amigoId, status: 'ativo' };
     conexoes.push(novaConexao);
     localStorage.setItem('conexoesLPX', JSON.stringify(conexoes));
-    
+
     if (typeof db !== 'undefined') {
         db.collection('conexoes').add({
             usuarioId: s.usuarioLogado.id,
@@ -560,7 +591,7 @@ App.prototype.adicionarNaRede = function(amigoId) {
             dataCriacao: new Date().toISOString()
         }).catch(function(){});
     }
-    
+
     s.mostrarToast('✅ Adicionado à rede!', 'sucesso');
     s.carregarRede();
 };
@@ -568,7 +599,7 @@ App.prototype.adicionarNaRede = function(amigoId) {
 App.prototype.removerDaRede = function(amigoId) {
     var s = this;
     if (!confirm('Remover esta conexão?')) return;
-    
+
     var conexoes = JSON.parse(localStorage.getItem('conexoesLPX') || '[]');
     var novas = [];
     for (var i = 0; i < conexoes.length; i++) {
@@ -578,7 +609,7 @@ App.prototype.removerDaRede = function(amigoId) {
         }
     }
     localStorage.setItem('conexoesLPX', JSON.stringify(novas));
-    
+
     if (typeof db !== 'undefined') {
         db.collection('conexoes').get().then(function(snap) {
             snap.forEach(function(doc) {
@@ -589,9 +620,63 @@ App.prototype.removerDaRede = function(amigoId) {
             });
         }).catch(function(){});
     }
-    
+
     s.mostrarToast('Removido', 'sucesso');
     s.carregarRede();
+};
+
+// ===== LISTA DE CONVERSAS (CHAT) =====
+App.prototype.carregarListaChats = function() {
+    var s = this;
+    var c = document.getElementById('chatListaContainer');
+    if (!c || !s.usuarioLogado) return;
+
+    var mensagens = JSON.parse(localStorage.getItem('mensagensLPX') || '[]');
+    var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
+    var meuId = s.usuarioLogado.id;
+
+    var parceiros = {};
+    for (var i = 0; i < mensagens.length; i++) {
+        var m = mensagens[i];
+        var outroId = null;
+        if (m.remetenteId === meuId) outroId = m.destinatarioId;
+        else if (m.destinatarioId === meuId) outroId = m.remetenteId;
+        if (!outroId) continue;
+        if (!parceiros[outroId] || new Date(m.data) > new Date(parceiros[outroId].data)) {
+            parceiros[outroId] = m;
+        }
+    }
+
+    var ids = Object.keys(parceiros);
+
+    if (ids.length === 0) {
+        c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
+            '<div style="font-size:50px;">💬</div><h3 style="color:#1A3A5C;">Nenhuma conversa ainda</h3>' +
+            '<p style="color:#666;">Busque profissionais e comece a conversar</p>' +
+            '<button onclick="abrirBusca()" style="background:#1A3A5C;color:white;border:none;padding:12px 24px;border-radius:25px;font-weight:bold;cursor:pointer;margin-top:10px;">🔍 Buscar Profissionais</button>' +
+            '</div>';
+        return;
+    }
+
+    ids.sort(function(a, b) { return new Date(parceiros[b].data) - new Date(parceiros[a].data); });
+
+    var html = '';
+    for (var i = 0; i < ids.length; i++) {
+        var uid = ids[i];
+        var ultima = parceiros[uid];
+        var user = usuarios.find(function(u) { return u.id === uid; });
+        var nome = user ? user.nome : 'Usuário';
+        var foto = user ? user.fotoPerfil : null;
+
+        html += '<div onclick="iniciarChat(\'' + uid + '\')" style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;">';
+        html += '<div style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;flex-shrink:0;">';
+        html += foto ? '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;">👷</div>';
+        html += '</div>';
+        html += '<div style="flex:1;overflow:hidden;"><strong>' + nome + '</strong><br><small style="color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">' + ultima.conteudo + '</small></div>';
+        html += '<small style="color:#999;">' + new Date(ultima.data).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + '</small>';
+        html += '</div>';
+    }
+    c.innerHTML = html;
 };
 
 // ===== CHAT =====
@@ -599,7 +684,7 @@ App.prototype.iniciarChat = function(uid) {
     var s = this;
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
     var user = usuarios.find(function(u) { return u.id === uid; });
-    
+
     if (!user && typeof db !== 'undefined') {
         db.collection('usuarios').doc(uid).get().then(function(doc) {
             if (doc.exists) {
@@ -610,7 +695,7 @@ App.prototype.iniciarChat = function(uid) {
         });
         return;
     }
-    
+
     if (!user) return;
     s.usuarioSelecionado = user;
     s.abrirChat(user);
@@ -618,19 +703,26 @@ App.prototype.iniciarChat = function(uid) {
 
 App.prototype.abrirChat = function(user) {
     var s = this;
-    
+
     var tela = document.getElementById('chatScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'chatScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
-    
-    tela.innerHTML = 
+
+    tela.innerHTML =
         '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
         '<button onclick="voltarTela()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">⬅</button>' +
         '<strong>💬 ' + user.nome + '</strong></div>' +
-        '<div id="chatMensagens" style="padding:15px;height:calc(100vh - 130px);overflow-y:auto;background:#f5f5f5;"></div>' +
+        '<div id="chatMensagens" style="padding:15px;height:calc(100vh - 200px);overflow-y:auto;background:#f5f5f5;"></div>' +
         '<div style="padding:10px;background:white;display:flex;gap:10px;">' +
         '<input id="chatInput" placeholder="Mensagem..." style="flex:1;padding:12px;border:1px solid #ddd;border-radius:25px;">' +
         '<button onclick="enviarMensagem()" style="background:#1A3A5C;color:white;border:none;padding:12px 20px;border-radius:25px;cursor:pointer;">Enviar</button></div>';
-    
+
+    var input = tela.querySelector('#chatInput');
+    if (input) {
+        input.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter') { ev.preventDefault(); enviarMensagem(); }
+        });
+    }
+
     s.mostrarTela('chatScreen');
     s.carregarMensagens();
 };
@@ -639,7 +731,7 @@ App.prototype.carregarMensagens = function() {
     var s = this;
     var c = document.getElementById('chatMensagens');
     if (!c || !s.usuarioSelecionado) return;
-    
+
     var mensagens = JSON.parse(localStorage.getItem('mensagensLPX') || '[]');
     var relevantes = [];
     for (var i = 0; i < mensagens.length; i++) {
@@ -649,12 +741,12 @@ App.prototype.carregarMensagens = function() {
             relevantes.push(m);
         }
     }
-    
+
     if (relevantes.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;color:#666;">Diga olá! 👋</div>';
         return;
     }
-    
+
     var html = '';
     for (var i = 0; i < relevantes.length; i++) {
         var m = relevantes[i];
@@ -674,7 +766,7 @@ App.prototype.enviarMensagem = function() {
     if (!input || !s.usuarioSelecionado) return;
     var texto = input.value.trim();
     if (!texto) return;
-    
+
     var mensagens = JSON.parse(localStorage.getItem('mensagensLPX') || '[]');
     mensagens.push({
         id: 'msg_' + Date.now(),
@@ -692,13 +784,11 @@ App.prototype.buscarProfissionais = function() {
     var s = this;
     var c = document.getElementById('buscaResultados');
     if (!c) return;
-    
+
     c.innerHTML = '<div style="text-align:center;padding:30px;">🔍 Buscando...</div>';
-    
-    // Buscar do localStorage
+
     var todos = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    
-    // Buscar do Firebase também
+
     if (typeof db !== 'undefined') {
         db.collection('usuarios').where('tipo', '==', 'profissional').get().then(function(snap) {
             snap.forEach(function(doc) {
@@ -707,7 +797,6 @@ App.prototype.buscarProfissionais = function() {
                     todos.push(u);
                 }
             });
-            // Salvar no localStorage
             localStorage.setItem('usuariosLPX', JSON.stringify(todos));
             s.renderizarBusca(c, todos);
         }).catch(function() {
@@ -718,20 +807,33 @@ App.prototype.buscarProfissionais = function() {
     }
 };
 
+App.prototype.filtrarBusca = function(termo) {
+    var s = this;
+    var c = document.getElementById('buscaResultados');
+    if (!c) return;
+    var todos = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
+    termo = (termo || '').toLowerCase().trim();
+    if (!termo) { s.renderizarBusca(c, todos); return; }
+    var filtrados = todos.filter(function(u) {
+        return (u.nome || '').toLowerCase().indexOf(termo) !== -1 ||
+               (u.profissao || '').toLowerCase().indexOf(termo) !== -1;
+    });
+    s.renderizarBusca(c, filtrados);
+};
+
 App.prototype.renderizarBusca = function(c, todos) {
     var s = this;
     var meuId = s.usuarioLogado ? s.usuarioLogado.id : '';
-    
-    // Filtrar profissionais (não mostrar o próprio)
+
     var profissionais = [];
     for (var i = 0; i < todos.length; i++) {
         if (todos[i].tipo === 'profissional' && todos[i].id !== meuId) {
             profissionais.push(todos[i]);
         }
     }
-    
+
     console.log('👷 Profissionais:', profissionais.length, 'de', todos.length, 'usuários');
-    
+
     if (profissionais.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
             '<div style="font-size:50px;">👷</div>' +
@@ -740,13 +842,13 @@ App.prototype.renderizarBusca = function(c, todos) {
             '<p style="color:#999;font-size:12px;">Cadastre outros usuários como "profissional"</p></div>';
         return;
     }
-    
+
     var html = '<div style="text-align:center;padding:10px;">👷 ' + profissionais.length + ' profissional(is)</div>';
-    
+
     for (var i = 0; i < profissionais.length; i++) {
         var p = profissionais[i];
         var score = p.score || 0;
-        
+
         html += '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
         html += '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;flex-shrink:0;" onclick="verPerfil(\'' + p.id + '\')">';
         html += p.fotoPerfil ? '<img src="' + p.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;">👷</div>';
@@ -761,7 +863,7 @@ App.prototype.renderizarBusca = function(c, todos) {
         html += '<button onclick="event.stopPropagation();adicionarNaRede(\'' + p.id + '\')" style="background:#10B981;color:white;border:none;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;">+</button>';
         html += '</div>';
     }
-    
+
     c.innerHTML = html;
 };
 
@@ -770,7 +872,7 @@ App.prototype.verPerfil = function(uid) {
     var s = this;
     var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
     var user = usuarios.find(function(u) { return u.id === uid; });
-    
+
     if (!user && typeof db !== 'undefined') {
         db.collection('usuarios').doc(uid).get().then(function(doc) {
             if (doc.exists) {
@@ -782,7 +884,7 @@ App.prototype.verPerfil = function(uid) {
         });
         return;
     }
-    
+
     if (!user) { s.mostrarToast('Não encontrado', 'erro'); return; }
     s.mostrarPerfilPublico(user);
 };
@@ -791,8 +893,8 @@ App.prototype.mostrarPerfilPublico = function(user) {
     var s = this;
     var tela = document.getElementById('perfilPublicoScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'perfilPublicoScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
-    
-    tela.innerHTML = 
+
+    tela.innerHTML =
         '<div style="background:#1A3A5C;color:white;padding:30px;text-align:center;">' +
         '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #f0c27f;">' +
         (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:white;display:flex;align-items:center;justify-content:center;font-size:50px;">👷</div>') +
@@ -806,7 +908,7 @@ App.prototype.mostrarPerfilPublico = function(user) {
         '<button onclick="iniciarChat(\'' + user.id + '\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">💬 Chat</button>' +
         '<button onclick="adicionarNaRede(\'' + user.id + '\')" style="width:100%;background:#10B981;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🔗 Adicionar à Rede</button>' +
         '<button onclick="voltarTela()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">⬅ Voltar</button></div>';
-    
+
     s.mostrarTela('perfilPublicoScreen');
 };
 
@@ -814,11 +916,11 @@ App.prototype.mostrarPerfilPublico = function(user) {
 App.prototype.abrirTelaPublicacao = function() {
     var s = this;
     if (!s.usuarioLogado) { s.mostrarToast('Faça login!', 'erro'); return; }
-    
+
     var tela = document.getElementById('publicarVagaScreen');
     if (!tela) { tela = document.createElement('div'); tela.id = 'publicarVagaScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
-    
-    tela.innerHTML = 
+
+    tela.innerHTML =
         '<div style="padding:20px;max-width:500px;margin:0 auto;">' +
         '<h2 style="text-align:center;color:#1A3A5C;">📢 PUBLICAR OBRA</h2>' +
         '<p style="text-align:center;color:#666;font-size:12px;margin-bottom:20px;">Publicado por: <b>' + s.usuarioLogado.nome + '</b></p>' +
@@ -838,7 +940,7 @@ App.prototype.abrirTelaPublicacao = function() {
         '<button onclick="document.getElementById(\'pubFotoInput\').click()" style="background:#e5e7eb;border:none;padding:10px;border-radius:8px;cursor:pointer;margin-bottom:15px;">📁 Escolher Foto</button>' +
         '<button onclick="publicarVaga()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;">📢 PUBLICAR</button>' +
         '<button onclick="voltarTela()" style="width:100%;background:#6b7280;color:white;border:none;padding:10px;border-radius:10px;margin-top:8px;cursor:pointer;">Cancelar</button></div>';
-    
+
     s.vagaFotoBase64 = null;
     s.mostrarTela('publicarVagaScreen');
 };
@@ -861,11 +963,11 @@ App.prototype.publicarVaga = function() {
     var profissoes = document.getElementById('pubProfissoes')?.value?.trim() || 'Geral';
     var valor = document.getElementById('pubValor')?.value?.trim() || '';
     var descricao = document.getElementById('pubDescricao')?.value?.trim() || '';
-    
+
     if (!titulo) { s.mostrarToast('Digite o título!', 'erro'); return; }
     if (!endereco) { s.mostrarToast('Digite o endereço!', 'erro'); return; }
     if (!valor) { s.mostrarToast('Digite o valor!', 'erro'); return; }
-    
+
     var vaga = {
         id: 'vaga_' + Date.now(),
         titulo: titulo, endereco: endereco, profissoes: profissoes, valorHora: valor,
@@ -873,11 +975,11 @@ App.prototype.publicarVaga = function() {
         autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome,
         autorFoto: s.usuarioLogado.fotoPerfil || null, dataCriacao: new Date().toISOString()
     };
-    
+
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
     vagas.unshift(vaga);
     localStorage.setItem('vagasLPX', JSON.stringify(vagas));
-    
+
     if (typeof db !== 'undefined') {
         db.collection('vagas').add(vaga).then(function(docRef) {
             vaga.id = docRef.id;
@@ -885,7 +987,7 @@ App.prototype.publicarVaga = function() {
             localStorage.setItem('vagasLPX', JSON.stringify(vagas));
         }).catch(function(){});
     }
-    
+
     document.getElementById('pubTitulo').value = '';
     document.getElementById('pubEndereco').value = '';
     document.getElementById('pubProfissoes').value = 'Geral';
@@ -893,7 +995,7 @@ App.prototype.publicarVaga = function() {
     document.getElementById('pubDescricao').value = '';
     document.getElementById('pubFotoPreview').src = 'imagem/logo-sem-fundo-lpxconstrutor.png';
     s.vagaFotoBase64 = null;
-    
+
     s.mostrarToast('✅ Obra publicada! 🏗️', 'sucesso');
     setTimeout(function() { s.historicoTelas = []; s.mostrarTela('homeScreen'); s.carregarFeed(); }, 800);
 };
@@ -903,18 +1005,18 @@ App.prototype.carregarMinhasObras = function() {
     var s = this;
     var c = document.getElementById('listaObrasContainer') || document.getElementById('minhasObrasContainer');
     if (!c || !s.usuarioLogado) return;
-    
+
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
     var minhas = [];
     for (var i = 0; i < vagas.length; i++) {
         if (vagas[i].autorId === s.usuarioLogado.id) minhas.push(vagas[i]);
     }
-    
+
     var totalEl = document.getElementById('totalObras');
     if (totalEl) totalEl.textContent = minhas.length;
-    
+
     if (minhas.length === 0) { c.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Nenhuma obra</h3></div>'; return; }
-    
+
     var html = '<div style="text-align:center;padding:10px;">🏗️ <b>' + minhas.length + '</b> obra(s)</div>';
     for (var i = 0; i < minhas.length; i++) {
         var v = minhas[i];
@@ -934,7 +1036,7 @@ App.prototype.verDetalheObra = function(oid) {
     var v = null;
     for (var i = 0; i < vagas.length; i++) { if (vagas[i].id === oid) { v = vagas[i]; break; } }
     if (!v) return;
-    
+
     var html = '<div id="modalObra" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;" onclick="if(event.target===this)this.remove()">';
     html += '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;">';
     if (v.fotoObra && v.fotoObra.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;">';
@@ -944,7 +1046,7 @@ App.prototype.verDetalheObra = function(oid) {
     html += '<p>👤 ' + (v.autorNome || 'Anônimo') + '</p>';
     html += '<button onclick="document.getElementById(\'modalObra\').remove()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">⬅ Fechar</button>';
     html += '</div></div></div>';
-    
+
     fecharModal('modalObra');
     document.body.insertAdjacentHTML('beforeend', html);
 };
@@ -956,12 +1058,12 @@ App.prototype.carregarMeuPerfil = function() {
     var user = s.usuarioLogado;
     var tela = document.getElementById('meuPerfilScreen');
     if (!tela) return;
-    
+
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
     var totalObras = 0;
     for (var i = 0; i < vagas.length; i++) { if (vagas[i].autorId === user.id) totalObras++; }
-    
-    tela.innerHTML = 
+
+    tela.innerHTML =
         '<div style="background:linear-gradient(135deg,#1A3A5C,#2d5a7b);color:white;padding:30px;text-align:center;">' +
         '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:3px solid #f0c27f;cursor:pointer;" onclick="document.getElementById(\'inputFoto\').click()">' +
         (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;">') +
@@ -972,8 +1074,9 @@ App.prototype.carregarMeuPerfil = function() {
         '<button id="btnInfo" onclick="mostrarSecao(\'info\')" style="flex:1;background:#1A3A5C;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">📋 INFO</button>' +
         '<button id="btnConfig" onclick="mostrarSecao(\'config\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:8px;cursor:pointer;">⚙️ CONFIG</button>' +
         '<button id="btnAlertas" onclick="mostrarSecao(\'alertas\')" style="flex:1;background:#e5e7eb;color:#1A3A5C;border:none;padding:10px;border-radius:8px;cursor:pointer;">🔔 ALERTAS</button></div>' +
-        '<div id="secaoConteudo" style="padding:15px;"></div>';
-    
+        '<div id="secaoConteudo" style="padding:15px;"></div>' +
+        '<div style="padding:0 15px 20px;"><button onclick="sair()" style="width:100%;background:#EF4444;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;">🚪 Sair</button></div>';
+
     s.mostrarSecao('info');
 };
 
@@ -981,28 +1084,28 @@ App.prototype.mostrarSecao = function(secao) {
     var s = this;
     var c = document.getElementById('secaoConteudo');
     if (!c) return;
-    
+
     ['info', 'config', 'alertas'].forEach(function(sec) {
         var btn = document.getElementById('btn' + sec.charAt(0).toUpperCase() + sec.slice(1));
         if (btn) { btn.style.background = sec === secao ? '#1A3A5C' : '#e5e7eb'; btn.style.color = sec === secao ? 'white' : '#1A3A5C'; }
     });
-    
+
     var user = s.usuarioLogado;
     var vagas = JSON.parse(localStorage.getItem('vagasLPX') || '[]');
     var totalObras = 0;
     for (var i = 0; i < vagas.length; i++) { if (vagas[i].autorId === user.id) totalObras++; }
-    
+
     if (secao === 'info') {
-        c.innerHTML = 
+        c.innerHTML =
             '<div style="display:flex;gap:10px;margin-bottom:15px;">' +
             '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b>' + (user.experiencia || '0') + '</b><br><small>Anos</small></div>' +
             '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;"><b>' + (user.score || 0).toFixed(1) + '</b><br><small>Score</small></div>' +
-            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;cursor:pointer;" onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();"><b style="color:#10B981;">' + totalObras + '</b><br><small>Obras</small></div></div>' +
+            '<div style="flex:1;background:white;border-radius:10px;padding:15px;text-align:center;cursor:pointer;" onclick="mostrarTela(\'minhasObrasScreen\')"><b style="color:#10B981;">' + totalObras + '</b><br><small>Obras</small></div></div>' +
             '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;"><p>📧 ' + (user.email || '') + '</p><p>📱 ' + (user.celular || '') + '</p><p>🔧 ' + (user.profissao || '') + '</p></div>' +
-            '<button onclick="mostrarTela(\'minhasObrasScreen\');carregarMinhasObras();" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🏗️ Minhas Obras (' + totalObras + ')</button>' +
+            '<button onclick="mostrarTela(\'minhasObrasScreen\')" style="width:100%;background:#1A3A5C;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🏗️ Minhas Obras (' + totalObras + ')</button>' +
             '<button onclick="abrirEditarPerfil()" style="width:100%;background:#f59e0b;color:white;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;">✏️ Editar Perfil</button>';
     } else if (secao === 'config') {
-        c.innerHTML = 
+        c.innerHTML =
             '<div style="background:white;border-radius:10px;padding:15px;margin-bottom:10px;"><h3>🎨 Tema</h3>' +
             '<button onclick="selecionarTema(\'claro\')" style="background:' + (s.temaAtual === 'claro' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.temaAtual === 'claro' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;margin-right:5px;">☀️ Claro</button>' +
             '<button onclick="selecionarTema(\'escuro\')" style="background:' + (s.temaAtual === 'escuro' ? '#1A3A5C' : '#e5e7eb') + ';color:' + (s.temaAtual === 'escuro' ? 'white' : '#1A3A5C') + ';border:none;padding:12px;border-radius:8px;cursor:pointer;">🌙 Escuro</button></div>' +
@@ -1015,7 +1118,21 @@ App.prototype.mostrarSecao = function(secao) {
             '<button onclick="mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;margin-bottom:5px;cursor:pointer;">🔒 Privacidade</button>' +
             '<button onclick="mostrarDocumento(\'sobre\')" style="display:block;width:100%;text-align:left;background:#e5e7eb;border:none;padding:12px;border-radius:8px;cursor:pointer;">ℹ️ Sobre</button></div>';
     } else {
-        c.innerHTML = '<div style="text-align:center;padding:30px;"><div style="font-size:50px;">🔔</div><h3>Nenhuma notificação</h3></div>';
+        var notificacoes = JSON.parse(localStorage.getItem('notificacoesLPX') || '[]');
+        var minhasNotif = notificacoes.filter(function(n) { return n.usuarioId === user.id; });
+        if (minhasNotif.length === 0) {
+            c.innerHTML = '<div style="text-align:center;padding:30px;"><div style="font-size:50px;">🔔</div><h3>Nenhuma notificação</h3></div>';
+        } else {
+            var html = '';
+            for (var i = 0; i < minhasNotif.length; i++) {
+                var n = minhasNotif[i];
+                html += '<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;">';
+                html += '<div style="font-weight:bold;">' + n.titulo + '</div>';
+                html += '<div style="font-size:13px;color:#666;">' + n.mensagem + '</div>';
+                html += '<div style="font-size:10px;color:#999;">' + new Date(n.data).toLocaleString('pt-BR') + '</div></div>';
+            }
+            c.innerHTML = html;
+        }
     }
 };
 
@@ -1040,7 +1157,7 @@ App.prototype.abrirEditarPerfil = function() {
     var s = this;
     if (!s.usuarioLogado) return;
     var user = s.usuarioLogado;
-    
+
     var html = '<div id="modalEditar" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">';
     html += '<div style="background:white;border-radius:15px;padding:20px;width:90%;max-width:400px;">';
     html += '<h3 style="text-align:center;">✏️ Editar Perfil</h3>';
@@ -1116,10 +1233,11 @@ App.prototype.mostrarToast = function(m, t) {
 document.addEventListener('DOMContentLoaded', function() {
     var splashAntigo = document.getElementById('splashScreen');
     if (splashAntigo) splashAntigo.remove();
-    
+
     appInstancia = new App();
     console.log('✅ LPXCONSTRUTOR CORRIGIDO!');
     console.log('✅ Rede - busca Firebase + localStorage');
     console.log('✅ Voltar - não fecha o app');
     console.log('✅ Busca - encontra perfis cadastrados');
+    console.log('✅ Menu inferior - buscar/chat/perfil funcionando');
 });
