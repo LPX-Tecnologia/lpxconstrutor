@@ -1,5 +1,5 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - COMPLETO RESTAURADO =====
+// ===== LPXCONSTRUTOR - COMPLETO FINAL =====
 // ==========================================================
 
 var appInstancia = null;
@@ -64,6 +64,9 @@ App.prototype.init = function() {
     splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;margin-top:6px;">Rede Profissional da Construção</p>';
     document.body.appendChild(splash);
     
+    // Configurar navegação
+    s.configurarNavegacao();
+    
     setTimeout(function() {
         splash.style.opacity = '0';
         setTimeout(function() {
@@ -72,6 +75,128 @@ App.prototype.init = function() {
             else { s.mostrarTela('loginScreen'); }
         }, 500);
     }, 2000);
+};
+
+// ===== CONFIGURAR NAVEGAÇÃO (SINO, BUSCAR, CHAT, PERFIL) =====
+App.prototype.configurarNavegacao = function() {
+    var s = this;
+    
+    setTimeout(function() {
+        console.log('🔧 Configurando botões de navegação...');
+        
+        // SINO - Procura QUALQUER elemento com ícone de sino
+        var todos = document.querySelectorAll('button, a, div, span, i, [onclick]');
+        for (var i = 0; i < todos.length; i++) {
+            var el = todos[i];
+            var texto = (el.textContent || el.innerText || '').trim();
+            var onclick = el.getAttribute('onclick') || '';
+            var classe = el.className || '';
+            var id = el.id || '';
+            
+            // SINO 🔔
+            if (texto === '🔔' || texto.indexOf('🔔') >= 0 || 
+                onclick.indexOf('notif') >= 0 || onclick.indexOf('Notif') >= 0 ||
+                onclick.indexOf('sino') >= 0 || onclick.indexOf('Sino') >= 0 ||
+                id.indexOf('notif') >= 0 || id.indexOf('sino') >= 0 ||
+                classe.indexOf('bell') >= 0 || classe.indexOf('notif') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarNotificacoes(); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Sino configurado:', texto || classe || id);
+            }
+            
+            // BUSCAR 🔍
+            if (texto.toLowerCase().indexOf('buscar') >= 0 || texto.toLowerCase().indexOf('busca') >= 0 ||
+                texto === '🔍' || 
+                onclick.toLowerCase().indexOf('buscar') >= 0 || onclick.toLowerCase().indexOf('busca') >= 0 ||
+                id.toLowerCase().indexOf('buscar') >= 0 || id.toLowerCase().indexOf('busca') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('buscaScreen'); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Buscar configurado:', texto || id);
+            }
+            
+            // CHAT 💬
+            if (texto.toLowerCase().indexOf('chat') >= 0 || texto === '💬' ||
+                onclick.toLowerCase().indexOf('chat') >= 0 ||
+                id.toLowerCase().indexOf('chat') >= 0 ||
+                classe.indexOf('fa-comment') >= 0 || classe.indexOf('fa-comments') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('chatScreen'); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Chat configurado:', texto || id);
+            }
+            
+            // PERFIL 👤
+            if (texto.toLowerCase().indexOf('perfil') >= 0 || texto === '👤' ||
+                onclick.toLowerCase().indexOf('perfil') >= 0 || onclick.toLowerCase().indexOf('meuperfil') >= 0 ||
+                id.toLowerCase().indexOf('perfil') >= 0 ||
+                classe.indexOf('fa-user') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('meuPerfilScreen'); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Perfil configurado:', texto || id);
+            }
+            
+            // HOME 🏠
+            if (texto.toLowerCase().indexOf('home') >= 0 || texto === '🏠' ||
+                texto.toLowerCase().indexOf('início') >= 0 || texto.toLowerCase().indexOf('inicio') >= 0 ||
+                onclick.toLowerCase().indexOf('home') >= 0 ||
+                id.toLowerCase().indexOf('home') >= 0 ||
+                classe.indexOf('fa-home') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('homeScreen'); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Home configurado:', texto || id);
+            }
+            
+            // OBRAS 🏗️
+            if (texto.toLowerCase().indexOf('obra') >= 0 || texto === '🏗️' ||
+                onclick.toLowerCase().indexOf('obra') >= 0 ||
+                id.toLowerCase().indexOf('obra') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); mostrarTela('minhasObrasScreen'); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Obras configurado:', texto || id);
+            }
+            
+            // PUBLICAR 📢
+            if (texto.toLowerCase().indexOf('publicar') >= 0 || texto === '📢' ||
+                onclick.toLowerCase().indexOf('publicar') >= 0 ||
+                id.toLowerCase().indexOf('publicar') >= 0 ||
+                classe.indexOf('fa-plus') >= 0) {
+                el.onclick = function(e) { e.preventDefault(); e.stopPropagation(); abrirTelaPublicacao(); };
+                el.style.cursor = 'pointer';
+                console.log('✅ Publicar configurado:', texto || id);
+            }
+        }
+        
+        // Configurar BottomNav também
+        var bottomNav = document.getElementById('bottomNav');
+        if (bottomNav) {
+            var botoesNav = bottomNav.querySelectorAll('button, a, div, span, i');
+            for (var j = 0; j < botoesNav.length; j++) {
+                var btn = botoesNav[j];
+                var txt = (btn.textContent || btn.innerText || '').toLowerCase().trim();
+                
+                // Se já tem onclick configurado, pular
+                if (btn.getAttribute('data-nav-config')) continue;
+                
+                if (txt.indexOf('home') >= 0 || txt === '🏠') {
+                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('homeScreen'); };
+                } else if (txt.indexOf('buscar') >= 0 || txt.indexOf('busca') >= 0 || txt === '🔍') {
+                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('buscaScreen'); };
+                } else if (txt.indexOf('chat') >= 0 || txt === '💬') {
+                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('chatScreen'); };
+                } else if (txt.indexOf('perfil') >= 0 || txt === '👤') {
+                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('meuPerfilScreen'); };
+                } else if (txt.indexOf('obra') >= 0 || txt === '🏗️') {
+                    btn.onclick = function(e) { e.preventDefault(); mostrarTela('minhasObrasScreen'); };
+                } else if (txt.indexOf('publicar') >= 0 || txt === '📢') {
+                    btn.onclick = function(e) { e.preventDefault(); abrirTelaPublicacao(); };
+                }
+                btn.style.cursor = 'pointer';
+                btn.setAttribute('data-nav-config', 'true');
+            }
+        }
+        
+        console.log('🔧 Navegação configurada!');
+        
+    }, 1000);
 };
 
 // ===== NAVEGAÇÃO =====
@@ -528,15 +653,14 @@ App.prototype.enviarMensagem = function() {
     s.carregarMensagens();
 };
 
-// ===== BUSCA (CORRIGIDA - MOSTRA PROFISSIONAIS CADASTRADOS) =====
+// ===== BUSCA =====
 App.prototype.buscarProfissionais = function() {
     var s = this;
     var c = document.getElementById('buscaResultados');
     if (!c) return;
     
     var todos = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
-    console.log('🔍 Busca - Total de usuários:', todos.length);
-    console.log('📋 Lista:', todos.map(function(u) { return u.nome + ' (' + u.tipo + ')'; }));
+    console.log('🔍 Busca - Total:', todos.length);
     
     var profissionais = [];
     var meuId = s.usuarioLogado ? s.usuarioLogado.id : '';
@@ -547,18 +671,14 @@ App.prototype.buscarProfissionais = function() {
         }
     }
     
-    console.log('👷 Profissionais encontrados:', profissionais.length);
-    
     if (profissionais.length === 0) {
         c.innerHTML = '<div style="text-align:center;padding:30px;background:white;border-radius:10px;">' +
-            '<div style="font-size:50px;">👷</div>' +
-            '<h3>Nenhum profissional encontrado</h3>' +
-            '<p style="color:#666;">Total de usuários no sistema: <b>' + todos.length + '</b></p>' +
-            '<p style="color:#999;font-size:12px;">Cadastre outros usuários como "profissional" para aparecer aqui</p></div>';
+            '<div style="font-size:50px;">👷</div><h3>Nenhum profissional</h3>' +
+            '<p style="color:#666;">Total: ' + todos.length + ' usuários</p></div>';
         return;
     }
     
-    var html = '<div style="text-align:center;padding:8px;color:#666;">' + profissionais.length + ' profissional(is) encontrado(s)</div>';
+    var html = '<div style="text-align:center;padding:8px;color:#666;">' + profissionais.length + ' profissional(is)</div>';
     
     for (var i = 0; i < profissionais.length; i++) {
         var p = profissionais[i];
@@ -741,7 +861,7 @@ App.prototype.verDetalheObra = function(oid) {
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
-// ===== PERFIL DO USUÁRIO (COMPLETO COM TUDO) =====
+// ===== PERFIL DO USUÁRIO =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
     if (!s.usuarioLogado) return;
@@ -916,10 +1036,10 @@ App.prototype.mostrarDocumento = function(tipo) {
     
     var titulos = { termos: '📄 Termos de Uso', privacidade: '🔒 Política de Privacidade', diretrizes: '📋 Diretrizes da Comunidade', sobre: 'ℹ️ Sobre o LPXCONSTRUTOR' };
     var conteudos = {
-        termos: '<h3 style="color:#1A3A5C;">1. Aceitação dos Termos</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda integralmente com estes Termos de Uso.</p><h3 style="color:#1A3A5C;">2. Cadastro</h3><p>O cadastro é gratuito e requer informações verídicas.</p><h3 style="color:#1A3A5C;">3. Conduta</h3><p>É proibido: discriminação, assédio, informações falsas.</p><h3 style="color:#1A3A5C;">4. Contato</h3><p>contato@lpxconstrutor.com.br</p>',
-        privacidade: '<h3 style="color:#1A3A5C;">1. LGPD</h3><p>Protegemos seus dados conforme a Lei 13.709/2018.</p><h3 style="color:#1A3A5C;">2. Dados Coletados</h3><p>Nome, email, telefone, profissão.</p><h3 style="color:#1A3A5C;">3. Seus Direitos</h3><p>Acessar, corrigir e excluir dados.</p>',
-        diretrizes: '<h3 style="color:#1A3A5C;">1. Respeito Mútuo</h3><p>Trate todos com profissionalismo.</p><h3 style="color:#1A3A5C;">2. Segurança</h3><p>Use EPIs e siga normas.</p><h3 style="color:#1A3A5C;">3. Qualidade</h3><p>Entregue no prazo combinado.</p>',
-        sobre: '<div style="text-align:center;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100px;"><h2 style="color:#1A3A5C;">LPXCONSTRUTOR</h2><p><strong>Versão 1.0.0</strong></p><p>Rede Profissional da Construção Civil</p><hr><p><strong>Desenvolvido por:</strong> LPX Tecnologia</p><p><strong>Email:</strong> contato@lpxconstrutor.com.br</p><p style="color:#999;">© 2024 LPXCONSTRUTOR</p></div>'
+        termos: '<h3 style="color:#1A3A5C;">1. Aceitação</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda com estes termos.</p><h3 style="color:#1A3A5C;">2. Conduta</h3><p>É proibido discriminação, assédio e informações falsas.</p>',
+        privacidade: '<h3 style="color:#1A3A5C;">1. LGPD</h3><p>Protegemos seus dados conforme a Lei 13.709/2018.</p><h3 style="color:#1A3A5C;">2. Dados</h3><p>Nome, email, telefone, profissão.</p>',
+        diretrizes: '<h3 style="color:#1A3A5C;">1. Respeito</h3><p>Trate todos com profissionalismo.</p><h3 style="color:#1A3A5C;">2. Segurança</h3><p>Use EPIs e siga normas.</p>',
+        sobre: '<div style="text-align:center;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100px;"><h2 style="color:#1A3A5C;">LPXCONSTRUTOR</h2><p><strong>Versão 1.0.0</strong></p><p>Rede Profissional da Construção Civil</p></div>'
     };
     
     tela.innerHTML = '<div style="min-height:100vh;background:#f5f5f5;">' +
@@ -931,7 +1051,7 @@ App.prototype.mostrarDocumento = function(tipo) {
     s.mostrarTela('documentoScreen');
 };
 
-// ===== TEMA E IDIOMA =====
+// ===== TEMA, IDIOMA, VERSÃO =====
 App.prototype.selecionarTema = function(tema) {
     this.temaAtual = tema;
     localStorage.setItem('tema', tema);
@@ -977,15 +1097,5 @@ document.addEventListener('DOMContentLoaded', function() {
     
     appInstancia = new App();
     console.log('✅ LPXCONSTRUTOR COMPLETO!');
-    console.log('📋 Funcionalidades:');
-    console.log('  ✅ Login/Cadastro');
-    console.log('  ✅ Feed com obras');
-    console.log('  ✅ Rede de conexões');
-    console.log('  ✅ Busca de profissionais');
-    console.log('  ✅ Chat');
-    console.log('  ✅ Perfil completo');
-    console.log('  ✅ Tema claro/escuro');
-    console.log('  ✅ Idiomas PT/EN/ES');
-    console.log('  ✅ Documentos');
-    console.log('  ✅ Versão do app');
+    console.log('✅ Navegação: Sino, Buscar, Chat, Perfil configurados');
 });
