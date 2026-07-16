@@ -361,21 +361,352 @@ App.prototype.recusarConvite = function(nid, deId) {
     }
 };
 
-// ===== CHAT =====
+// ===== CORREÇÃO DO CHAT (FUNCIONANDO) =====
+
+// Substitua estas funções no seu app.js:
+
+// 1. LISTA DE CONVERSAS
 App.prototype.carregarListaConversas = function() {
-    var s = this; if (!s.usuarioLogado) return;
-    var tela = document.getElementById('chatScreen'); if (!tela) { tela = document.createElement('div'); tela.id = 'chatScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
-    tela.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;"><h3>💬 Mensagens</h3></div><div id="listaConversas" style="padding:10px;"><div style="text-align:center;padding:30px;">Carregando...</div></div>';
+    var s = this;
+    if (!s.usuarioLogado) { s.mostrarTela('loginScreen'); return; }
+    
+    var tela = document.getElementById('chatScreen');
+    if (!tela) { tela = document.createElement('div'); tela.id = 'chatScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
+    
+    s.usuarioSelecionado = null;
+    
+    // Mostrar tela imediatamente
+    tela.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;"><h3>💬 Mensagens</h3></div><div id="listaConversas" style="padding:10px;"><div style="text-align:center;padding:30px;">🔍 Buscando conversas...</div></div>';
     s.mostrarTela('chatScreen');
+    
+    // Buscar conexões ativas
     if (typeof db !== 'undefined') {
-        db.collection('conexoes').where('participantes', 'array-contains', s.usuarioLogado.id).where('status', '==', 'ativo')
+        db.collection('conexoes')
+            .where('participantes', 'array-contains', s.usuarioLogado.id)
+            .where('status', '==', 'ativo')
+            .get()
+            .then(function(snap) {
+                var container = document.getElementById('listaConversas');
+                if (!container) return;
+                
+                var ids = [];
+                snap.forEach(function(doc) {
+                    var p = doc.data().participantes;
+                    var amigoId = p.find(function(x) { return x !== s.usuarioLogado.id; });
+                    if (amigoId) ids.push(amigoId);
+                });
+                
+                console.log('📊 Conversas encontradas:', ids.length);
+                
+                if (ids.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;">' +
+                        '<div style="font-size:50px;">💬</div>' +
+                        '<h3>Nenhuma conversa</h3>' +
+                        '<p style="color:#666;">Conecte-se com profissionais na rede</p>' +
+                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" style="background:#1A3A5C;color:white;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;margin-top:10px;">🔍 Buscar Profissionais</button>' +
+                        '</div>';
+                    return;
+                }
+                
+                // Buscar dados dos usuários
+                var html = '';
+                var processados = 0;
+                
+                ids.forEach(function(uid) {
+                    db.collection('usuarios').doc(uid).get().then(function(doc) {
+                        processados++;
+                        if (doc.exists) {
+                            var u = doc.data();
+                            u.id = doc.id;
+                            html += '<div onclick="window.app.iniciarChat(\'' + u.id + '\')" style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+                                '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;flex-shrink:0;">' +
+                                (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:22px;">👷</div>') +
+                                '</div>' +
+                                '<div style="flex:1;"><strong>' + u.nome + '</strong><br><small style="color:#666;">' + (u.profissao || 'Profissional') + '</small></div>' +
+                                '<i class="fas fa-chevron-right" style="color:#ccc;"></i>' +
+                                '</div>';
+                        }
+                        if (processados >= ids.length) {
+                            container.innerHTML = html;
+                        }
+                    }).catch(function() {
+                        processados++;
+                        if (processados >= ids.length) {
+                            container.innerHTML = html || '<div style="text-align:center;padding:30px;">Nenhuma conversa</div>';
+                        }
+                    });
+                });
+            })
+            .catch(function(err) {
+                console.error('Erro ao buscar conexões:', err);
+                var container = document.getElementById('listaConversas');
+                if (container) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;">' +
+                        '<div style="font-size:50px;">💬</div>' +
+                        '<h3>Erro ao carregar</h3>' +
+                        '<button onclick="window.app.carregarListaConversas()" style="background:#1A3A5C;color:white;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;">Tentar novamente</button>' +
+                        '</div>';
+                }
+            });
+    } else {
+        // Sem Firebase - mostrar mensagem
+        var container = document.getElementById('listaConversas');
+        if (container) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;">' +
+                '<div style="font-size:50px;">💬</div>' +
+                '<h3>Firebase não conectado</h3>' +
+                '<p style="color:#666;">Verifique sua conexão</p>' +
+                '</div>';
+        }
+    }
+};
+
+// 2. INICIAR CHAT (ABRIR CONVERSA)
+App.prototype.iniciarChat = function(uid) {
+    var s = this;
+    console.log('💬 Abrindo chat com:', uid);
+    
+    // Buscar dados do usuário
+    if (typeof db !== 'undefined') {
+        db.collection('usuarios').doc(uid).get().then(function(doc) {
+            if (doc.exists) {
+                var u = doc.data();
+                u.id = doc.id;
+                s.usuarioSelecionado = u;
+                s.abrirChat(u);
+                s.escutarMensagens();
+            } else {
+                s.mostrarToast('Usuário não encontrado', 'erro');
+            }
+        }).catch(function(err) {
+            console.error('Erro ao buscar usuário:', err);
+            s.mostrarToast('Erro ao abrir chat', 'erro');
+        });
+    } else {
+        // Buscar no localStorage
+        var usuarios = JSON.parse(localStorage.getItem('usuariosLPX') || '[]');
+        var user = usuarios.find(function(u) { return u.id === uid; });
+        if (user) {
+            s.usuarioSelecionado = user;
+            s.abrirChat(user);
+        } else {
+            s.mostrarToast('Usuário não encontrado', 'erro');
+        }
+    }
+};
+
+// 3. ABRIR TELA DE CHAT
+App.prototype.abrirChat = function(user) {
+    var s = this;
+    var tela = document.getElementById('chatScreen');
+    if (!tela) { tela = document.createElement('div'); tela.id = 'chatScreen'; tela.className = 'screen'; document.body.appendChild(tela); }
+    
+    tela.innerHTML = 
+        '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
+        '<button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">⬅</button>' +
+        '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #f0c27f;">' +
+        (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">👷</div>') +
+        '</div>' +
+        '<strong>💬 ' + user.nome + '</strong></div>' +
+        
+        '<div id="chatMensagens" style="padding:15px;height:calc(100vh - 140px);overflow-y:auto;background:#f5f5f5;">' +
+        '<div style="text-align:center;padding:30px;color:#666;">Diga olá! 👋</div>' +
+        '</div>' +
+        
+        '<div style="padding:10px;background:white;display:flex;gap:10px;border-top:1px solid #e5e7eb;">' +
+        '<input id="chatInput" type="text" placeholder="Digite sua mensagem..." style="flex:1;padding:12px 16px;border:2px solid #e5e7eb;border-radius:25px;font-size:14px;outline:none;" onkeypress="if(event.key===\'Enter\')window.app.enviarMensagem()">' +
+        '<button id="btnEnviarMsg" onclick="window.app.enviarMensagem()" style="background:#1A3A5C;color:white;border:none;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">➤</button>' +
+        '</div>';
+    
+    s.mostrarTela('chatScreen');
+    
+    // Focar no input
+    setTimeout(function() {
+        var input = document.getElementById('chatInput');
+        if (input) input.focus();
+    }, 300);
+};
+
+// 4. ESCUTAR MENSAGENS EM TEMPO REAL
+App.prototype.escutarMensagens = function() {
+    var s = this;
+    if (s._listenerChat) s._listenerChat();
+    
+    if (typeof db !== 'undefined' && s.usuarioSelecionado) {
+        console.log('👂 Escutando mensagens...');
+        
+        s._listenerChat = db.collection('mensagens')
+            .where('participantes', 'array-contains', s.usuarioLogado.id)
+            .orderBy('dataEnvio', 'asc')
             .onSnapshot(function(snap) {
-                var container = document.getElementById('listaConversas'); if (!container) return;
-                var ids = []; snap.forEach(function(doc) { var p = doc.data().participantes; var amigoId = p.find(function(x) { return x !== s.usuarioLogado.id; }); if (amigoId) ids.push(amigoId); });
-                if (ids.length === 0) { container.innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:50px;">💬</div><h3>Nenhuma conversa</h3></div>'; return; }
-                s.renderizarListaConversas(container, ids);
+                var msgs = [];
+                snap.forEach(function(doc) {
+                    var m = doc.data();
+                    m.id = doc.id;
+                    // Filtrar apenas mensagens entre os dois usuários
+                    if (m.participantes && 
+                        m.participantes.indexOf(s.usuarioLogado.id) >= 0 && 
+                        m.participantes.indexOf(s.usuarioSelecionado.id) >= 0) {
+                        msgs.push(m);
+                    }
+                });
+                
+                console.log('📨 Mensagens carregadas:', msgs.length);
+                
+                var c = document.getElementById('chatMensagens');
+                if (!c) return;
+                
+                if (msgs.length === 0) {
+                    c.innerHTML = '<div style="text-align:center;padding:30px;color:#666;">Diga olá! 👋</div>';
+                    return;
+                }
+                
+                var html = '';
+                for (var i = 0; i < msgs.length; i++) {
+                    var m = msgs[i];
+                    var meu = m.remetenteId === s.usuarioLogado.id;
+                    var data = '';
+                    if (m.dataEnvio) {
+                        try {
+                            var d = m.dataEnvio.toDate ? m.dataEnvio.toDate() : new Date(m.dataEnvio);
+                            data = d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                        } catch(e) {}
+                    }
+                    
+                    html += '<div style="display:flex;justify-content:' + (meu ? 'flex-end' : 'flex-start') + ';margin-bottom:8px;padding:0 5px;">';
+                    html += '<div style="max-width:80%;padding:10px 14px;border-radius:18px;' + 
+                        (meu ? 'background:#1A3A5C;color:white;border-bottom-right-radius:4px;' : 
+                               'background:white;color:#333;border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,0.1);') + '">';
+                    html += '<div style="font-size:14px;line-height:1.4;">' + (m.conteudo || '') + '</div>';
+                    html += '<div style="font-size:10px;opacity:0.7;text-align:right;margin-top:3px;">' + data + '</div>';
+                    html += '</div></div>';
+                }
+                
+                c.innerHTML = html;
+                c.scrollTop = c.scrollHeight;
+                
+                // Marcar como lidas
+                snap.forEach(function(doc) {
+                    var m = doc.data();
+                    if (m.destinatarioId === s.usuarioLogado.id && !m.lida) {
+                        db.collection('mensagens').doc(doc.id).update({ lida: true }).catch(function(){});
+                    }
+                });
+            }, function(err) {
+                console.error('❌ Erro no listener:', err);
             });
     }
+};
+
+// 5. ENVIAR MENSAGEM
+App.prototype.enviarMensagem = function() {
+    var s = this;
+    var input = document.getElementById('chatInput');
+    
+    if (!input) {
+        console.error('❌ Input não encontrado');
+        return;
+    }
+    
+    if (!s.usuarioSelecionado) {
+        s.mostrarToast('Selecione um contato', 'erro');
+        return;
+    }
+    
+    var texto = input.value.trim();
+    if (!texto) return;
+    
+    // Evitar envio duplicado
+    if (s._enviandoMensagem) return;
+    s._enviandoMensagem = true;
+    
+    var btn = document.getElementById('btnEnviarMsg');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+    
+    console.log('📤 Enviando mensagem:', texto.substring(0, 30));
+    
+    if (typeof db !== 'undefined') {
+        db.collection('mensagens').add({
+            remetenteId: s.usuarioLogado.id,
+            destinatarioId: s.usuarioSelecionado.id,
+            participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
+            conteudo: texto,
+            lida: false,
+            dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function() {
+            console.log('✅ Mensagem enviada');
+            input.value = '';
+            input.focus();
+            s._enviandoMensagem = false;
+            if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        }).catch(function(err) {
+            console.error('❌ Erro ao enviar:', err);
+            s.mostrarToast('Erro ao enviar mensagem', 'erro');
+            s._enviandoMensagem = false;
+            if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        });
+    } else {
+        // Salvar no localStorage
+        var mensagens = JSON.parse(localStorage.getItem('mensagensLPX') || '[]');
+        mensagens.push({
+            id: 'msg_' + Date.now(),
+            remetenteId: s.usuarioLogado.id,
+            destinatarioId: s.usuarioSelecionado.id,
+            conteudo: texto,
+            lida: false,
+            dataEnvio: new Date().toISOString()
+        });
+        localStorage.setItem('mensagensLPX', JSON.stringify(mensagens));
+        
+        input.value = '';
+        input.focus();
+        s._enviandoMensagem = false;
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        
+        // Recarregar mensagens
+        s.carregarMensagensLocal();
+    }
+};
+
+// 6. CARREGAR MENSAGENS LOCAL (FALLBACK)
+App.prototype.carregarMensagensLocal = function() {
+    var s = this;
+    var c = document.getElementById('chatMensagens');
+    if (!c || !s.usuarioSelecionado) return;
+    
+    var mensagens = JSON.parse(localStorage.getItem('mensagensLPX') || '[]');
+    var relevantes = [];
+    
+    for (var i = 0; i < mensagens.length; i++) {
+        var m = mensagens[i];
+        if ((m.remetenteId === s.usuarioLogado.id && m.destinatarioId === s.usuarioSelecionado.id) ||
+            (m.remetenteId === s.usuarioSelecionado.id && m.destinatarioId === s.usuarioLogado.id)) {
+            relevantes.push(m);
+        }
+    }
+    
+    if (relevantes.length === 0) {
+        c.innerHTML = '<div style="text-align:center;padding:30px;color:#666;">Diga olá! 👋</div>';
+        return;
+    }
+    
+    var html = '';
+    for (var j = 0; j < relevantes.length; j++) {
+        var msg = relevantes[j];
+        var meu = msg.remetenteId === s.usuarioLogado.id;
+        var data = '';
+        try { data = new Date(msg.dataEnvio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}); } catch(e) {}
+        
+        html += '<div style="display:flex;justify-content:' + (meu ? 'flex-end' : 'flex-start') + ';margin-bottom:8px;">';
+        html += '<div style="max-width:80%;padding:10px 14px;border-radius:18px;' + 
+            (meu ? 'background:#1A3A5C;color:white;' : 'background:white;color:#333;box-shadow:0 1px 2px rgba(0,0,0,0.1);') + '">';
+        html += '<div style="font-size:14px;">' + msg.conteudo + '</div>';
+        html += '<div style="font-size:10px;opacity:0.7;text-align:right;margin-top:3px;">' + data + '</div>';
+        html += '</div></div>';
+    }
+    
+    c.innerHTML = html;
+    c.scrollTop = c.scrollHeight;
 };
 
 App.prototype.renderizarListaConversas = function(container, ids) { var s = this, html = '', processados = 0; for (var i = 0; i < ids.length; i++) { if (typeof db !== 'undefined') { db.collection('usuarios').doc(ids[i]).get().then(function(doc) { processados++; if (doc.exists) { var u = doc.data(); u.id = doc.id; html += '<div onclick="window.app.iniciarChat(\'' + u.id + '\')" style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;"><div style="width:45px;height:45px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;">' + (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;">👷</div>') + '</div><div style="flex:1;"><strong>' + u.nome + '</strong><br><small>' + (u.profissao || '') + '</small></div></div>'; } if (processados >= ids.length) container.innerHTML = html; }); } } };
