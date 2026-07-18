@@ -1,6 +1,7 @@
 // ==========================================================
 // ===== LPXCONSTRUTOR - VERSÃO UNIFICADA FINAL =====
 // ===== FEED INSTANTÂNEO + CHAT EM TEMPO REAL =====
+// ===== COMUNICAÇÃO ENTRE CONTAS FUNCIONANDO =====
 // ==========================================================
 
 window.app = window.app || {};
@@ -67,6 +68,9 @@ var App = function() {
 App.prototype.init = function() {
     var s = this;
     console.log('🚀 LPXCONSTRUTOR - SISTEMA UNIFICADO');
+    console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅ Conectado' : '❌ Não conectado');
+    console.log('💾 Firestore:', typeof db !== 'undefined' ? '✅ Disponível' : '❌ Indisponível');
+    
     window.app._app = s;
     
     var nav = document.getElementById('bottomNav'); 
@@ -89,22 +93,27 @@ App.prototype.init = function() {
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
+                console.log('👤 Usuário autenticado:', user.uid);
                 if (typeof db !== 'undefined') {
                     db.collection('usuarios').doc(user.uid).get().then(function(doc) {
                         if (doc.exists) {
                             s.usuarioLogado = doc.data();
                             s.usuarioLogado.id = doc.id;
                             localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+                            console.log('✅ Dados do usuário carregados');
                             s.mostrarTela('homeScreen');
                             s.iniciarListenerNotificacoes();
                             s.iniciarFeedListener();
+                        } else {
+                            console.log('⚠️ Documento do usuário não encontrado');
                         }
                     }).catch(function(err) {
-                        console.error('Erro ao carregar usuário:', err);
+                        console.error('❌ Erro ao carregar usuário:', err);
                         s.mostrarTela('loginScreen');
                     });
                 }
             } else {
+                console.log('👤 Nenhum usuário autenticado');
                 s.usuarioLogado = null;
                 localStorage.removeItem('usuarioLPX');
                 s.pararFeedListener();
@@ -208,7 +217,8 @@ App.prototype.iniciarListenerNotificacoes = function() {
             } 
             snap.docChanges().forEach(function(change) { 
                 if (change.type === 'added') { 
-                    s.mostrarToast('🔔 ' + change.doc.data().titulo, 'info'); 
+                    var notif = change.doc.data();
+                    s.mostrarToast('🔔 ' + notif.titulo, 'info'); 
                 } 
             }); 
         }, function(error) {
@@ -259,7 +269,6 @@ App.prototype.mostrarTela = function(id) {
         });
     }
     
-    // Carrega conteúdo específico
     if (id === 'homeScreen') {
         s.carregarHome();
         if (!s._feedIniciado) s.iniciarFeedListener();
@@ -268,7 +277,6 @@ App.prototype.mostrarTela = function(id) {
     if (id === 'buscaScreen') s.buscarProfissionais(); 
     if (id === 'minhasObrasScreen') s.carregarMinhasObras(); 
     if (id === 'chatScreen') {
-        // Não limpa o chat se já estiver em uma conversa
         if (!s.usuarioSelecionado) {
             s.carregarListaConversas();
         }
@@ -300,6 +308,7 @@ App.prototype.fazerLogin = function() {
     if (typeof firebase !== 'undefined' && firebase.auth) { 
         firebase.auth().signInWithEmailAndPassword(email, senha)
             .then(function(userCredential) { 
+                console.log('✅ Login bem sucedido:', userCredential.user.uid);
                 if (typeof db !== 'undefined') { 
                     db.collection('usuarios').doc(userCredential.user.uid).get()
                         .then(function(doc) { 
@@ -317,7 +326,7 @@ App.prototype.fazerLogin = function() {
                 } 
             })
             .catch(function(err) {
-                console.error('Erro login:', err);
+                console.error('❌ Erro login:', err);
                 var msg = 'Email ou senha incorretos!';
                 if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado!';
                 if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
@@ -361,6 +370,7 @@ App.prototype.cadastrar = function() {
     if (typeof firebase !== 'undefined' && firebase.auth) { 
         firebase.auth().createUserWithEmailAndPassword(dados.email, dados.senha)
             .then(function(userCredential) { 
+                console.log('✅ Conta criada:', userCredential.user.uid);
                 dados.id = userCredential.user.uid;
                 dados.dataCadastro = firebase.firestore.FieldValue.serverTimestamp();
                 
@@ -376,13 +386,13 @@ App.prototype.cadastrar = function() {
                             s.iniciarFeedListener();
                         })
                         .catch(function(err) {
-                            console.error('Erro ao salvar:', err);
+                            console.error('❌ Erro ao salvar:', err);
                             s.mostrarToast('Erro ao salvar dados', 'erro');
                         }); 
                 } 
             })
             .catch(function(err) { 
-                console.error('Erro cadastro:', err);
+                console.error('❌ Erro cadastro:', err);
                 var msg = 'Erro ao cadastrar';
                 if (err.code === 'auth/email-already-in-use') msg = 'Email já cadastrado!';
                 if (err.code === 'auth/invalid-email') msg = 'Email inválido!';
@@ -418,16 +428,6 @@ App.prototype.solicitarCodigo = function() {
 
 App.prototype.verificarCodigo = function() {
     var s = this;
-    var codigo = document.getElementById('recCodigo')?.value?.trim() || '';
-    var novaSenha = document.getElementById('recNovaSenha')?.value || '';
-    
-    if (!codigo || !novaSenha) {
-        s.mostrarToast('Preencha todos os campos!', 'erro');
-        return;
-    }
-    
-    s.mostrarToast('Verificando...', 'info');
-    // A recuperação real é feita pelo link do email
     s.mostrarToast('Use o link enviado por email!', 'info');
 };
 
@@ -438,11 +438,13 @@ App.prototype.voltarPasso1 = function() {
 
 // ===== LOGOUT =====
 App.prototype.sair = function() { 
+    console.log('🚪 Saindo...');
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().signOut(); 
     }
     this.pararFeedListener();
     if (this._listenerChat) { this._listenerChat(); this._listenerChat = null; }
+    if (this._listenerNotificacoes) { this._listenerNotificacoes(); this._listenerNotificacoes = null; }
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
     localStorage.removeItem('usuarioLPX'); 
@@ -549,8 +551,6 @@ App.prototype.renderizarFeed = function(container, vagas) {
         var dono = s.usuarioLogado && v.autorId === s.usuarioLogado.id; 
         
         html += '<div class="vaga-card">';
-        
-        // Header
         html += '<div class="vaga-header">';
         html += '<div class="vaga-avatar">';
         if (v.autorFoto && v.autorFoto.length > 10) {
@@ -578,7 +578,6 @@ App.prototype.renderizarFeed = function(container, vagas) {
         }
         html += '</div>';
         
-        // Body
         html += '<div class="vaga-body">';
         if (v.fotoObra && v.fotoObra.length > 100) {
             html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">';
@@ -593,14 +592,12 @@ App.prototype.renderizarFeed = function(container, vagas) {
         html += '</div>';
         html += '</div>';
         
-        // Footer
         html += '<div class="vaga-footer">';
         html += '<button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver Detalhes</button>';
         if (dono) {
             html += '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️ Apagar</button>';
         }
         html += '</div>';
-        
         html += '</div>';
     } 
     
@@ -665,7 +662,6 @@ App.prototype.previewFotoObra = function(e) {
 App.prototype.publicarVagaApp = function() { 
     var s = this; 
     
-    // USA OS IDs DO HTML CORRETOS
     var titulo = document.getElementById('vagaTitulo')?.value?.trim() || '';
     var endereco = document.getElementById('vagaEndereco')?.value?.trim() || '';
     var valor = document.getElementById('vagaValorHora')?.value || '';
@@ -895,54 +891,171 @@ App.prototype.recusarConvite = function(nid, deId) {
     } 
 };
 
-// ===== CHAT UNIFICADO =====
+// ==========================================================
+// ===== CHAT - COMUNICAÇÃO REAL ENTRE CONTAS =====
+// ==========================================================
+
 App.prototype.carregarListaConversas = function() {
     var s = this;
     s.usuarioSelecionado = null;
+    
+    // Para listener de chat anterior
+    if (s._listenerChat) {
+        s._listenerChat();
+        s._listenerChat = null;
+    }
     
     var chatHeader = document.getElementById('chatHeaderInfo');
     var chatMessages = document.getElementById('chatMessages');
     
     if (chatHeader) chatHeader.innerHTML = '<h2>💬 Mensagens</h2>';
     if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">Selecione um contato para conversar</div>';
+    
+    // Esconde input de chat
+    var inputContainer = document.querySelector('.chat-input-container');
+    if (inputContainer) inputContainer.style.display = 'none';
+    
+    // Busca conversas existentes
+    if (typeof db !== 'undefined' && s.usuarioLogado) {
+        db.collection('mensagens')
+            .where('participantes', 'array-contains', s.usuarioLogado.id)
+            .orderBy('dataEnvio', 'desc')
+            .limit(50)
+            .get()
+            .then(function(snap) {
+                var conversas = {};
+                snap.forEach(function(doc) {
+                    var msg = doc.data();
+                    var outros = msg.participantes.filter(function(p) {
+                        return p !== s.usuarioLogado.id;
+                    });
+                    outros.forEach(function(uid) {
+                        if (!conversas[uid]) {
+                            conversas[uid] = { ultimaMensagem: msg.conteudo, data: msg.dataEnvio };
+                        }
+                    });
+                });
+                
+                var ids = Object.keys(conversas);
+                if (ids.length === 0) {
+                    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">' +
+                        '<div style="font-size:50px;">💬</div>' +
+                        '<h3>Nenhuma conversa</h3>' +
+                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary" style="margin-top:15px;">🔍 Buscar Profissionais</button>' +
+                        '</div>';
+                    return;
+                }
+                
+                var html = '';
+                var carregados = 0;
+                
+                ids.forEach(function(uid) {
+                    db.collection('usuarios').doc(uid).get()
+                        .then(function(doc) {
+                            carregados++;
+                            if (doc.exists) {
+                                var user = doc.data();
+                                user.id = doc.id;
+                                html += '<div onclick="window.app.iniciarChat(\'' + user.id + '\')" style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+                                    '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;">' +
+                                    (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' :
+                                    '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:22px;">👷</div>') +
+                                    '</div>' +
+                                    '<div style="flex:1;">' +
+                                    '<strong>' + user.nome + '</strong><br>' +
+                                    '<small style="color:#666;">' + (conversas[uid]?.ultimaMensagem?.substring(0, 40) || '') + '</small>' +
+                                    '</div>' +
+                                    '<span style="font-size:20px;">💬</span>' +
+                                    '</div>';
+                            }
+                            if (carregados >= ids.length && chatMessages) {
+                                chatMessages.innerHTML = html;
+                            }
+                        })
+                        .catch(function() {
+                            carregados++;
+                            if (carregados >= ids.length && chatMessages) {
+                                chatMessages.innerHTML = html;
+                            }
+                        });
+                });
+                
+                setTimeout(function() {
+                    if (carregados < ids.length && chatMessages) {
+                        chatMessages.innerHTML = html;
+                    }
+                }, 3000);
+            })
+            .catch(function(err) {
+                console.error('Erro ao carregar conversas:', err);
+            });
+    }
 };
 
 App.prototype.iniciarChat = function(uid) {
     var s = this;
-    console.log('💬 Iniciando chat com:', uid);
+    console.log('💬 ABRINDO CHAT COM:', uid);
     
-    s.mostrarTela('chatScreen');
+    // Para listener anterior
+    if (s._listenerChat) {
+        s._listenerChat();
+        s._listenerChat = null;
+    }
     
-    if (typeof db !== 'undefined') {
+    if (typeof db !== 'undefined' && s.usuarioLogado) {
         db.collection('usuarios').doc(uid).get()
             .then(function(doc) {
                 if (doc.exists) {
                     s.usuarioSelecionado = doc.data();
                     s.usuarioSelecionado.id = doc.id;
+                    console.log('✅ Usuário encontrado:', s.usuarioSelecionado.nome);
                 } else {
-                    s.usuarioSelecionado = { id: uid, nome: 'Usuário', profissao: 'Profissional', fotoPerfil: null };
+                    console.log('⚠️ Usuário não encontrado, criando temporário');
+                    s.usuarioSelecionado = { 
+                        id: uid, 
+                        nome: 'Usuário ' + uid.substring(0, 6), 
+                        profissao: 'Profissional', 
+                        fotoPerfil: null 
+                    };
                 }
                 s.abrirInterfaceChat();
                 s.iniciarListenerMensagens();
             })
-            .catch(function() {
-                s.usuarioSelecionado = { id: uid, nome: 'Usuário', profissao: 'Profissional', fotoPerfil: null };
+            .catch(function(err) {
+                console.error('❌ Erro ao buscar usuário:', err);
+                s.usuarioSelecionado = { 
+                    id: uid, 
+                    nome: 'Usuário', 
+                    profissao: 'Profissional', 
+                    fotoPerfil: null 
+                };
                 s.abrirInterfaceChat();
+                s.iniciarListenerMensagens();
             });
     } else {
-        s.usuarioSelecionado = { id: uid, nome: 'Usuário', profissao: 'Profissional', fotoPerfil: null };
+        s.usuarioSelecionado = { 
+            id: uid, 
+            nome: 'Usuário', 
+            profissao: 'Profissional', 
+            fotoPerfil: null 
+        };
         s.abrirInterfaceChat();
     }
+    
+    s.mostrarTela('chatScreen');
 };
 
 App.prototype.abrirInterfaceChat = function() {
     var s = this;
     var user = s.usuarioSelecionado;
-    if (!user) return;
+    if (!user || !s.usuarioLogado) return;
+    
+    console.log('📱 Abrindo interface de chat com:', user.nome);
     
     var chatHeader = document.getElementById('chatHeaderInfo');
     if (chatHeader) {
-        chatHeader.innerHTML = '<div style="display:flex;align-items:center;gap:10px;">' +
+        chatHeader.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
+            '<button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">⬅</button>' +
             '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #f0c27f;">' +
             (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : 
             '<div style="width:100%;height:100%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">👷</div>') +
@@ -951,116 +1064,226 @@ App.prototype.abrirInterfaceChat = function() {
             '</div>';
     }
     
+    // Mostra input de chat
+    var inputContainer = document.querySelector('.chat-input-container');
+    if (inputContainer) inputContainer.style.display = 'flex';
+    
+    // Limpa mensagens anteriores
+    var chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        chatMessages.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">' +
+            '<i class="fas fa-spinner fa-spin"></i> Carregando mensagens...</div>';
+    }
+    
+    // Foca no input
     setTimeout(function() {
         var input = document.getElementById('chatInput');
-        if (input) input.focus();
+        if (input) {
+            input.focus();
+            input.placeholder = 'Digite sua mensagem...';
+        }
     }, 300);
 };
 
 App.prototype.iniciarListenerMensagens = function() {
     var s = this;
     var container = document.getElementById('chatMessages');
-    if (!container || !s.usuarioLogado || !s.usuarioSelecionado) return;
     
-    if (s._listenerChat) s._listenerChat();
+    if (!container || !s.usuarioLogado || !s.usuarioSelecionado) {
+        console.log('❌ Não foi possível iniciar listener');
+        return;
+    }
     
+    console.log('👂 Iniciando listener de mensagens entre:', s.usuarioLogado.id, 'e', s.usuarioSelecionado.id);
+    
+    // Para listener anterior
+    if (s._listenerChat) {
+        s._listenerChat();
+        s._listenerChat = null;
+    }
+    
+    // Listener que escuta TODAS as mensagens onde o usuário logado participa
     s._listenerChat = db.collection('mensagens')
         .where('participantes', 'array-contains', s.usuarioLogado.id)
         .orderBy('dataEnvio', 'asc')
         .onSnapshot(function(snap) {
+            console.log('📨 Snapshot recebido:', snap.size, 'documentos');
+            
             var mensagens = [];
             snap.forEach(function(doc) {
                 var msg = doc.data();
                 msg.id = doc.id;
-                if (msg.participantes?.indexOf(s.usuarioLogado.id) >= 0 && 
-                    msg.participantes?.indexOf(s.usuarioSelecionado.id) >= 0) {
+                
+                // Filtra apenas mensagens entre os dois usuários
+                if (msg.participantes && 
+                    msg.participantes.indexOf(s.usuarioLogado.id) >= 0 && 
+                    msg.participantes.indexOf(s.usuarioSelecionado.id) >= 0) {
                     mensagens.push(msg);
                 }
             });
             
+            console.log('📬 Mensagens filtradas:', mensagens.length);
+            
             if (mensagens.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Diga olá! 👋</div>';
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">' +
+                    '<div style="font-size:50px;">💬</div>' +
+                    '<p>Nenhuma mensagem ainda</p>' +
+                    '<p style="font-size:13px;">Diga olá! 👋</p>' +
+                    '</div>';
             } else {
-                var html = '';
-                for (var i = 0; i < mensagens.length; i++) {
-                    var msg = mensagens[i];
-                    var meu = msg.remetenteId === s.usuarioLogado.id;
-                    var hora = '';
-                    try {
-                        if (msg.dataEnvio?.toDate) {
-                            hora = msg.dataEnvio.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                        } else if (msg.dataEnvio) {
-                            hora = new Date(msg.dataEnvio).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                        }
-                    } catch(e) {}
-                    
-                    html += '<div class="message ' + (meu ? 'message-sent' : 'message-received') + '">' +
-                        '<div class="message-content">' + (msg.conteudo || '') + '</div>' +
-                        '<div class="message-footer"><span class="message-time">' + hora + '</span></div>' +
-                        '</div>';
-                }
-                container.innerHTML = html;
-                container.scrollTop = container.scrollHeight;
+                s.renderizarMensagens(container, mensagens);
             }
             
-            // Marca mensagens como lidas
+            // Marca mensagens recebidas como lidas
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added' || change.type === 'modified') {
                     var msg = change.doc.data();
                     if (msg.destinatarioId === s.usuarioLogado.id && !msg.lida) {
-                        db.collection('mensagens').doc(change.doc.id).update({ lida: true }).catch(function(){});
+                        console.log('✅ Marcando como lida:', change.doc.id);
+                        db.collection('mensagens').doc(change.doc.id).update({ 
+                            lida: true 
+                        }).catch(function(err) {
+                            console.error('Erro ao marcar lida:', err);
+                        });
                     }
                 }
             });
         }, function(error) {
-            console.error('Erro listener chat:', error);
+            console.error('❌ Erro no listener de mensagens:', error);
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">' +
+                '<p>Erro ao carregar mensagens</p>' +
+                '<button onclick="window.app._app.iniciarListenerMensagens()" class="btn btn-small btn-outline">Tentar novamente</button>' +
+                '</div>';
         });
+};
+
+App.prototype.renderizarMensagens = function(container, mensagens) {
+    var s = this;
+    var html = '';
+    
+    for (var i = 0; i < mensagens.length; i++) {
+        var msg = mensagens[i];
+        var meu = msg.remetenteId === s.usuarioLogado.id;
+        var hora = '';
+        
+        try {
+            if (msg.dataEnvio && msg.dataEnvio.toDate) {
+                hora = msg.dataEnvio.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            } else if (msg.dataEnvio instanceof Date) {
+                hora = msg.dataEnvio.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            } else if (typeof msg.dataEnvio === 'string') {
+                hora = new Date(msg.dataEnvio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            }
+        } catch(e) {
+            hora = '';
+        }
+        
+        html += '<div class="message ' + (meu ? 'message-sent' : 'message-received') + '">' +
+            '<div class="message-content">' + (msg.conteudo || '') + '</div>' +
+            '<div class="message-footer">' +
+            '<span class="message-time">' + hora + '</span>' +
+            (meu && msg.lida ? '<span style="color:#34B7F1;margin-left:4px;">✓✓</span>' : (meu ? '<span style="color:#999;margin-left:4px;">✓</span>' : '')) +
+            '</div>' +
+            '</div>';
+    }
+    
+    container.innerHTML = html;
+    
+    // Scroll para o final
+    setTimeout(function() {
+        container.scrollTop = container.scrollHeight;
+    }, 100);
 };
 
 App.prototype.enviarMensagem = function() {
     var s = this;
     var input = document.getElementById('chatInput');
-    if (!input || !s.usuarioLogado || !s.usuarioSelecionado) return;
+    
+    if (!input) {
+        console.error('❌ Input de chat não encontrado');
+        return;
+    }
+    
+    if (!s.usuarioLogado) {
+        s.mostrarToast('Faça login primeiro!', 'erro');
+        return;
+    }
+    
+    if (!s.usuarioSelecionado) {
+        s.mostrarToast('Selecione um contato!', 'erro');
+        return;
+    }
     
     var texto = input.value.trim();
     if (!texto) return;
+    
     if (s._enviandoMensagem) return;
     
     s._enviandoMensagem = true;
     input.value = '';
+    input.disabled = true;
+    
+    console.log('📤 Enviando mensagem para:', s.usuarioSelecionado.id);
+    console.log('📝 Conteúdo:', texto);
+    
+    // Cria o objeto mensagem com participantes em array
+    var participantes = [s.usuarioLogado.id, s.usuarioSelecionado.id];
     
     var mensagem = {
         remetenteId: s.usuarioLogado.id,
         destinatarioId: s.usuarioSelecionado.id,
-        participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
+        participantes: participantes,
         conteudo: texto,
         lida: false,
         dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
     };
     
+    console.log('📦 Mensagem a ser enviada:', JSON.stringify(mensagem));
+    
     if (typeof db !== 'undefined') {
         db.collection('mensagens').add(mensagem)
-            .then(function() {
-                console.log('✅ Mensagem enviada');
-                // Envia notificação
-                db.collection('notificacoes').add({
+            .then(function(docRef) {
+                console.log('✅ Mensagem enviada com ID:', docRef.id);
+                
+                // Envia notificação para o destinatário
+                var notificacao = {
                     usuarioId: s.usuarioSelecionado.id,
-                    titulo: '💬 Nova mensagem',
-                    mensagem: s.usuarioLogado.nome + ': ' + texto.substring(0, 50),
+                    titulo: '💬 Nova mensagem de ' + s.usuarioLogado.nome,
+                    mensagem: texto.substring(0, 100),
                     tipo: 'mensagem',
                     de: s.usuarioLogado.id,
                     lida: false,
                     dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(function(){});
+                };
+                
+                db.collection('notificacoes').add(notificacao)
+                    .then(function() {
+                        console.log('✅ Notificação enviada para:', s.usuarioSelecionado.id);
+                    })
+                    .catch(function(err) {
+                        console.error('❌ Erro ao enviar notificação:', err);
+                    });
+                
+                s.mostrarToast('✅ Mensagem enviada!', 'sucesso');
             })
             .catch(function(err) {
-                console.error('Erro ao enviar:', err);
-                s.mostrarToast('Erro ao enviar mensagem', 'erro');
+                console.error('❌ Erro ao enviar mensagem:', err);
+                s.mostrarToast('Erro ao enviar. Tente novamente.', 'erro');
+                input.value = texto;
             })
             .finally(function() {
                 s._enviandoMensagem = false;
-                setTimeout(function() { if (input) input.focus(); }, 100);
+                input.disabled = false;
+                setTimeout(function() { 
+                    input.focus(); 
+                }, 100);
             });
+    } else {
+        console.error('❌ Firebase não disponível');
+        s.mostrarToast('Erro: Firebase não conectado', 'erro');
+        s._enviandoMensagem = false;
+        input.disabled = false;
+        input.value = texto;
     }
 };
 
@@ -1317,7 +1540,7 @@ App.prototype.mostrarNotificacoes = function() {
     } 
 };
 
-// ===== LOCALIZAÇÃO, UPLOAD, EDITAR PERFIL, QR CODE, CONFIG =====
+// ===== LOCALIZAÇÃO =====
 App.prototype.abrirMapaLocalizacao = function() { 
     var s = this; 
     if (!s.usuarioLogado) return; 
@@ -1356,7 +1579,7 @@ App.prototype.getTodasCidades = function() {
 };
 
 App.prototype.getBairrosPorCidade = function(c) { 
-    var b = {'São Paulo':['Centro','Pinheiros','Vila Mariana'],'Rio de Janeiro':['Copacabana','Ipanema','Barra'],'Belo Horizonte':['Savassi','Pampulha'],'Florianópolis':['Centro','Lagoa'],'Curitiba':['Centro','Batel'],'Porto Alegre':['Moinhos','Bela Vista'],'Salvador':['Barra','Ondina'],'Recife':['Boa Viagem','Pina'],'Fortaleza':['Meireles','Aldeota'],'Brasília':['Asa Sul','Asa Norte']}; 
+    var b = {'São Paulo':['Centro','Pinheiros'],'Rio de Janeiro':['Copacabana','Ipanema'],'Belo Horizonte':['Savassi','Pampulha'],'Florianópolis':['Centro','Lagoa'],'Curitiba':['Centro','Batel'],'Porto Alegre':['Moinhos','Bela Vista'],'Salvador':['Barra','Ondina'],'Recife':['Boa Viagem','Pina'],'Fortaleza':['Meireles','Aldeota'],'Brasília':['Asa Sul','Asa Norte']}; 
     return b[c]||['Centro']; 
 };
 
@@ -1494,7 +1717,8 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
         toast = document.createElement('div'); 
         toast.id = 'toast'; 
         toast.className = 'toast';
-        document.querySelector('.app-container')?.appendChild(toast);
+        var appContainer = document.querySelector('.app-container');
+        if (appContainer) appContainer.appendChild(toast);
     } 
     if (!toast) return;
     toast.textContent = mensagem; 
@@ -1507,7 +1731,7 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR - SISTEMA UNIFICADO');
+    console.log('🏗️ LPXCONSTRUTOR - SISTEMA UNIFICADO FINAL');
     console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅ Conectado' : '❌ Não conectado');
     console.log('💾 Firestore:', typeof db !== 'undefined' ? '✅ Disponível' : '❌ Indisponível');
     
@@ -1518,6 +1742,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ SISTEMA INICIALIZADO!');
     console.log('🔥 Feed em tempo real');
-    console.log('💬 Chat instantâneo');
+    console.log('💬 Chat com comunicação entre contas');
     console.log('🔗 Rede de conexões');
 });
