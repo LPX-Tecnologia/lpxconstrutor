@@ -1,13 +1,10 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - VERSÃO UNIFICADA FINAL =====
-// ===== FEED INSTANTÂNEO + CHAT EM TEMPO REAL =====
-// ===== COMUNICAÇÃO ENTRE CONTAS FUNCIONANDO =====
+// ===== LPXCONSTRUTOR - CORRIGIDO =====
 // ==========================================================
 
 window.app = window.app || {};
 window.app._app = null;
 
-// Interface global unificada
 window.app.fazerLogin = function() { if(window.app._app) window.app._app.fazerLogin(); };
 window.app.mostrarTela = function(id) { if(window.app._app) window.app._app.mostrarTela(id); };
 window.app.voltarTela = function() { if(window.app._app) window.app._app.voltarTela(); };
@@ -47,7 +44,6 @@ window.app.solicitarCodigo = function() { if(window.app._app) window.app._app.so
 window.app.verificarCodigo = function() { if(window.app._app) window.app._app.verificarCodigo(); };
 window.app.voltarPasso1 = function() { if(window.app._app) window.app._app.voltarPasso1(); };
 
-// ===== CONSTRUTOR PRINCIPAL =====
 var App = function() {
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
@@ -67,53 +63,42 @@ var App = function() {
 
 App.prototype.init = function() {
     var s = this;
-    console.log('🚀 LPXCONSTRUTOR - SISTEMA UNIFICADO');
-    console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅ Conectado' : '❌ Não conectado');
-    console.log('💾 Firestore:', typeof db !== 'undefined' ? '✅ Disponível' : '❌ Indisponível');
-    
+    console.log('🚀 LPXCONSTRUTOR INICIADO');
     window.app._app = s;
     
     var nav = document.getElementById('bottomNav'); 
     if (nav) nav.style.display = 'none';
     
-    if (s.temaAtual === 'escuro') {
-        document.body.classList.add('dark-theme');
-    }
+    if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
     
-    // Splash screen
     var splashAntigo = document.getElementById('splashScreen'); 
     if (splashAntigo?.parentNode) splashAntigo.parentNode.removeChild(splashAntigo);
     
     var splash = document.createElement('div'); 
     splash.id = 'splashScreen';
     splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.5s;';
-    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;">Rede Profissional da Construção</p>';
+    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p>';
     document.body.appendChild(splash);
     
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
-                console.log('👤 Usuário autenticado:', user.uid);
+                console.log('✅ Usuário autenticado:', user.uid);
                 if (typeof db !== 'undefined') {
                     db.collection('usuarios').doc(user.uid).get().then(function(doc) {
                         if (doc.exists) {
                             s.usuarioLogado = doc.data();
                             s.usuarioLogado.id = doc.id;
                             localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
-                            console.log('✅ Dados do usuário carregados');
                             s.mostrarTela('homeScreen');
                             s.iniciarListenerNotificacoes();
                             s.iniciarFeedListener();
-                        } else {
-                            console.log('⚠️ Documento do usuário não encontrado');
                         }
                     }).catch(function(err) {
-                        console.error('❌ Erro ao carregar usuário:', err);
-                        s.mostrarTela('loginScreen');
+                        console.error('Erro ao carregar usuário:', err);
                     });
                 }
             } else {
-                console.log('👤 Nenhum usuário autenticado');
                 s.usuarioLogado = null;
                 localStorage.removeItem('usuarioLPX');
                 s.pararFeedListener();
@@ -124,43 +109,38 @@ App.prototype.init = function() {
                 setTimeout(function() {
                     if (splash.parentNode) splash.parentNode.removeChild(splash);
                 }, 500);
-            }, 2000);
+            }, 1500);
         });
     } else {
-        var salvo = localStorage.getItem('usuarioLPX'); 
-        if (salvo) { 
-            try { s.usuarioLogado = JSON.parse(salvo); } catch(e) {} 
-        }
         setTimeout(function() {
             splash.style.opacity = '0';
             setTimeout(function() {
                 if (splash.parentNode) splash.parentNode.removeChild(splash);
-                if (s.usuarioLogado) {
-                    s.mostrarTela('homeScreen');
-                    s.iniciarFeedListener();
-                } else {
-                    s.mostrarTela('loginScreen');
-                }
+                s.mostrarTela('loginScreen');
             }, 500);
-        }, 2000);
+        }, 1500);
     }
 };
 
-// ===== LISTENER DO FEED (INSTANTÂNEO) =====
+// ===== FEED - CORRIGIDO PARA MOSTRAR POSTS INSTANTANEAMENTE =====
 App.prototype.iniciarFeedListener = function() {
     var s = this;
     if (s._feedIniciado) return;
-    if (typeof db === 'undefined') return;
+    if (typeof db === 'undefined') {
+        console.error('❌ Firestore não disponível');
+        return;
+    }
     
-    console.log('🔥 FEED: Listener em tempo real iniciado');
+    console.log('🔥 Iniciando listener do feed...');
     
     if (s._listenerFeed) s._listenerFeed();
     
+    // Usando apenas where sem orderBy para evitar erro de índice
+    // Depois ordenamos no JavaScript
     s._listenerFeed = db.collection('vagas')
         .where('ativa', '==', true)
-        .orderBy('dataCriacao', 'desc')
         .onSnapshot(function(snap) {
-            console.log('📢 FEED: Atualização recebida -', snap.size, 'documentos');
+            console.log('📢 Feed atualizado:', snap.size, 'vagas');
             
             var vagas = [];
             snap.forEach(function(doc) {
@@ -169,21 +149,31 @@ App.prototype.iniciarFeedListener = function() {
                 vagas.push(vaga);
             });
             
+            // Ordena por dataCriacao (mais recente primeiro)
+            vagas.sort(function(a, b) {
+                var da = a.dataCriacao?.toDate?.() || new Date(a.dataCriacao || 0);
+                var db2 = b.dataCriacao?.toDate?.() || new Date(b.dataCriacao || 0);
+                return db2 - da;
+            });
+            
             var container = document.getElementById('feedContainer');
-            if (container && s.tabAtual === 'feed') {
+            if (container) {
                 s.renderizarFeed(container, vagas);
             }
             
+            // Notifica novas vagas
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added' && s._feedIniciado) {
                     var vaga = change.doc.data();
+                    console.log('🆕 Nova vaga:', vaga.titulo);
                     if (vaga.autorId !== s.usuarioLogado?.id) {
                         s.mostrarToast('🆕 Nova obra: ' + (vaga.titulo || 'Sem título'), 'info');
                     }
                 }
             });
         }, function(error) {
-            console.error('❌ Erro no listener do feed:', error);
+            console.error('❌ Erro no feed:', error);
+            s.mostrarToast('Erro ao carregar feed: ' + error.message, 'erro');
         });
     
     s._feedIniciado = true;
@@ -191,14 +181,12 @@ App.prototype.iniciarFeedListener = function() {
 
 App.prototype.pararFeedListener = function() {
     if (this._listenerFeed) {
-        console.log('🛑 FEED: Listener parado');
         this._listenerFeed();
         this._listenerFeed = null;
     }
     this._feedIniciado = false;
 };
 
-// ===== LISTENER DE NOTIFICAÇÕES =====
 App.prototype.iniciarListenerNotificacoes = function() { 
     var s = this; 
     if (typeof db === 'undefined' || !s.usuarioLogado) return; 
@@ -215,14 +203,8 @@ App.prototype.iniciarListenerNotificacoes = function() {
                 badge.textContent = count > 99 ? '99+' : count; 
                 badge.style.display = count > 0 ? 'flex' : 'none'; 
             } 
-            snap.docChanges().forEach(function(change) { 
-                if (change.type === 'added') { 
-                    var notif = change.doc.data();
-                    s.mostrarToast('🔔 ' + notif.titulo, 'info'); 
-                } 
-            }); 
         }, function(error) {
-            console.error('Erro nas notificações:', error);
+            console.error('Erro notificações:', error);
         });
 };
 
@@ -261,11 +243,7 @@ App.prototype.mostrarTela = function(id) {
         var navItems = nav.querySelectorAll('.nav-item');
         navItems.forEach(function(item) {
             var screenAttr = item.getAttribute('data-screen');
-            if (screenAttr === id) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
+            item.classList.toggle('active', screenAttr === id);
         });
     }
     
@@ -276,11 +254,7 @@ App.prototype.mostrarTela = function(id) {
     if (id === 'meuPerfilScreen') s.carregarMeuPerfil(); 
     if (id === 'buscaScreen') s.buscarProfissionais(); 
     if (id === 'minhasObrasScreen') s.carregarMinhasObras(); 
-    if (id === 'chatScreen') {
-        if (!s.usuarioSelecionado) {
-            s.carregarListaConversas();
-        }
-    }
+    if (id === 'chatScreen' && !s.usuarioSelecionado) s.carregarListaConversas();
     if (id === 'configScreen') s.carregarConfigScreen(); 
 };
 
@@ -298,17 +272,13 @@ App.prototype.fazerLogin = function() {
     var email = document.getElementById('loginEmail')?.value?.trim() || '';
     var senha = document.getElementById('loginSenha')?.value || ''; 
     
-    if (!email || !senha) { 
-        s.mostrarToast('Preencha email e senha!', 'erro'); 
-        return; 
-    } 
+    if (!email || !senha) { s.mostrarToast('Preencha email e senha!', 'erro'); return; } 
     
     s.mostrarToast('Entrando...', 'info'); 
     
     if (typeof firebase !== 'undefined' && firebase.auth) { 
         firebase.auth().signInWithEmailAndPassword(email, senha)
             .then(function(userCredential) { 
-                console.log('✅ Login bem sucedido:', userCredential.user.uid);
                 if (typeof db !== 'undefined') { 
                     db.collection('usuarios').doc(userCredential.user.uid).get()
                         .then(function(doc) { 
@@ -326,12 +296,9 @@ App.prototype.fazerLogin = function() {
                 } 
             })
             .catch(function(err) {
-                console.error('❌ Erro login:', err);
                 var msg = 'Email ou senha incorretos!';
                 if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado!';
                 if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
-                if (err.code === 'auth/invalid-email') msg = 'Email inválido!';
-                if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Tente mais tarde!';
                 s.mostrarToast(msg, 'erro'); 
             }); 
     }
@@ -356,13 +323,11 @@ App.prototype.cadastrar = function() {
     }; 
     
     if (!dados.nome || !dados.email || !dados.senha) { 
-        s.mostrarToast('Preencha todos os campos obrigatórios!', 'erro'); 
-        return; 
+        s.mostrarToast('Preencha todos os campos!', 'erro'); return; 
     }
     
     if (dados.senha.length < 6) {
-        s.mostrarToast('Senha deve ter no mínimo 6 caracteres!', 'erro');
-        return;
+        s.mostrarToast('Senha deve ter no mínimo 6 caracteres!', 'erro'); return;
     }
     
     s.mostrarToast('Cadastrando...', 'info'); 
@@ -370,7 +335,6 @@ App.prototype.cadastrar = function() {
     if (typeof firebase !== 'undefined' && firebase.auth) { 
         firebase.auth().createUserWithEmailAndPassword(dados.email, dados.senha)
             .then(function(userCredential) { 
-                console.log('✅ Conta criada:', userCredential.user.uid);
                 dados.id = userCredential.user.uid;
                 dados.dataCadastro = firebase.firestore.FieldValue.serverTimestamp();
                 
@@ -380,68 +344,23 @@ App.prototype.cadastrar = function() {
                             s.usuarioLogado = dados; 
                             localStorage.setItem('usuarioLPX', JSON.stringify(dados)); 
                             s.historicoTelas = []; 
-                            s.mostrarToast('✅ Cadastro realizado com sucesso!', 'sucesso'); 
+                            s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); 
                             s.mostrarTela('homeScreen'); 
                             s.iniciarListenerNotificacoes();
                             s.iniciarFeedListener();
-                        })
-                        .catch(function(err) {
-                            console.error('❌ Erro ao salvar:', err);
-                            s.mostrarToast('Erro ao salvar dados', 'erro');
                         }); 
                 } 
             })
             .catch(function(err) { 
-                console.error('❌ Erro cadastro:', err);
-                var msg = 'Erro ao cadastrar';
-                if (err.code === 'auth/email-already-in-use') msg = 'Email já cadastrado!';
-                if (err.code === 'auth/invalid-email') msg = 'Email inválido!';
-                if (err.code === 'auth/weak-password') msg = 'Senha muito fraca!';
+                var msg = err.code === 'auth/email-already-in-use' ? 'Email já cadastrado!' : 'Erro ao cadastrar';
                 s.mostrarToast(msg, 'erro'); 
             }); 
     }
 };
 
-// ===== RECUPERAR SENHA =====
-App.prototype.solicitarCodigo = function() {
-    var s = this;
-    var email = document.getElementById('recEmail')?.value?.trim() || '';
-    
-    if (!email) {
-        s.mostrarToast('Digite seu email!', 'erro');
-        return;
-    }
-    
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-        firebase.auth().sendPasswordResetEmail(email)
-            .then(function() {
-                s.mostrarToast('Email de recuperação enviado!', 'sucesso');
-                document.getElementById('recPasso1').style.display = 'none';
-                document.getElementById('recPasso2').style.display = 'block';
-            })
-            .catch(function(err) {
-                console.error('Erro recuperação:', err);
-                s.mostrarToast('Email não encontrado!', 'erro');
-            });
-    }
-};
-
-App.prototype.verificarCodigo = function() {
-    var s = this;
-    s.mostrarToast('Use o link enviado por email!', 'info');
-};
-
-App.prototype.voltarPasso1 = function() {
-    document.getElementById('recPasso1').style.display = 'block';
-    document.getElementById('recPasso2').style.display = 'none';
-};
-
-// ===== LOGOUT =====
+// ===== SAIR =====
 App.prototype.sair = function() { 
-    console.log('🚪 Saindo...');
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-        firebase.auth().signOut(); 
-    }
+    if (typeof firebase !== 'undefined' && firebase.auth) firebase.auth().signOut(); 
     this.pararFeedListener();
     if (this._listenerChat) { this._listenerChat(); this._listenerChat = null; }
     if (this._listenerNotificacoes) { this._listenerNotificacoes(); this._listenerNotificacoes = null; }
@@ -457,10 +376,7 @@ App.prototype.sair = function() {
 // ===== HOME =====
 App.prototype.carregarHome = function() { 
     var s = this; 
-    if (!s.usuarioLogado) { 
-        s.mostrarTela('loginScreen'); 
-        return; 
-    } 
+    if (!s.usuarioLogado) { s.mostrarTela('loginScreen'); return; } 
     
     var u = s.usuarioLogado; 
     var hr = new Date().getHours();
@@ -470,25 +386,17 @@ App.prototype.carregarHome = function() {
     if (elSaudacao) elSaudacao.textContent = '👋 ' + saudacao + ', ' + u.nome + '!';
     
     var elResumo = document.getElementById('resumoTexto');
-    if (elResumo) {
-        elResumo.textContent = u.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
-    }
+    if (elResumo) elResumo.textContent = u.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
     
     var btnPublicar = document.getElementById('btnPublicar');
     var btnObras = document.getElementById('btnObras');
     if (btnPublicar && btnObras) {
-        if (u.tipo === 'empreiteiro') {
-            btnPublicar.style.display = 'flex';
-            btnObras.style.display = 'flex';
-        } else {
-            btnPublicar.style.display = 'none';
-            btnObras.style.display = 'none';
-        }
+        var mostrar = u.tipo === 'empreiteiro';
+        btnPublicar.style.display = mostrar ? 'flex' : 'none';
+        btnObras.style.display = mostrar ? 'flex' : 'none';
     }
     
-    if (s.tabAtual === 'feed') {
-        s.carregarFeed();
-    }
+    if (s.tabAtual === 'feed') s.carregarFeed();
 };
 
 // ===== MUDAR TAB =====
@@ -518,17 +426,8 @@ App.prototype.carregarFeed = function() {
     var s = this;
     var container = document.getElementById('feedContainer'); 
     if (!container) return; 
-    
-    if (s._feedIniciado) {
-        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Atualizando feed...</div>';
-        return;
-    }
-    
     container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>'; 
-    
-    if (typeof db !== 'undefined') { 
-        s.iniciarFeedListener();
-    }
+    if (typeof db !== 'undefined') s.iniciarFeedListener();
 };
 
 App.prototype.renderizarFeed = function(container, vagas) { 
@@ -538,7 +437,6 @@ App.prototype.renderizarFeed = function(container, vagas) {
         container.innerHTML = '<div class="card" style="text-align:center;padding:30px;">' +
             '<div style="font-size:50px;">🏗️</div>' +
             '<h3>Nenhuma obra publicada</h3>' +
-            '<p style="color:#666;">Seja o primeiro a publicar!</p>' +
             (s.usuarioLogado?.tipo === 'empreiteiro' ? 
                 '<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary" style="margin-top:15px;">📢 PUBLICAR OBRA</button>' : '') + 
             '</div>'; 
@@ -561,21 +459,14 @@ App.prototype.renderizarFeed = function(container, vagas) {
         html += '</div>';
         html += '<div class="vaga-info">';
         html += '<div class="vaga-nome">' + (v.autorNome || 'Anônimo') + '</div>';
-        
         var data = '';
         try {
-            if (v.dataCriacao?.toDate) {
-                data = v.dataCriacao.toDate().toLocaleDateString('pt-BR');
-            } else if (v.dataCriacao) {
-                data = new Date(v.dataCriacao).toLocaleDateString('pt-BR');
-            }
+            if (v.dataCriacao?.toDate) data = v.dataCriacao.toDate().toLocaleDateString('pt-BR');
+            else if (v.dataCriacao) data = new Date(v.dataCriacao).toLocaleDateString('pt-BR');
         } catch(e) {}
         html += '<div class="vaga-data">' + data + '</div>';
         html += '</div>';
-        
-        if (dono) {
-            html += '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:bold;">⭐ SUA</span>';
-        }
+        if (dono) html += '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:bold;">⭐ SUA</span>';
         html += '</div>';
         
         html += '<div class="vaga-body">';
@@ -584,39 +475,24 @@ App.prototype.renderizarFeed = function(container, vagas) {
         }
         html += '<div onclick="window.app.verDetalheObra(\'' + v.id + '\')" style="cursor:pointer;">';
         html += '<div class="vaga-titulo">' + (v.titulo || 'Sem título') + '</div>';
-        html += '<div style="color:#666;font-size:13px;margin-bottom:8px;">📍 ' + (v.endereco || 'Endereço não informado') + '</div>';
+        html += '<div style="color:#666;font-size:13px;margin-bottom:8px;">📍 ' + (v.endereco || '') + '</div>';
         html += '<div class="vaga-tags">';
         html += '<span class="vaga-tag">💰 R$' + (v.valorHora || '0') + '/h</span>';
         html += '<span class="vaga-tag">👷 ' + (v.profissoes || 'Geral') + '</span>';
-        html += '</div>';
-        html += '</div>';
-        html += '</div>';
+        html += '</div></div></div>';
         
         html += '<div class="vaga-footer">';
         html += '<button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver Detalhes</button>';
-        if (dono) {
-            html += '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️ Apagar</button>';
-        }
-        html += '</div>';
-        html += '</div>';
+        if (dono) html += '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️ Apagar</button>';
+        html += '</div></div>';
     } 
-    
     container.innerHTML = html; 
 };
 
 App.prototype.apagarObra = function(oid, ev) { 
     if (ev) ev.stopPropagation(); 
-    if (!confirm('Tem certeza que deseja apagar esta obra?')) return; 
-    
-    if (typeof db !== 'undefined') {
-        db.collection('vagas').doc(oid).update({ ativa: false })
-            .then(function() {
-                console.log('Obra apagada:', oid);
-            })
-            .catch(function(err) {
-                console.error('Erro ao apagar:', err);
-            });
-    }
+    if (!confirm('Apagar esta obra?')) return; 
+    if (typeof db !== 'undefined') db.collection('vagas').doc(oid).update({ ativa: false }); 
     this.mostrarToast('Obra apagada!', 'sucesso'); 
 };
 
@@ -629,74 +505,46 @@ App.prototype.abrirTelaPublicacao = function() {
     setTimeout(function() {
         var foto = document.getElementById('vagaFotoPreview');
         if (foto) foto.src = 'imagem/logo-sem-fundo-lpxconstrutor.png';
-        
-        var campos = ['vagaTitulo', 'vagaDescricao', 'vagaEndereco', 'vagaValorHora'];
-        campos.forEach(function(id) {
-            var campo = document.getElementById(id);
-            if (campo) campo.value = '';
+        ['vagaTitulo','vagaDescricao','vagaEndereco','vagaValorHora'].forEach(function(id) {
+            var el = document.getElementById(id); if (el) el.value = '';
         });
-        
-        var checkboxes = document.querySelectorAll('#profissoesCheckboxes input[type="checkbox"]');
-        checkboxes.forEach(function(cb) { cb.checked = false; });
+        document.querySelectorAll('#profissoesCheckboxes input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
     }, 100);
 };
 
 App.prototype.previewFotoObra = function(e) { 
-    var f = e.target.files[0]; 
-    if (!f) return; 
-    
+    var f = e.target.files[0]; if (!f) return; 
     var reader = new FileReader(); 
-    var app = window.app._app || this;
-    
     reader.onload = function(ev) { 
         var preview = document.getElementById('vagaFotoPreview'); 
-        if (preview) { 
-            preview.src = ev.target.result; 
-            preview.style.objectFit = 'cover'; 
-        } 
-        app.vagaFotoBase64 = ev.target.result; 
+        if (preview) { preview.src = ev.target.result; preview.style.objectFit = 'cover'; } 
+        if (window.app._app) window.app._app.vagaFotoBase64 = ev.target.result; 
     }; 
     reader.readAsDataURL(f); 
 };
 
 App.prototype.publicarVagaApp = function() { 
     var s = this; 
-    
     var titulo = document.getElementById('vagaTitulo')?.value?.trim() || '';
     var endereco = document.getElementById('vagaEndereco')?.value?.trim() || '';
     var valor = document.getElementById('vagaValorHora')?.value || '';
     var descricao = document.getElementById('vagaDescricao')?.value?.trim() || ''; 
     
     var profissoes = []; 
-    var checkboxes = document.querySelectorAll('#profissoesCheckboxes input:checked'); 
-    checkboxes.forEach(function(cb) { profissoes.push(cb.value); });
+    document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { profissoes.push(cb.value); });
     var profissoesStr = profissoes.length > 0 ? profissoes.join(', ') : 'Geral'; 
     
-    if (!titulo || !endereco || !valor) { 
-        s.mostrarToast('Preencha título, endereço e valor!', 'erro'); 
-        return; 
-    } 
-    
-    if (!s.usuarioLogado) {
-        s.mostrarToast('Faça login primeiro!', 'erro');
-        return;
-    }
+    if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha título, endereço e valor!', 'erro'); return; } 
+    if (!s.usuarioLogado) { s.mostrarToast('Faça login!', 'erro'); return; }
     
     s.mostrarToast('Publicando...', 'info'); 
     
     var vaga = { 
-        titulo: titulo, 
-        endereco: endereco, 
-        profissoes: profissoesStr, 
-        valorHora: parseFloat(valor) || 0, 
-        descricao: descricao, 
-        fotoObra: s.vagaFotoBase64 || '', 
-        status: 'disponivel', 
-        ativa: true, 
-        autorId: s.usuarioLogado.id, 
-        autorNome: s.usuarioLogado.nome, 
-        autorFoto: s.usuarioLogado.fotoPerfil || null, 
-        interessados: [], 
+        titulo: titulo, endereco: endereco, profissoes: profissoesStr, 
+        valorHora: parseFloat(valor) || 0, descricao: descricao, 
+        fotoObra: s.vagaFotoBase64 || '', status: 'disponivel', ativa: true, 
+        autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome, 
+        autorFoto: s.usuarioLogado.fotoPerfil || null, interessados: [], 
         dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
     }; 
     
@@ -704,7 +552,7 @@ App.prototype.publicarVagaApp = function() {
         db.collection('vagas').add(vaga)
             .then(function(docRef) { 
                 console.log('✅ Vaga publicada:', docRef.id);
-                s.mostrarToast('✅ Obra publicada com sucesso!', 'sucesso'); 
+                s.mostrarToast('✅ Obra publicada!', 'sucesso'); 
                 s.vagaFotoBase64 = null;
                 s.historicoTelas = []; 
                 s.mostrarTela('homeScreen');
@@ -712,7 +560,7 @@ App.prototype.publicarVagaApp = function() {
             })
             .catch(function(err) {
                 console.error('Erro ao publicar:', err);
-                s.mostrarToast('Erro ao publicar. Tente novamente.', 'erro');
+                s.mostrarToast('Erro ao publicar', 'erro');
             }); 
     }
 };
@@ -722,33 +570,24 @@ App.prototype.carregarRede = function() {
     var s = this;
     var container = document.getElementById('redeContainer'); 
     if (!container || !s.usuarioLogado) return; 
-    
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando rede...</div>'; 
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>'; 
     
     if (typeof db !== 'undefined') { 
         if (s._listenerRede) s._listenerRede(); 
-        
         s._listenerRede = db.collection('conexoes')
             .where('participantes', 'array-contains', s.usuarioLogado.id)
             .where('status', '==', 'ativo')
             .onSnapshot(function(snap) { 
                 var conexoes = []; 
-                snap.forEach(function(doc) { 
-                    conexoes.push({ id: doc.id, data: doc.data() }); 
-                }); 
+                snap.forEach(function(doc) { conexoes.push({ id: doc.id, data: doc.data() }); }); 
                 
                 if (conexoes.length === 0) { 
                     container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
-                        '<div style="font-size:50px;">🔗</div>' +
-                        '<h3>Sua rede está vazia</h3>' +
-                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary" style="margin-top:15px;">🔍 Buscar Profissionais</button>' +
-                        '</div>'; 
+                        '<div style="font-size:50px;">🔗</div><h3>Sua rede está vazia</h3>' +
+                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary">🔍 Buscar</button></div>'; 
                     return; 
                 } 
-                
                 s.renderizarRede(container, conexoes); 
-            }, function(error) {
-                console.error('Erro rede:', error);
             });
     }
 };
@@ -760,79 +599,46 @@ App.prototype.renderizarRede = function(container, conexoes) {
     
     for (var i = 0; i < conexoes.length; i++) { 
         (function(index) {
-            var amigoId = conexoes[index].data.participantes.find(function(p) { 
-                return p !== s.usuarioLogado.id; 
-            }); 
-            
-            if (typeof db !== 'undefined' && amigoId) { 
-                db.collection('usuarios').doc(amigoId).get()
-                    .then(function(doc) { 
-                        processados++; 
-                        if (doc.exists) { 
-                            var amigo = doc.data(); 
-                            amigo.id = doc.id; 
-                            html += '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;">' +
-                                '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;" onclick="window.app.verPerfil(\'' + amigo.id + '\')">' + 
-                                (amigo.fotoPerfil ? '<img src="' + amigo.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : 
-                                '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;">👷</div>') + 
-                                '</div>' +
-                                '<div style="flex:1;" onclick="window.app.verPerfil(\'' + amigo.id + '\')">' +
-                                '<strong>' + amigo.nome + '</strong><br>' +
-                                '<small style="color:#666;">' + (amigo.profissao || 'Profissional') + '</small>' +
-                                '</div>' +
-                                '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + amigo.id + '\')" style="background:#1A3A5C;color:white;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px;">💬</button>' +
-                                '</div>'; 
-                        } 
-                        if (processados >= conexoes.length) container.innerHTML = html; 
-                    })
-                    .catch(function() {
-                        processados++;
-                        if (processados >= conexoes.length) container.innerHTML = html;
-                    }); 
+            var amigoId = conexoes[index].data.participantes.find(function(p) { return p !== s.usuarioLogado.id; }); 
+            if (amigoId && typeof db !== 'undefined') { 
+                db.collection('usuarios').doc(amigoId).get().then(function(doc) { 
+                    processados++; 
+                    if (doc.exists) { 
+                        var amigo = doc.data(); amigo.id = doc.id; 
+                        html += '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">' +
+                            '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;" onclick="window.app.verPerfil(\'' + amigo.id + '\')">' + 
+                            (amigo.fotoPerfil ? '<img src="' + amigo.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷') + '</div>' +
+                            '<div style="flex:1;" onclick="window.app.verPerfil(\'' + amigo.id + '\')"><strong>' + amigo.nome + '</strong><br><small>' + (amigo.profissao||'') + '</small></div>' +
+                            '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + amigo.id + '\')" style="background:#1A3A5C;color:white;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;">💬</button></div>'; 
+                    } 
+                    if (processados >= conexoes.length) container.innerHTML = html; 
+                });
             }
         })(i);
     }
-    
-    setTimeout(function() {
-        if (processados < conexoes.length) container.innerHTML = html;
-    }, 3000);
+    setTimeout(function() { if (processados < conexoes.length) container.innerHTML = html; }, 3000);
 };
 
 App.prototype.adicionarNaRede = function(pid) { 
     var s = this; 
     if (!s.usuarioLogado || s.usuarioLogado.id === pid) return; 
-    
     s.mostrarToast('📩 Enviando convite...', 'info'); 
     
     if (typeof db !== 'undefined') { 
-        db.collection('conexoes')
-            .where('participantes', 'array-contains', s.usuarioLogado.id)
-            .get()
+        db.collection('conexoes').where('participantes', 'array-contains', s.usuarioLogado.id).get()
             .then(function(snap) { 
                 var existe = false; 
-                snap.forEach(function(doc) { 
-                    if (doc.data().participantes.indexOf(pid) >= 0) existe = true; 
-                }); 
-                
-                if (existe) { 
-                    s.mostrarToast('Convite já enviado!', 'erro'); 
-                    return; 
-                } 
+                snap.forEach(function(doc) { if (doc.data().participantes.indexOf(pid) >= 0) existe = true; }); 
+                if (existe) { s.mostrarToast('Convite já enviado!', 'erro'); return; } 
                 
                 db.collection('conexoes').add({ 
-                    participantes: [s.usuarioLogado.id, pid], 
-                    status: 'pendente', 
-                    solicitanteId: s.usuarioLogado.id, 
-                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
+                    participantes: [s.usuarioLogado.id, pid], status: 'pendente', 
+                    solicitanteId: s.usuarioLogado.id, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
                 }).then(function() { 
                     db.collection('notificacoes').add({ 
-                        usuarioId: pid, 
-                        titulo: '🔗 Convite de Rede', 
-                        mensagem: s.usuarioLogado.nome + ' quer se conectar!', 
-                        tipo: 'convite', 
-                        de: s.usuarioLogado.id, 
-                        lida: false, 
-                        dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
+                        usuarioId: pid, titulo: '🔗 Convite de Rede', 
+                        mensagem: s.usuarioLogado.nome + ' quer se conectar!', tipo: 'convite', 
+                        de: s.usuarioLogado.id, lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
                     }); 
                     s.mostrarToast('✅ Convite enviado!', 'sucesso'); 
                 }); 
@@ -843,205 +649,70 @@ App.prototype.adicionarNaRede = function(pid) {
 App.prototype.aceitarConvite = function(nid, deId) { 
     var s = this; 
     if (typeof db !== 'undefined') { 
-        db.collection('conexoes')
-            .where('participantes', 'array-contains', s.usuarioLogado.id)
-            .get()
+        db.collection('conexoes').where('participantes', 'array-contains', s.usuarioLogado.id).get()
             .then(function(snap) { 
                 snap.forEach(function(doc) { 
                     var d = doc.data(); 
-                    if (d.participantes?.indexOf(s.usuarioLogado.id) >= 0 && 
-                        d.participantes?.indexOf(deId) >= 0 && 
-                        d.status === 'pendente') { 
+                    if (d.participantes?.indexOf(s.usuarioLogado.id) >= 0 && d.participantes?.indexOf(deId) >= 0 && d.status === 'pendente') 
                         db.collection('conexoes').doc(doc.id).update({ status: 'ativo' }); 
-                    } 
                 }); 
             }); 
-        
         db.collection('notificacoes').doc(nid).update({ lida: true }); 
-        db.collection('notificacoes').add({ 
-            usuarioId: deId, 
-            titulo: '✅ Convite Aceito!', 
-            mensagem: s.usuarioLogado.nome + ' aceitou seu convite!', 
-            tipo: 'info', 
-            lida: false, 
-            dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
-        }); 
         s.mostrarToast('✅ Conectados!', 'sucesso'); 
     } 
 };
 
 App.prototype.recusarConvite = function(nid, deId) { 
-    var s = this; 
     if (typeof db !== 'undefined') { 
-        db.collection('conexoes')
-            .where('participantes', 'array-contains', s.usuarioLogado.id)
-            .get()
+        db.collection('conexoes').where('participantes', 'array-contains', this.usuarioLogado.id).get()
             .then(function(snap) { 
                 snap.forEach(function(doc) { 
                     var d = doc.data(); 
-                    if (d.participantes?.indexOf(s.usuarioLogado.id) >= 0 && 
-                        d.participantes?.indexOf(deId) >= 0 && 
-                        d.status === 'pendente') { 
+                    if (d.participantes?.indexOf(this.usuarioLogado.id) >= 0 && d.participantes?.indexOf(deId) >= 0 && d.status === 'pendente') 
                         db.collection('conexoes').doc(doc.id).delete(); 
-                    } 
                 }); 
             }); 
         db.collection('notificacoes').doc(nid).update({ lida: true }); 
-        s.mostrarToast('Convite recusado', 'info'); 
     } 
+    this.mostrarToast('Convite recusado', 'info'); 
 };
 
-// ==========================================================
-// ===== CHAT - COMUNICAÇÃO REAL ENTRE CONTAS =====
-// ==========================================================
-
+// ===== CHAT SIMPLIFICADO (SEM ORDENAÇÃO COMPLEXA) =====
 App.prototype.carregarListaConversas = function() {
     var s = this;
     s.usuarioSelecionado = null;
-    
-    // Para listener de chat anterior
-    if (s._listenerChat) {
-        s._listenerChat();
-        s._listenerChat = null;
-    }
+    if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
     
     var chatHeader = document.getElementById('chatHeaderInfo');
     var chatMessages = document.getElementById('chatMessages');
-    
     if (chatHeader) chatHeader.innerHTML = '<h2>💬 Mensagens</h2>';
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">Selecione um contato para conversar</div>';
+    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">Selecione um contato</div>';
     
-    // Esconde input de chat
     var inputContainer = document.querySelector('.chat-input-container');
     if (inputContainer) inputContainer.style.display = 'none';
-    
-    // Busca conversas existentes
-    if (typeof db !== 'undefined' && s.usuarioLogado) {
-        db.collection('mensagens')
-            .where('participantes', 'array-contains', s.usuarioLogado.id)
-            .orderBy('dataEnvio', 'desc')
-            .limit(50)
-            .get()
-            .then(function(snap) {
-                var conversas = {};
-                snap.forEach(function(doc) {
-                    var msg = doc.data();
-                    var outros = msg.participantes.filter(function(p) {
-                        return p !== s.usuarioLogado.id;
-                    });
-                    outros.forEach(function(uid) {
-                        if (!conversas[uid]) {
-                            conversas[uid] = { ultimaMensagem: msg.conteudo, data: msg.dataEnvio };
-                        }
-                    });
-                });
-                
-                var ids = Object.keys(conversas);
-                if (ids.length === 0) {
-                    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">' +
-                        '<div style="font-size:50px;">💬</div>' +
-                        '<h3>Nenhuma conversa</h3>' +
-                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary" style="margin-top:15px;">🔍 Buscar Profissionais</button>' +
-                        '</div>';
-                    return;
-                }
-                
-                var html = '';
-                var carregados = 0;
-                
-                ids.forEach(function(uid) {
-                    db.collection('usuarios').doc(uid).get()
-                        .then(function(doc) {
-                            carregados++;
-                            if (doc.exists) {
-                                var user = doc.data();
-                                user.id = doc.id;
-                                html += '<div onclick="window.app.iniciarChat(\'' + user.id + '\')" style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;">' +
-                                    '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;">' +
-                                    (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' :
-                                    '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:22px;">👷</div>') +
-                                    '</div>' +
-                                    '<div style="flex:1;">' +
-                                    '<strong>' + user.nome + '</strong><br>' +
-                                    '<small style="color:#666;">' + (conversas[uid]?.ultimaMensagem?.substring(0, 40) || '') + '</small>' +
-                                    '</div>' +
-                                    '<span style="font-size:20px;">💬</span>' +
-                                    '</div>';
-                            }
-                            if (carregados >= ids.length && chatMessages) {
-                                chatMessages.innerHTML = html;
-                            }
-                        })
-                        .catch(function() {
-                            carregados++;
-                            if (carregados >= ids.length && chatMessages) {
-                                chatMessages.innerHTML = html;
-                            }
-                        });
-                });
-                
-                setTimeout(function() {
-                    if (carregados < ids.length && chatMessages) {
-                        chatMessages.innerHTML = html;
-                    }
-                }, 3000);
-            })
-            .catch(function(err) {
-                console.error('Erro ao carregar conversas:', err);
-            });
-    }
 };
 
 App.prototype.iniciarChat = function(uid) {
     var s = this;
-    console.log('💬 ABRINDO CHAT COM:', uid);
+    console.log('💬 Chat com:', uid);
     
-    // Para listener anterior
-    if (s._listenerChat) {
-        s._listenerChat();
-        s._listenerChat = null;
-    }
+    if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
     
     if (typeof db !== 'undefined' && s.usuarioLogado) {
-        db.collection('usuarios').doc(uid).get()
-            .then(function(doc) {
-                if (doc.exists) {
-                    s.usuarioSelecionado = doc.data();
-                    s.usuarioSelecionado.id = doc.id;
-                    console.log('✅ Usuário encontrado:', s.usuarioSelecionado.nome);
-                } else {
-                    console.log('⚠️ Usuário não encontrado, criando temporário');
-                    s.usuarioSelecionado = { 
-                        id: uid, 
-                        nome: 'Usuário ' + uid.substring(0, 6), 
-                        profissao: 'Profissional', 
-                        fotoPerfil: null 
-                    };
-                }
-                s.abrirInterfaceChat();
-                s.iniciarListenerMensagens();
-            })
-            .catch(function(err) {
-                console.error('❌ Erro ao buscar usuário:', err);
-                s.usuarioSelecionado = { 
-                    id: uid, 
-                    nome: 'Usuário', 
-                    profissao: 'Profissional', 
-                    fotoPerfil: null 
-                };
-                s.abrirInterfaceChat();
-                s.iniciarListenerMensagens();
-            });
-    } else {
-        s.usuarioSelecionado = { 
-            id: uid, 
-            nome: 'Usuário', 
-            profissao: 'Profissional', 
-            fotoPerfil: null 
-        };
-        s.abrirInterfaceChat();
+        db.collection('usuarios').doc(uid).get().then(function(doc) {
+            if (doc.exists) {
+                s.usuarioSelecionado = doc.data();
+                s.usuarioSelecionado.id = doc.id;
+            } else {
+                s.usuarioSelecionado = { id: uid, nome: 'Usuário', profissao: '', fotoPerfil: null };
+            }
+            s.abrirInterfaceChat();
+            s.iniciarListenerMensagens();
+        }).catch(function() {
+            s.usuarioSelecionado = { id: uid, nome: 'Usuário', profissao: '', fotoPerfil: null };
+            s.abrirInterfaceChat();
+        });
     }
-    
     s.mostrarTela('chatScreen');
 };
 
@@ -1050,71 +721,42 @@ App.prototype.abrirInterfaceChat = function() {
     var user = s.usuarioSelecionado;
     if (!user || !s.usuarioLogado) return;
     
-    console.log('📱 Abrindo interface de chat com:', user.nome);
-    
     var chatHeader = document.getElementById('chatHeaderInfo');
     if (chatHeader) {
         chatHeader.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
             '<button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">⬅</button>' +
             '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #f0c27f;">' +
-            (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : 
-            '<div style="width:100%;height:100%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">👷</div>') +
-            '</div>' +
-            '<strong>💬 ' + (user.nome || 'Usuário') + '</strong>' +
-            '</div>';
+            (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷') + '</div>' +
+            '<strong>💬 ' + (user.nome || 'Usuário') + '</strong></div>';
     }
     
-    // Mostra input de chat
     var inputContainer = document.querySelector('.chat-input-container');
     if (inputContainer) inputContainer.style.display = 'flex';
     
-    // Limpa mensagens anteriores
     var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-        chatMessages.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">' +
-            '<i class="fas fa-spinner fa-spin"></i> Carregando mensagens...</div>';
-    }
+    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:20px;">Carregando...</div>';
     
-    // Foca no input
     setTimeout(function() {
         var input = document.getElementById('chatInput');
-        if (input) {
-            input.focus();
-            input.placeholder = 'Digite sua mensagem...';
-        }
+        if (input) input.focus();
     }, 300);
 };
 
 App.prototype.iniciarListenerMensagens = function() {
     var s = this;
     var container = document.getElementById('chatMessages');
+    if (!container || !s.usuarioLogado || !s.usuarioSelecionado) return;
     
-    if (!container || !s.usuarioLogado || !s.usuarioSelecionado) {
-        console.log('❌ Não foi possível iniciar listener');
-        return;
-    }
+    if (s._listenerChat) s._listenerChat();
     
-    console.log('👂 Iniciando listener de mensagens entre:', s.usuarioLogado.id, 'e', s.usuarioSelecionado.id);
-    
-    // Para listener anterior
-    if (s._listenerChat) {
-        s._listenerChat();
-        s._listenerChat = null;
-    }
-    
-    // Listener que escuta TODAS as mensagens onde o usuário logado participa
+    // Escuta sem orderBy para evitar erro de índice
     s._listenerChat = db.collection('mensagens')
         .where('participantes', 'array-contains', s.usuarioLogado.id)
-        .orderBy('dataEnvio', 'asc')
         .onSnapshot(function(snap) {
-            console.log('📨 Snapshot recebido:', snap.size, 'documentos');
-            
             var mensagens = [];
             snap.forEach(function(doc) {
                 var msg = doc.data();
                 msg.id = doc.id;
-                
-                // Filtra apenas mensagens entre os dois usuários
                 if (msg.participantes && 
                     msg.participantes.indexOf(s.usuarioLogado.id) >= 0 && 
                     msg.participantes.indexOf(s.usuarioSelecionado.id) >= 0) {
@@ -1122,113 +764,51 @@ App.prototype.iniciarListenerMensagens = function() {
                 }
             });
             
-            console.log('📬 Mensagens filtradas:', mensagens.length);
+            // Ordena no JavaScript
+            mensagens.sort(function(a, b) {
+                var da = a.dataEnvio?.toDate?.() || new Date(a.dataEnvio || 0);
+                var db2 = b.dataEnvio?.toDate?.() || new Date(b.dataEnvio || 0);
+                return da - db2;
+            });
             
             if (mensagens.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">' +
-                    '<div style="font-size:50px;">💬</div>' +
-                    '<p>Nenhuma mensagem ainda</p>' +
-                    '<p style="font-size:13px;">Diga olá! 👋</p>' +
-                    '</div>';
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Diga olá! 👋</div>';
             } else {
-                s.renderizarMensagens(container, mensagens);
-            }
-            
-            // Marca mensagens recebidas como lidas
-            snap.docChanges().forEach(function(change) {
-                if (change.type === 'added' || change.type === 'modified') {
-                    var msg = change.doc.data();
-                    if (msg.destinatarioId === s.usuarioLogado.id && !msg.lida) {
-                        console.log('✅ Marcando como lida:', change.doc.id);
-                        db.collection('mensagens').doc(change.doc.id).update({ 
-                            lida: true 
-                        }).catch(function(err) {
-                            console.error('Erro ao marcar lida:', err);
-                        });
-                    }
+                var html = '';
+                for (var i = 0; i < mensagens.length; i++) {
+                    var msg = mensagens[i];
+                    var meu = msg.remetenteId === s.usuarioLogado.id;
+                    var hora = '';
+                    try {
+                        if (msg.dataEnvio?.toDate) hora = msg.dataEnvio.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                        else if (msg.dataEnvio) hora = new Date(msg.dataEnvio).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                    } catch(e) {}
+                    
+                    html += '<div class="message ' + (meu ? 'message-sent' : 'message-received') + '">' +
+                        '<div class="message-content">' + (msg.conteudo || '') + '</div>' +
+                        '<div class="message-footer"><span class="message-time">' + hora + '</span></div></div>';
                 }
-            });
-        }, function(error) {
-            console.error('❌ Erro no listener de mensagens:', error);
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">' +
-                '<p>Erro ao carregar mensagens</p>' +
-                '<button onclick="window.app._app.iniciarListenerMensagens()" class="btn btn-small btn-outline">Tentar novamente</button>' +
-                '</div>';
-        });
-};
-
-App.prototype.renderizarMensagens = function(container, mensagens) {
-    var s = this;
-    var html = '';
-    
-    for (var i = 0; i < mensagens.length; i++) {
-        var msg = mensagens[i];
-        var meu = msg.remetenteId === s.usuarioLogado.id;
-        var hora = '';
-        
-        try {
-            if (msg.dataEnvio && msg.dataEnvio.toDate) {
-                hora = msg.dataEnvio.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-            } else if (msg.dataEnvio instanceof Date) {
-                hora = msg.dataEnvio.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-            } else if (typeof msg.dataEnvio === 'string') {
-                hora = new Date(msg.dataEnvio).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                container.innerHTML = html;
+                container.scrollTop = container.scrollHeight;
             }
-        } catch(e) {
-            hora = '';
-        }
-        
-        html += '<div class="message ' + (meu ? 'message-sent' : 'message-received') + '">' +
-            '<div class="message-content">' + (msg.conteudo || '') + '</div>' +
-            '<div class="message-footer">' +
-            '<span class="message-time">' + hora + '</span>' +
-            (meu && msg.lida ? '<span style="color:#34B7F1;margin-left:4px;">✓✓</span>' : (meu ? '<span style="color:#999;margin-left:4px;">✓</span>' : '')) +
-            '</div>' +
-            '</div>';
-    }
-    
-    container.innerHTML = html;
-    
-    // Scroll para o final
-    setTimeout(function() {
-        container.scrollTop = container.scrollHeight;
-    }, 100);
+        }, function(error) {
+            console.error('❌ Erro chat:', error);
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">Erro: ' + error.message + '</div>';
+        });
 };
 
 App.prototype.enviarMensagem = function() {
     var s = this;
     var input = document.getElementById('chatInput');
-    
-    if (!input) {
-        console.error('❌ Input de chat não encontrado');
-        return;
-    }
-    
-    if (!s.usuarioLogado) {
-        s.mostrarToast('Faça login primeiro!', 'erro');
-        return;
-    }
-    
-    if (!s.usuarioSelecionado) {
-        s.mostrarToast('Selecione um contato!', 'erro');
-        return;
-    }
+    if (!input || !s.usuarioLogado || !s.usuarioSelecionado) return;
     
     var texto = input.value.trim();
-    if (!texto) return;
-    
-    if (s._enviandoMensagem) return;
+    if (!texto || s._enviandoMensagem) return;
     
     s._enviandoMensagem = true;
     input.value = '';
-    input.disabled = true;
     
-    console.log('📤 Enviando mensagem para:', s.usuarioSelecionado.id);
-    console.log('📝 Conteúdo:', texto);
-    
-    // Cria o objeto mensagem com participantes em array
     var participantes = [s.usuarioLogado.id, s.usuarioSelecionado.id];
-    
     var mensagem = {
         remetenteId: s.usuarioLogado.id,
         destinatarioId: s.usuarioSelecionado.id,
@@ -1238,53 +818,24 @@ App.prototype.enviarMensagem = function() {
         dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    console.log('📦 Mensagem a ser enviada:', JSON.stringify(mensagem));
-    
-    if (typeof db !== 'undefined') {
-        db.collection('mensagens').add(mensagem)
-            .then(function(docRef) {
-                console.log('✅ Mensagem enviada com ID:', docRef.id);
-                
-                // Envia notificação para o destinatário
-                var notificacao = {
-                    usuarioId: s.usuarioSelecionado.id,
-                    titulo: '💬 Nova mensagem de ' + s.usuarioLogado.nome,
-                    mensagem: texto.substring(0, 100),
-                    tipo: 'mensagem',
-                    de: s.usuarioLogado.id,
-                    lida: false,
-                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                db.collection('notificacoes').add(notificacao)
-                    .then(function() {
-                        console.log('✅ Notificação enviada para:', s.usuarioSelecionado.id);
-                    })
-                    .catch(function(err) {
-                        console.error('❌ Erro ao enviar notificação:', err);
-                    });
-                
-                s.mostrarToast('✅ Mensagem enviada!', 'sucesso');
-            })
-            .catch(function(err) {
-                console.error('❌ Erro ao enviar mensagem:', err);
-                s.mostrarToast('Erro ao enviar. Tente novamente.', 'erro');
-                input.value = texto;
-            })
-            .finally(function() {
-                s._enviandoMensagem = false;
-                input.disabled = false;
-                setTimeout(function() { 
-                    input.focus(); 
-                }, 100);
-            });
-    } else {
-        console.error('❌ Firebase não disponível');
-        s.mostrarToast('Erro: Firebase não conectado', 'erro');
+    db.collection('mensagens').add(mensagem).then(function() {
+        console.log('✅ Mensagem enviada');
+        db.collection('notificacoes').add({
+            usuarioId: s.usuarioSelecionado.id,
+            titulo: '💬 ' + s.usuarioLogado.nome,
+            mensagem: texto.substring(0, 50),
+            tipo: 'mensagem',
+            de: s.usuarioLogado.id,
+            lida: false,
+            dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(){});
+    }).catch(function(err) {
+        console.error('Erro ao enviar:', err);
+        s.mostrarToast('Erro ao enviar', 'erro');
+    }).finally(function() {
         s._enviandoMensagem = false;
-        input.disabled = false;
-        input.value = texto;
-    }
+        setTimeout(function() { if (input) input.focus(); }, 100);
+    });
 };
 
 // ===== BUSCA =====
@@ -1292,56 +843,33 @@ App.prototype.buscarProfissionais = function() {
     var s = this;
     var container = document.getElementById('buscaResultados'); 
     if (!container) return; 
-    
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>'; 
-    
-    var filtro = document.getElementById('buscaInput')?.value?.toLowerCase() || '';
+    container.innerHTML = '<div class="loading">Buscando...</div>'; 
     
     if (typeof db !== 'undefined') { 
-        db.collection('usuarios').get()
-            .then(function(snap) { 
-                var todos = []; 
-                snap.forEach(function(doc) { 
-                    var u = doc.data(); 
-                    u.id = doc.id; 
-                    if (u.id !== s.usuarioLogado?.id) {
-                        if (!filtro || 
-                            (u.nome?.toLowerCase().indexOf(filtro) >= 0) ||
-                            (u.profissao?.toLowerCase().indexOf(filtro) >= 0)) {
-                            todos.push(u);
-                        }
-                    }
-                }); 
-                
-                if (todos.length === 0) { 
-                    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
-                        '<div style="font-size:50px;">🔍</div><h3>Nenhum profissional encontrado</h3></div>'; 
-                    return; 
-                } 
-                
-                var html = '<div style="text-align:center;padding:10px;color:#666;">👷 ' + todos.length + ' profissional(is)</div>'; 
-                for (var i = 0; i < todos.length; i++) { 
-                    var p = todos[i]; 
-                    html += '<div class="vaga-card" style="padding:12px;display:flex;align-items:center;gap:12px;">' +
-                        '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;cursor:pointer;" onclick="window.app.verPerfil(\'' + p.id + '\')">' + 
-                        (p.fotoPerfil ? '<img src="' + p.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : 
-                        '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;">👷</div>') + 
-                        '</div>' +
-                        '<div style="flex:1;cursor:pointer;" onclick="window.app.verPerfil(\'' + p.id + '\')">' +
-                        '<strong>' + p.nome + '</strong><br>' +
-                        '<small style="color:#666;">🔧 ' + (p.profissao || 'Profissional') + '</small><br>' +
-                        '<small style="color:#999;">⭐ ' + (p.score || 0).toFixed(1) + '</small>' +
-                        '</div>' +
-                        '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + p.id + '\')" style="background:#1A3A5C;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;">💬</button>' +
-                        '<button onclick="event.stopPropagation();window.app.adicionarNaRede(\'' + p.id + '\')" style="background:#10B981;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:20px;">+</button>' +
-                        '</div>'; 
-                } 
-                container.innerHTML = html; 
-            })
-            .catch(function(err) {
-                console.error('Erro busca:', err);
-                container.innerHTML = '<div class="loading">Erro ao buscar</div>';
-            });
+        db.collection('usuarios').get().then(function(snap) { 
+            var todos = []; 
+            snap.forEach(function(doc) { 
+                var u = doc.data(); u.id = doc.id; 
+                if (u.id !== s.usuarioLogado?.id) todos.push(u); 
+            }); 
+            
+            if (todos.length === 0) { 
+                container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhum profissional</h3></div>'; 
+                return; 
+            } 
+            
+            var html = ''; 
+            for (var i = 0; i < todos.length; i++) { 
+                var p = todos[i]; 
+                html += '<div class="vaga-card" style="padding:12px;display:flex;align-items:center;gap:12px;">' +
+                    '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;">' + 
+                    (p.fotoPerfil ? '<img src="' + p.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷') + '</div>' +
+                    '<div style="flex:1;"><strong>' + p.nome + '</strong><br><small>🔧 ' + (p.profissao||'') + '</small></div>' +
+                    '<button onclick="window.app.iniciarChat(\'' + p.id + '\')" style="background:#1A3A5C;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;">💬</button>' +
+                    '<button onclick="window.app.adicionarNaRede(\'' + p.id + '\')" style="background:#10B981;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;">+</button></div>'; 
+            } 
+            container.innerHTML = html; 
+        }); 
     } 
 };
 
@@ -1349,29 +877,21 @@ App.prototype.buscarProfissionais = function() {
 App.prototype.verPerfil = function(uid) { 
     var s = this; 
     if (typeof db !== 'undefined') { 
-        db.collection('usuarios').doc(uid).get()
-            .then(function(doc) { 
-                if (!doc.exists) return; 
-                var u = doc.data(); 
-                u.id = doc.id; 
-                
-                var conteudo = document.getElementById('perfilPublicoConteudo');
-                if (conteudo) {
-                    conteudo.innerHTML = '<div style="text-align:center;padding:20px;">' +
-                        '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #f0c27f;">' + 
-                        (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : 
-                        '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:50px;">👷</div>') + 
-                        '</div>' +
-                        '<h2>' + u.nome + '</h2>' +
-                        '<p style="color:#666;">🔧 ' + (u.profissao || u.tipo || '') + '</p>' +
-                        '<p>⭐ ' + (u.score || 0).toFixed(1) + ' • 📅 ' + (u.experiencia || '0') + ' anos</p>' +
-                        '</div>' +
-                        '<div class="card"><p>📧 ' + (u.email || '') + '</p><p>📱 ' + (u.celular || '') + '</p></div>' +
-                        '<button onclick="window.app.iniciarChat(\'' + u.id + '\')" class="btn btn-primary">💬 Chat</button>' +
-                        '<button onclick="window.app.adicionarNaRede(\'' + u.id + '\')" class="btn btn-success">🔗 Conectar</button>';
-                }
-                s.mostrarTela('perfilPublicoScreen'); 
-            }); 
+        db.collection('usuarios').doc(uid).get().then(function(doc) { 
+            if (!doc.exists) return; 
+            var u = doc.data(); u.id = doc.id; 
+            var conteudo = document.getElementById('perfilPublicoConteudo');
+            if (conteudo) {
+                conteudo.innerHTML = '<div style="text-align:center;padding:20px;">' +
+                    '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #f0c27f;">' + 
+                    (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷') + '</div>' +
+                    '<h2>' + u.nome + '</h2><p>' + (u.profissao||u.tipo||'') + '</p></div>' +
+                    '<div class="card"><p>📧 ' + (u.email||'') + '</p><p>📱 ' + (u.celular||'') + '</p></div>' +
+                    '<button onclick="window.app.iniciarChat(\'' + u.id + '\')" class="btn btn-primary">💬 Chat</button>' +
+                    '<button onclick="window.app.adicionarNaRede(\'' + u.id + '\')" class="btn btn-success">🔗 Conectar</button>';
+            }
+            s.mostrarTela('perfilPublicoScreen'); 
+        }); 
     } 
 };
 
@@ -1383,27 +903,18 @@ App.prototype.carregarMeuPerfil = function() {
     var tela = document.getElementById('meuPerfilScreen'); 
     if (!tela) return; 
     
-    tela.innerHTML = '<div class="profile-header-container">' +
-        '<div class="profile-cover"></div>' +
-        '<div class="profile-avatar-container">' +
-        '<div class="profile-avatar" onclick="document.getElementById(\'inputFoto\').click()">' +
+    tela.innerHTML = '<div class="profile-header-container"><div class="profile-cover"></div>' +
+        '<div class="profile-avatar-container"><div class="profile-avatar" onclick="document.getElementById(\'inputFoto\').click()">' +
         (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : 
         '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;">') +
-        '</div></div>' +
-        '<input type="file" id="inputFoto" accept="image/*" onchange="window.app.uploadFoto(event)" style="display:none;">' +
-        '</div>' +
-        '<div class="profile-info-card">' +
-        '<h2>' + u.nome + '</h2>' +
-        '<p>' + (u.profissao || u.tipo || '') + ' • ⭐ ' + (u.score || 0).toFixed(1) + '</p>' +
-        '<p>📧 ' + (u.email || '') + '</p>' +
-        '<p>📱 ' + (u.celular || '') + '</p>' +
-        '</div>' +
+        '</div></div><input type="file" id="inputFoto" accept="image/*" onchange="window.app.uploadFoto(event)" style="display:none;"></div>' +
+        '<div class="profile-info-card"><h2>' + u.nome + '</h2><p>' + (u.profissao||u.tipo||'') + ' • ⭐ ' + (u.score||0).toFixed(1) + '</p>' +
+        '<p>📧 ' + (u.email||'') + '</p><p>📱 ' + (u.celular||'') + '</p></div>' +
         '<div style="padding:16px;">' +
         '<button onclick="window.app.abrirEditarPerfil()" class="btn btn-primary">✏️ Editar</button>' +
         '<button onclick="window.app.gerarQRCodeCompartilhar()" class="btn btn-outline">📱 Compartilhar</button>' +
         '<button onclick="window.app.mostrarTela(\'configScreen\')" class="btn btn-outline">⚙️ Configurações</button>' +
-        '<button onclick="document.getElementById(\'modalSair\').style.display=\'flex\'" class="btn btn-danger">🚪 Sair</button>' +
-        '</div>';
+        '<button onclick="document.getElementById(\'modalSair\').style.display=\'flex\'" class="btn btn-danger">🚪 Sair</button></div>';
 };
 
 // ===== MINHAS OBRAS =====
@@ -1411,28 +922,19 @@ App.prototype.carregarMinhasObras = function() {
     var s = this;
     var container = document.getElementById('listaObrasContainer'); 
     if (!container || !s.usuarioLogado) return; 
-    
     container.innerHTML = '<div class="loading">Carregando...</div>'; 
     
     if (typeof db !== 'undefined') { 
-        db.collection('vagas')
-            .where('autorId', '==', s.usuarioLogado.id)
-            .where('ativa', '==', true)
-            .get()
+        db.collection('vagas').where('autorId', '==', s.usuarioLogado.id).where('ativa', '==', true).get()
             .then(function(snap) { 
                 var minhas = []; 
-                snap.forEach(function(doc) { 
-                    var v = doc.data(); 
-                    v.id = doc.id; 
-                    minhas.push(v); 
-                }); 
+                snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; minhas.push(v); }); 
                 
-                var totalObras = document.getElementById('totalObras');
-                if (totalObras) totalObras.textContent = minhas.length;
+                var total = document.getElementById('totalObras');
+                if (total) total.textContent = minhas.length;
                 
                 if (minhas.length === 0) { 
-                    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
-                        '<div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>' +
+                    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma obra</h3>' +
                         '<button onclick="window.app.novaObra()" class="btn btn-primary">📢 Publicar</button></div>'; 
                     return; 
                 } 
@@ -1442,14 +944,11 @@ App.prototype.carregarMinhasObras = function() {
                     var v = minhas[i]; 
                     html += '<div class="vaga-card">';
                     if (v.fotoObra?.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:150px;object-fit:cover;">';
-                    html += '<div style="padding:15px;"><strong>' + v.titulo + '</strong><br>' +
-                        '<small>📍 ' + v.endereco + '</small><br>' +
-                        '<span class="vaga-tag">💰 R$' + v.valorHora + '/h</span> ' +
-                        '<span class="vaga-tag">👷 ' + v.profissoes + '</span>' +
+                    html += '<div style="padding:15px;"><strong>' + v.titulo + '</strong><br><small>📍 ' + v.endereco + '</small><br>' +
+                        '<span class="vaga-tag">💰 R$' + v.valorHora + '/h</span> <span class="vaga-tag">👷 ' + v.profissoes + '</span>' +
                         '<div style="margin-top:10px;display:flex;gap:8px;">' +
                         '<button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>' +
-                        '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">Apagar</button>' +
-                        '</div></div></div>'; 
+                        '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">Apagar</button></div></div></div>'; 
                 } 
                 container.innerHTML = html; 
             }); 
@@ -1459,31 +958,23 @@ App.prototype.carregarMinhasObras = function() {
 // ===== DETALHE DA OBRA =====
 App.prototype.verDetalheObra = function(oid) { 
     if (typeof db !== 'undefined') { 
-        db.collection('vagas').doc(oid).get()
-            .then(function(doc) { 
-                if (!doc.exists) return; 
-                var v = doc.data(); 
-                v.id = doc.id; 
-                
-                var modalAntigo = document.getElementById('modalObra');
-                if (modalAntigo) modalAntigo.remove();
-                
-                var modal = document.createElement('div');
-                modal.id = 'modalObra';
-                modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;';
-                modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
-                
-                var html = '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;">';
-                if (v.fotoObra?.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;">';
-                html += '<div style="padding:20px;"><h2>' + v.titulo + '</h2>' +
-                    '<p>📍 ' + v.endereco + '</p><p>👷 ' + v.profissoes + '</p>' +
-                    '<p>💰 R$' + v.valorHora + '/h</p><p>📝 ' + (v.descricao || '') + '</p>';
-                if (v.endereco) html += '<a href="https://www.google.com/maps?q=' + encodeURIComponent(v.endereco) + '" target="_blank" style="display:block;text-align:center;background:#1A3A5C;color:white;padding:12px;border-radius:10px;text-decoration:none;font-weight:bold;margin-bottom:15px;">🗺️ Google Maps</a>';
-                html += '<button onclick="document.getElementById(\'modalObra\').remove()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">Fechar</button></div></div>';
-                
-                modal.innerHTML = html;
-                document.body.appendChild(modal);
-            }); 
+        db.collection('vagas').doc(oid).get().then(function(doc) { 
+            if (!doc.exists) return; 
+            var v = doc.data(); v.id = doc.id; 
+            var modalAntigo = document.getElementById('modalObra'); if (modalAntigo) modalAntigo.remove();
+            
+            var modal = document.createElement('div'); modal.id = 'modalObra';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;';
+            modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+            
+            var html = '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;">';
+            if (v.fotoObra?.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;">';
+            html += '<div style="padding:20px;"><h2>' + v.titulo + '</h2><p>📍 ' + v.endereco + '</p><p>👷 ' + v.profissoes + '</p>' +
+                '<p>💰 R$' + v.valorHora + '/h</p><p>' + (v.descricao||'') + '</p>' +
+                '<button onclick="document.getElementById(\'modalObra\').remove()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">Fechar</button></div></div>';
+            modal.innerHTML = html;
+            document.body.appendChild(modal);
+        }); 
     } 
 };
 
@@ -1493,45 +984,39 @@ App.prototype.mostrarNotificacoes = function() {
     if (!s.usuarioLogado) return; 
     
     if (typeof db !== 'undefined') { 
-        db.collection('notificacoes')
-            .where('usuarioId', '==', s.usuarioLogado.id)
-            .orderBy('dataCriacao', 'desc')
-            .limit(50)
-            .get()
+        db.collection('notificacoes').where('usuarioId', '==', s.usuarioLogado.id).get()
             .then(function(snap) { 
-                var notificacoes = []; 
-                snap.forEach(function(doc) { 
-                    var n = doc.data(); n.id = doc.id; notificacoes.push(n); 
-                }); 
+                var ns = []; 
+                snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); }); 
                 
-                var modalAntigo = document.getElementById('modalNotif');
-                if (modalAntigo) modalAntigo.remove();
+                // Ordena no JS
+                ns.sort(function(a, b) {
+                    var da = a.dataCriacao?.toDate?.() || new Date(0);
+                    var db2 = b.dataCriacao?.toDate?.() || new Date(0);
+                    return db2 - da;
+                });
                 
-                var modal = document.createElement('div');
-                modal.id = 'modalNotif';
+                var modalAntigo = document.getElementById('modalNotif'); if (modalAntigo) modalAntigo.remove();
+                var modal = document.createElement('div'); modal.id = 'modalNotif';
                 modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;';
                 modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
                 
                 var html = '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;">' +
                     '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;justify-content:space-between;">' +
-                    '<h3>🔔 Notificações</h3>' +
-                    '<button onclick="document.getElementById(\'modalNotif\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">✕</button></div>' +
+                    '<h3>🔔 Notificações</h3><button onclick="document.getElementById(\'modalNotif\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">✕</button></div>' +
                     '<div style="padding:15px;">';
                 
-                if (notificacoes.length === 0) html += '<div style="text-align:center;padding:40px;"><h3>Nenhuma</h3></div>';
-                else {
-                    for (var i = 0; i < notificacoes.length; i++) {
-                        var n = notificacoes[i];
-                        html += '<div style="background:' + (n.lida ? '#f9fafb' : '#f0f9ff') + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;">' +
-                            '<strong>' + n.titulo + '</strong><br>' +
-                            '<small>' + n.mensagem + '</small>';
-                        if (n.tipo === 'convite' && !n.lida) {
-                            html += '<div style="display:flex;gap:10px;margin-top:10px;">' +
-                                '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button>' +
-                                '<button onclick="window.app.recusarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
-                        }
-                        html += '</div>';
+                if (ns.length === 0) html += '<div style="text-align:center;padding:40px;"><h3>Nenhuma</h3></div>';
+                else for (var i = 0; i < ns.length; i++) {
+                    var n = ns[i];
+                    html += '<div style="background:' + (n.lida?'#f9fafb':'#f0f9ff') + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;">' +
+                        '<strong>' + n.titulo + '</strong><br><small>' + n.mensagem + '</small>';
+                    if (n.tipo === 'convite' && !n.lida) {
+                        html += '<div style="display:flex;gap:10px;margin-top:10px;">' +
+                            '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button>' +
+                            '<button onclick="window.app.recusarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
                     }
+                    html += '</div>';
                 }
                 html += '</div></div>';
                 modal.innerHTML = html;
@@ -1540,33 +1025,20 @@ App.prototype.mostrarNotificacoes = function() {
     } 
 };
 
-// ===== LOCALIZAÇÃO =====
+// ===== LOCALIZAÇÃO, UPLOAD, EDITAR, QR CODE, CONFIG =====
 App.prototype.abrirMapaLocalizacao = function() { 
-    var s = this; 
-    if (!s.usuarioLogado) return; 
+    var s = this; if (!s.usuarioLogado) return; 
     var u = s.usuarioLogado; 
-    
-    var modalAntigo = document.getElementById('modalLoc');
-    if (modalAntigo) modalAntigo.remove();
-    
-    var modal = document.createElement('div');
-    modal.id = 'modalLoc';
+    var modalAntigo = document.getElementById('modalLoc'); if (modalAntigo) modalAntigo.remove();
+    var modal = document.createElement('div'); modal.id = 'modalLoc';
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:white;z-index:9999;';
-    modal.innerHTML = '<div style="background:#1A3A5C;color:white;padding:20px;">' +
-        '<button onclick="document.getElementById(\'modalLoc\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅</button>' +
-        '<h2>📍 Localização</h2></div>' +
-        '<div style="padding:20px;">' +
-        '<div class="input-group"><label>Estado</label><select id="locEstado" onchange="window.app.atualizarCidades()" class="input-field"><option value="">Selecione...</option>' + s.getEstadosHTML(u.localizacao?.estado) + '</select></div>' +
+    modal.innerHTML = '<div style="background:#1A3A5C;color:white;padding:20px;"><button onclick="document.getElementById(\'modalLoc\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅</button><h2>📍 Localização</h2></div>' +
+        '<div style="padding:20px;"><div class="input-group"><label>Estado</label><select id="locEstado" onchange="window.app.atualizarCidades()" class="input-field"><option value="">Selecione...</option>' + s.getEstadosHTML(u.localizacao?.estado) + '</select></div>' +
         '<div class="input-group"><label>Cidade</label><select id="locCidade" onchange="window.app.atualizarBairros()" class="input-field"><option value="">Selecione...</option></select></div>' +
         '<div class="input-group"><label>Bairro</label><select id="locBairro" class="input-field"><option value="">Selecione...</option></select></div>' +
         '<button onclick="window.app.salvarLocalizacao()" class="btn btn-success">💾 SALVAR</button></div>';
-    
     document.body.appendChild(modal);
-    
-    if (u.localizacao?.estado) {
-        setTimeout(function() { window.app.atualizarCidades(u.localizacao.cidade); }, 300);
-        if (u.localizacao.bairro) setTimeout(function() { window.app.atualizarBairros(u.localizacao.bairro); }, 600);
-    }
+    if (u.localizacao?.estado) { setTimeout(function() { window.app.atualizarCidades(u.localizacao.cidade); }, 300); }
 };
 
 App.prototype.getEstadosHTML = function(sel) { 
@@ -1585,8 +1057,7 @@ App.prototype.getBairrosPorCidade = function(c) {
 
 App.prototype.atualizarCidades = function(sel) { 
     var ee=document.getElementById('locEstado'), ce=document.getElementById('locCidade'); 
-    if(!ee||!ce) return; 
-    var e=ee.value, cs=this.getTodasCidades(); 
+    if(!ee||!ce) return; var e=ee.value, cs=this.getTodasCidades(); 
     ce.innerHTML='<option value="">Selecione...</option>'; 
     if(e&&cs[e]) for(var i=0;i<cs[e].length;i++) ce.innerHTML+='<option value="'+cs[e][i]+'"'+(sel===cs[e][i]?' selected':'')+'>'+cs[e][i]+'</option>'; 
     var be=document.getElementById('locBairro'); if(be) be.innerHTML='<option value="">Selecione...</option>'; 
@@ -1594,8 +1065,7 @@ App.prototype.atualizarCidades = function(sel) {
 
 App.prototype.atualizarBairros = function(sel) { 
     var ce=document.getElementById('locCidade'), be=document.getElementById('locBairro'); 
-    if(!ce||!be) return; 
-    var c=ce.value, bs=this.getBairrosPorCidade(c); 
+    if(!ce||!be) return; var c=ce.value, bs=this.getBairrosPorCidade(c); 
     be.innerHTML='<option value="">Selecione...</option>'; 
     if(bs) for(var i=0;i<bs.length;i++) be.innerHTML+='<option value="'+bs[i]+'"'+(sel===bs[i]?' selected':'')+'>'+bs[i]+'</option>'; 
 };
@@ -1604,13 +1074,11 @@ App.prototype.salvarLocalizacao = function() {
     var s=this; 
     var es=document.getElementById('locEstado')?.value||'', ci=document.getElementById('locCidade')?.value||'', ba=document.getElementById('locBairro')?.value||''; 
     if(!es||!ci){s.mostrarToast('Selecione estado e cidade!','erro');return;} 
-    var loc={estado:es,cidade:ci,bairro:ba}; 
-    s.usuarioLogado.localizacao=loc; 
+    s.usuarioLogado.localizacao={estado:es,cidade:ci,bairro:ba}; 
     localStorage.setItem('usuarioLPX',JSON.stringify(s.usuarioLogado)); 
-    if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update({localizacao:loc}); 
+    if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update({localizacao:s.usuarioLogado.localizacao}); 
     document.getElementById('modalLoc')?.remove(); 
     s.mostrarToast('Localização salva!','sucesso'); 
-    s.carregarMeuPerfil(); 
 };
 
 App.prototype.uploadFoto = function(e) { 
@@ -1620,22 +1088,18 @@ App.prototype.uploadFoto = function(e) {
         s.usuarioLogado.fotoPerfil=ev.target.result; 
         localStorage.setItem('usuarioLPX',JSON.stringify(s.usuarioLogado)); 
         if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update({fotoPerfil:ev.target.result}); 
-        s.mostrarToast('Foto atualizada!','sucesso'); 
-        s.carregarMeuPerfil(); 
+        s.mostrarToast('Foto atualizada!','sucesso'); s.carregarMeuPerfil(); 
     }; 
     r.readAsDataURL(f); 
 };
 
 App.prototype.abrirEditarPerfil = function() { 
-    var s=this; if(!s.usuarioLogado) return; 
-    var u=s.usuarioLogado;
+    var s=this; if(!s.usuarioLogado) return; var u=s.usuarioLogado;
     var modalAntigo=document.getElementById('modalEditar'); if(modalAntigo) modalAntigo.remove();
-    
     var modal=document.createElement('div'); modal.id='modalEditar';
     modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
     modal.innerHTML='<div class="modal-content"><div class="modal-header"><h3>✏️ Editar</h3><button class="modal-close" onclick="document.getElementById(\'modalEditar\').remove()">✕</button></div>'+
-        '<div class="modal-body">'+
-        '<div class="input-group"><label>Nome</label><input id="editNome" value="'+(u.nome||'')+'" class="input-field"></div>'+
+        '<div class="modal-body"><div class="input-group"><label>Nome</label><input id="editNome" value="'+(u.nome||'')+'" class="input-field"></div>'+
         '<div class="input-group"><label>Celular</label><input id="editCelular" value="'+(u.celular||'')+'" class="input-field"></div>'+
         '<div class="input-group"><label>Profissão</label><input id="editProfissao" value="'+(u.profissao||'')+'" class="input-field"></div>'+
         '<div class="input-group"><label>Experiência</label><input id="editExperiencia" type="number" value="'+(u.experiencia||'0')+'" class="input-field"></div>'+
@@ -1652,34 +1116,29 @@ App.prototype.salvarPerfil = function() {
     localStorage.setItem('usuarioLPX',JSON.stringify(s.usuarioLogado)); 
     if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update(d); 
     document.getElementById('modalEditar')?.remove(); 
-    s.mostrarToast('Perfil atualizado!','sucesso'); 
-    s.carregarMeuPerfil(); 
+    s.mostrarToast('Perfil atualizado!','sucesso'); s.carregarMeuPerfil(); 
 };
 
 App.prototype.gerarQRCodeCompartilhar = function() { 
     var s=this; if(!s.usuarioLogado) return; 
     var u=s.usuarioLogado, url=window.location.origin+window.location.pathname+'?perfil='+u.id;
     var modalAntigo=document.getElementById('modalQR'); if(modalAntigo) modalAntigo.remove();
-    
     var modal=document.createElement('div'); modal.id='modalQR';
     modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
     modal.innerHTML='<div class="modal-content" style="text-align:center;padding:30px;"><h3>📱 Compartilhar</h3>'+
-        '<div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:10px auto;border:3px solid #F47920;">'+(u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;object-fit:cover;">':'<div style="width:100%;height:100%;background:#1A3A5C;display:flex;align-items:center;justify-content:center;color:white;font-size:35px;">👷</div>')+'</div>'+
-        '<p><strong>'+u.nome+'</strong></p>'+
-        '<div id="qrcodeContainer" style="display:flex;justify-content:center;margin:15px 0;"></div>'+
+        '<div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:10px auto;border:3px solid #F47920;">'+(u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;object-fit:cover;">':'👷')+'</div>'+
+        '<p><strong>'+u.nome+'</strong></p><div id="qrcodeContainer" style="display:flex;justify-content:center;margin:15px 0;"></div>'+
         '<button onclick="document.getElementById(\'modalQR\').remove()" class="btn btn-primary">FECHAR</button></div>';
     document.body.appendChild(modal);
-    
     setTimeout(function(){var c=document.getElementById('qrcodeContainer');if(c&&typeof QRCode!=='undefined'){c.innerHTML='';new QRCode(c,{text:url,width:180,height:180,colorDark:'#1A3A5C',colorLight:'#ffffff'});}},300);
 };
 
 App.prototype.carregarConfigScreen = function() { 
     var s=this, tela=document.getElementById('configScreen'); if(!tela) return;
     tela.innerHTML='<div style="background:#1A3A5C;color:white;padding:20px;"><button onclick="window.app.voltarTela()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅</button><h2>⚙️ Configurações</h2></div>'+
-        '<div style="padding:15px;">'+
-        '<div class="card"><h3>🎨 Tema</h3><div style="display:flex;gap:10px;margin-top:10px;">'+
-        '<button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='claro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='claro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='claro'?'white':'#1A3A5C')+';cursor:pointer;font-weight:bold;">☀️ Claro</button>'+
-        '<button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='escuro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='escuro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='escuro'?'white':'#1A3A5C')+';cursor:pointer;font-weight:bold;">🌙 Escuro</button></div></div>'+
+        '<div style="padding:15px;"><div class="card"><h3>🎨 Tema</h3><div style="display:flex;gap:10px;margin-top:10px;">'+
+        '<button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='claro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='claro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='claro'?'white':'#1A3A5C')+';cursor:pointer;">☀️ Claro</button>'+
+        '<button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='escuro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='escuro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='escuro'?'white':'#1A3A5C')+';cursor:pointer;">🌙 Escuro</button></div></div>'+
         '<div class="card"><h3>📄 Documentos</h3>'+
         '<button onclick="window.app.mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos</button>'+
         '<button onclick="window.app.mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;cursor:pointer;">🔒 Privacidade</button></div>'+
@@ -1710,38 +1169,34 @@ App.prototype.toggleProfissao = function() {
     if(grupo) grupo.style.display=tipo==='profissional'?'block':'none';
 };
 
+App.prototype.solicitarCodigo = function() {
+    var s=this, email=document.getElementById('recEmail')?.value?.trim()||'';
+    if(!email){s.mostrarToast('Digite seu email!','erro');return;}
+    if(typeof firebase!=='undefined'&&firebase.auth) firebase.auth().sendPasswordResetEmail(email).then(function(){s.mostrarToast('Email enviado!','sucesso');});
+};
+
+App.prototype.verificarCodigo = function() { this.mostrarToast('Use o link do email!','info'); };
+App.prototype.voltarPasso1 = function() { document.getElementById('recPasso1').style.display='block'; document.getElementById('recPasso2').style.display='none'; };
+
 // ===== TOAST =====
 App.prototype.mostrarToast = function(mensagem, tipo) { 
     var toast = document.getElementById('toast'); 
     if (!toast) { 
-        toast = document.createElement('div'); 
-        toast.id = 'toast'; 
-        toast.className = 'toast';
+        toast = document.createElement('div'); toast.id = 'toast'; toast.className = 'toast';
         var appContainer = document.querySelector('.app-container');
         if (appContainer) appContainer.appendChild(toast);
     } 
     if (!toast) return;
     toast.textContent = mensagem; 
     toast.style.background = tipo === 'erro' ? '#EF4444' : tipo === 'sucesso' ? '#10B981' : '#1A3A5C'; 
-    toast.style.color = 'white'; 
-    toast.style.display = 'block'; 
+    toast.style.color = 'white'; toast.style.display = 'block'; 
     clearTimeout(this._toastTimeout); 
     this._toastTimeout = setTimeout(function() { toast.style.display = 'none'; }, 3000); 
 };
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR - SISTEMA UNIFICADO FINAL');
-    console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅ Conectado' : '❌ Não conectado');
-    console.log('💾 Firestore:', typeof db !== 'undefined' ? '✅ Disponível' : '❌ Indisponível');
-    
-    var nav = document.getElementById('bottomNav'); 
-    if (nav) nav.style.display = 'none';
-    
+    console.log('🏗️ LPXCONSTRUTOR INICIADO');
+    var nav = document.getElementById('bottomNav'); if (nav) nav.style.display = 'none';
     window.app._app = new App();
-    
-    console.log('✅ SISTEMA INICIALIZADO!');
-    console.log('🔥 Feed em tempo real');
-    console.log('💬 Chat com comunicação entre contas');
-    console.log('🔗 Rede de conexões');
 });
