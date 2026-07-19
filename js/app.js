@@ -1,11 +1,12 @@
 // ==========================================================
-// ===== LPXCONSTRUTOR - CORRIGIDO =====
-// ===== PUBLICAÇÃO INSTANTÂNEA + FEED CORRETO =====
+// ===== LPXCONSTRUTOR - COMPLETO FINAL =====
+// ===== FEED INSTANTÂNEO + CHAT + MAPA COM MARCADORES =====
 // ==========================================================
 
 window.app = window.app || {};
 window.app._app = null;
 
+// Interface global
 window.app.fazerLogin = function() { if(window.app._app) window.app._app.fazerLogin(); };
 window.app.mostrarTela = function(id) { if(window.app._app) window.app._app.mostrarTela(id); };
 window.app.voltarTela = function() { if(window.app._app) window.app._app.voltarTela(); };
@@ -45,6 +46,9 @@ window.app.solicitarCodigo = function() { if(window.app._app) window.app._app.so
 window.app.verificarCodigo = function() { if(window.app._app) window.app._app.verificarCodigo(); };
 window.app.voltarPasso1 = function() { if(window.app._app) window.app._app.voltarPasso1(); };
 
+// ==========================================================
+// ===== CONSTRUTOR PRINCIPAL =====
+// ==========================================================
 var App = function() {
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
@@ -61,12 +65,17 @@ var App = function() {
     this._feedIniciado = false;
     this._vagasCache = [];
     this._publicando = false;
+    this.mapa = null;
+    this._mapaInicializado = false;
     this.init();
 };
 
 App.prototype.init = function() {
     var s = this;
     console.log('🚀 LPXCONSTRUTOR INICIADO');
+    console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅' : '❌');
+    console.log('🗺️ Google Maps:', typeof google !== 'undefined' ? '✅' : '⏳');
+    
     window.app._app = s;
     
     var nav = document.getElementById('bottomNav'); 
@@ -74,13 +83,14 @@ App.prototype.init = function() {
     
     if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
     
+    // Splash screen
     var splashAntigo = document.getElementById('splashScreen'); 
     if (splashAntigo?.parentNode) splashAntigo.parentNode.removeChild(splashAntigo);
     
     var splash = document.createElement('div'); 
     splash.id = 'splashScreen';
     splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.5s;';
-    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p>';
+    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;">Rede Profissional da Construção</p>';
     document.body.appendChild(splash);
     
     if (typeof firebase !== 'undefined' && firebase.auth) {
@@ -96,6 +106,8 @@ App.prototype.init = function() {
                             s.mostrarTela('homeScreen');
                             s.iniciarListenerNotificacoes();
                             s.iniciarFeedListener();
+                            // Inicializa mapa após carregar home
+                            setTimeout(function() { s.inicializarMapa(); }, 1000);
                         }
                     }).catch(function(err) {
                         console.error('Erro ao carregar usuário:', err);
@@ -125,13 +137,275 @@ App.prototype.init = function() {
     }
 };
 
-// ===== FEED CORRIGIDO - ÚNICO LISTENER =====
+// ==========================================================
+// ===== MAPA COM MARCADORES EMOJI =====
+// ==========================================================
+
+App.prototype.inicializarMapa = function() {
+    var s = this;
+    
+    if (s._mapaInicializado) {
+        console.log('🗺️ Mapa já inicializado');
+        return;
+    }
+    
+    var mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.log('⚠️ Elemento do mapa não encontrado');
+        return;
+    }
+    
+    if (typeof google === 'undefined' || !google.maps) {
+        console.log('⏳ Aguardando Google Maps carregar...');
+        var checkGoogleMaps = setInterval(function() {
+            if (typeof google !== 'undefined' && google.maps) {
+                clearInterval(checkGoogleMaps);
+                s.inicializarMapa();
+            }
+        }, 300);
+        setTimeout(function() { clearInterval(checkGoogleMaps); }, 10000);
+        return;
+    }
+    
+    console.log('🗺️ Criando mapa...');
+    
+    // Posição padrão (Brasil)
+    var defaultPosition = { lat: -14.2350, lng: -51.9253 };
+    
+    try {
+        s.mapa = new google.maps.Map(mapElement, {
+            center: defaultPosition,
+            zoom: 4,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            zoomControl: true,
+            styles: [
+                {
+                    "featureType": "poi",
+                    "elementType": "labels",
+                    "stylers": [{ "visibility": "off" }]
+                },
+                {
+                    "featureType": "transit",
+                    "elementType": "labels",
+                    "stylers": [{ "visibility": "off" }]
+                }
+            ]
+        });
+        
+        s._mapaInicializado = true;
+        console.log('✅ Mapa criado com sucesso');
+        
+        // Tenta obter localização do usuário
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    var userPos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    s.mapa.setCenter(userPos);
+                    s.mapa.setZoom(13);
+                    
+                    // Adiciona marcador da localização atual
+                    s.adicionarMarcadorEmoji(userPos, '📍', 'Você está aqui', '#EF4444');
+                    
+                    console.log('📍 Localização do usuário obtida');
+                },
+                function(error) {
+                    console.log('⚠️ Geolocalização não disponível:', error.message);
+                    s.carregarMarcadoresMapa();
+                },
+                { 
+                    enableHighAccuracy: true,
+                    timeout: 8000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            s.carregarMarcadoresMapa();
+        }
+        
+    } catch(e) {
+        console.error('❌ Erro ao criar mapa:', e);
+        mapElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:300px;background:#f0f0f0;border-radius:12px;">' +
+            '<div style="text-align:center;"><div style="font-size:50px;">🗺️</div><p style="color:#666;">Mapa indisponível</p></div></div>';
+    }
+};
+
+App.prototype.carregarMarcadoresMapa = function() {
+    var s = this;
+    if (!s.mapa) {
+        console.log('⚠️ Mapa não disponível para marcadores');
+        return;
+    }
+    
+    console.log('📍 Carregando marcadores...');
+    
+    // Marcador do próprio usuário logado
+    if (s.usuarioLogado && s.usuarioLogado.localizacao && s.usuarioLogado.localizacao.cidade) {
+        var enderecoUsuario = s.usuarioLogado.localizacao.cidade + ', ' + 
+                             s.usuarioLogado.localizacao.estado + ', Brasil';
+        
+        s.geocodificarEndereco(enderecoUsuario, function(posicao) {
+            if (posicao) {
+                var emoji = s.usuarioLogado.tipo === 'empreiteiro' ? '🏰' : '👷‍♂️';
+                s.adicionarMarcadorEmoji(posicao, emoji, s.usuarioLogado.nome + ' (Você)', '#FFD700');
+            }
+        });
+    }
+    
+    // Marcadores de outros usuários
+    if (typeof db !== 'undefined') {
+        db.collection('usuarios')
+            .where('localizacao', '!=', null)
+            .limit(100)
+            .get()
+            .then(function(snap) {
+                console.log('📍 Encontrados ' + snap.size + ' usuários com localização');
+                
+                snap.forEach(function(doc) {
+                    var user = doc.data();
+                    user.id = doc.id;
+                    
+                    // Pula o próprio usuário
+                    if (s.usuarioLogado && user.id === s.usuarioLogado.id) return;
+                    
+                    if (user.localizacao && user.localizacao.cidade) {
+                        var endereco = user.localizacao.cidade + ', ' + 
+                                      (user.localizacao.estado || '') + ', Brasil';
+                        
+                        s.geocodificarEndereco(endereco, function(posicao) {
+                            if (posicao) {
+                                var emoji = user.tipo === 'empreiteiro' ? '🏰' : '👷';
+                                var cor = user.tipo === 'empreiteiro' ? '#F59E0B' : '#10B981';
+                                var info = '<div style="padding:10px;text-align:center;">' +
+                                    '<div style="font-size:30px;">' + emoji + '</div>' +
+                                    '<strong>' + user.nome + '</strong><br>' +
+                                    '<small>' + (user.profissao || user.tipo || '') + '</small><br>' +
+                                    '<small>📍 ' + user.localizacao.cidade + '/' + user.localizacao.estado + '</small><br>' +
+                                    '<button onclick="window.app.verPerfil(\'' + user.id + '\')" style="margin-top:8px;padding:6px 12px;background:#1A3A5C;color:white;border:none;border-radius:15px;cursor:pointer;font-size:11px;">Ver Perfil</button>' +
+                                    '</div>';
+                                s.adicionarMarcadorEmoji(posicao, emoji, user.nome, cor, info);
+                            }
+                        });
+                    }
+                });
+            })
+            .catch(function(err) {
+                console.error('❌ Erro ao buscar usuários:', err);
+            });
+    }
+};
+
+App.prototype.geocodificarEndereco = function(endereco, callback) {
+    if (typeof google === 'undefined' || !google.maps) {
+        console.log('⚠️ Google Maps não disponível para geocodificação');
+        callback(null);
+        return;
+    }
+    
+    var geocoder = new google.maps.Geocoder();
+    
+    geocoder.geocode({ address: endereco, region: 'BR' }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            var posicao = {
+                lat: results[0].geometry.location.lat(),
+                lng: results[0].geometry.location.lng()
+            };
+            callback(posicao);
+        } else {
+            console.log('⚠️ Geocodificação falhou para:', endereco, 'Status:', status);
+            callback(null);
+        }
+    });
+};
+
+App.prototype.adicionarMarcadorEmoji = function(posicao, emoji, nome, cor, infoPersonalizada) {
+    var s = this;
+    if (!s.mapa || !posicao) return;
+    
+    try {
+        // Conteúdo do marcador
+        var markerDiv = document.createElement('div');
+        markerDiv.style.cssText = 'font-size:36px;cursor:pointer;filter:drop-shadow(2px 3px 4px rgba(0,0,0,0.5));transition:transform 0.2s;text-align:center;';
+        markerDiv.innerHTML = emoji;
+        markerDiv.title = nome;
+        
+        markerDiv.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.3)';
+        });
+        
+        markerDiv.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+        
+        // InfoWindow
+        var infoContent = infoPersonalizada || 
+            '<div style="padding:10px;text-align:center;">' +
+            '<div style="font-size:30px;">' + emoji + '</div>' +
+            '<strong>' + nome + '</strong>' +
+            '</div>';
+        
+        var infoWindow = new google.maps.InfoWindow({
+            content: infoContent,
+            maxWidth: 250
+        });
+        
+        // Verifica se AdvancedMarkerElement está disponível
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+            var marker = new google.maps.marker.AdvancedMarkerElement({
+                map: s.mapa,
+                position: posicao,
+                content: markerDiv,
+                title: nome
+            });
+            
+            markerDiv.addEventListener('click', function() {
+                infoWindow.open(s.mapa, marker);
+            });
+        } else {
+            // Fallback para marcador tradicional
+            var marker = new google.maps.Marker({
+                position: posicao,
+                map: s.mapa,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 0,
+                    fillOpacity: 0,
+                    strokeOpacity: 0
+                },
+                label: {
+                    text: emoji,
+                    fontSize: '28px',
+                    className: 'custom-marker-label'
+                },
+                title: nome,
+                animation: google.maps.Animation.DROP
+            });
+            
+            marker.addListener('click', function() {
+                infoWindow.open(s.mapa, marker);
+            });
+        }
+        
+        console.log('✅ Marcador:', emoji, nome);
+        
+    } catch(e) {
+        console.error('❌ Erro ao adicionar marcador:', e, nome);
+    }
+};
+
+// ==========================================================
+// ===== FEED INSTANTÂNEO =====
+// ==========================================================
+
 App.prototype.iniciarFeedListener = function() {
     var s = this;
     
-    // NUNCA recria o listener se já existe
     if (s._listenerFeed) {
-        console.log('📡 Feed listener já ativo, apenas renderizando');
+        console.log('📡 Feed listener já ativo');
         var container = document.getElementById('feedContainer');
         if (container && s._vagasCache.length > 0) {
             s.renderizarFeed(container, s._vagasCache);
@@ -139,7 +413,10 @@ App.prototype.iniciarFeedListener = function() {
         return;
     }
     
-    if (typeof db === 'undefined') return;
+    if (typeof db === 'undefined') {
+        console.error('❌ Firestore não disponível');
+        return;
+    }
     
     console.log('🔥 INICIANDO LISTENER DO FEED');
     
@@ -157,30 +434,43 @@ App.prototype.iniciarFeedListener = function() {
             
             // Ordena por data (mais recente primeiro)
             vagas.sort(function(a, b) {
-                var da = a.dataCriacao ? (a.dataCriacao.toDate ? a.dataCriacao.toDate().getTime() : new Date(a.dataCriacao).getTime()) : 0;
-                var db2 = b.dataCriacao ? (b.dataCriacao.toDate ? b.dataCriacao.toDate().getTime() : new Date(b.dataCriacao).getTime()) : 0;
+                var da = 0, db2 = 0;
+                try {
+                    da = a.dataCriacao?.toDate?.().getTime() || new Date(a.dataCriacao).getTime() || 0;
+                    db2 = b.dataCriacao?.toDate?.().getTime() || new Date(b.dataCriacao).getTime() || 0;
+                } catch(e) {}
                 return db2 - da;
             });
             
-            // Atualiza cache
             s._vagasCache = vagas;
             
-            // Renderiza o feed
             var container = document.getElementById('feedContainer');
             if (container && s.tabAtual === 'feed') {
                 s.renderizarFeed(container, vagas);
             }
+            
+            // Notifica novas vagas
+            snap.docChanges().forEach(function(change) {
+                if (change.type === 'added' && s._feedIniciado) {
+                    var vaga = change.doc.data();
+                    if (vaga.autorId !== s.usuarioLogado?.id) {
+                        s.mostrarToast('🆕 ' + (vaga.titulo || 'Nova obra publicada!'), 'info');
+                    }
+                }
+            });
         }, function(error) {
             console.error('❌ Erro no feed:', error);
         });
+    
+    s._feedIniciado = true;
 };
 
 App.prototype.pararFeedListener = function() {
     if (this._listenerFeed) {
-        console.log('🛑 Parando feed listener');
         this._listenerFeed();
         this._listenerFeed = null;
     }
+    this._feedIniciado = false;
     this._vagasCache = [];
 };
 
@@ -198,13 +488,22 @@ App.prototype.iniciarListenerNotificacoes = function() {
             if (badge) { 
                 badge.textContent = count > 99 ? '99+' : count; 
                 badge.style.display = count > 0 ? 'flex' : 'none'; 
-            } 
-        }, function(error) {
-            console.error('Erro notificações:', error);
+            }
+            snap.docChanges().forEach(function(change) {
+                if (change.type === 'added') {
+                    var notif = change.doc.data();
+                    if (notif.tipo === 'mensagem') {
+                        s.mostrarToast('💬 Nova mensagem!', 'info');
+                    }
+                }
+            });
         });
 };
 
+// ==========================================================
 // ===== NAVEGAÇÃO =====
+// ==========================================================
+
 App.prototype.mostrarTela = function(id) { 
     var s = this; 
     
@@ -243,12 +542,18 @@ App.prototype.mostrarTela = function(id) {
         });
     }
     
-    if (id === 'homeScreen') s.carregarHome();
-    if (id === 'meuPerfilScreen') s.carregarMeuPerfil(); 
-    if (id === 'buscaScreen') s.buscarProfissionais(); 
-    if (id === 'minhasObrasScreen') s.carregarMinhasObras(); 
-    if (id === 'chatScreen' && !s.usuarioSelecionado) s.carregarListaConversas();
-    if (id === 'configScreen') s.carregarConfigScreen(); 
+    // Carrega conteúdo específico
+    switch(id) {
+        case 'homeScreen':
+            s.carregarHome();
+            if (!s._mapaInicializado) setTimeout(function() { s.inicializarMapa(); }, 500);
+            break;
+        case 'meuPerfilScreen': s.carregarMeuPerfil(); break;
+        case 'buscaScreen': s.buscarProfissionais(); break;
+        case 'minhasObrasScreen': s.carregarMinhasObras(); break;
+        case 'chatScreen': if (!s.usuarioSelecionado) s.carregarListaConversas(); break;
+        case 'configScreen': s.carregarConfigScreen(); break;
+    }
 };
 
 App.prototype.voltarTela = function() { 
@@ -259,7 +564,10 @@ App.prototype.voltarTela = function() {
     }
 };
 
-// ===== LOGIN =====
+// ==========================================================
+// ===== LOGIN / CADASTRO / SAIR =====
+// ==========================================================
+
 App.prototype.fazerLogin = function() { 
     var s = this; 
     var email = document.getElementById('loginEmail')?.value?.trim() || '';
@@ -281,7 +589,10 @@ App.prototype.fazerLogin = function() {
                                 localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); 
                                 s.historicoTelas = []; 
                                 s.mostrarToast('Bem-vindo, ' + s.usuarioLogado.nome + '!', 'sucesso'); 
-                                s.mostrarTela('homeScreen'); 
+                                s.mostrarTela('homeScreen');
+                                s.iniciarListenerNotificacoes();
+                                s.iniciarFeedListener();
+                                setTimeout(function() { s.inicializarMapa(); }, 1000);
                             } 
                         }); 
                 } 
@@ -295,7 +606,6 @@ App.prototype.fazerLogin = function() {
     }
 };
 
-// ===== CADASTRO =====
 App.prototype.cadastrar = function() { 
     var s = this; 
     var dados = { 
@@ -331,7 +641,10 @@ App.prototype.cadastrar = function() {
                             localStorage.setItem('usuarioLPX', JSON.stringify(dados)); 
                             s.historicoTelas = []; 
                             s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); 
-                            s.mostrarTela('homeScreen'); 
+                            s.mostrarTela('homeScreen');
+                            s.iniciarListenerNotificacoes();
+                            s.iniciarFeedListener();
+                            setTimeout(function() { s.inicializarMapa(); }, 1000);
                         }); 
                 } 
             })
@@ -342,7 +655,6 @@ App.prototype.cadastrar = function() {
     }
 };
 
-// ===== SAIR =====
 App.prototype.sair = function() { 
     if (typeof firebase !== 'undefined' && firebase.auth) firebase.auth().signOut(); 
     this.pararFeedListener();
@@ -350,6 +662,8 @@ App.prototype.sair = function() {
     if (this._listenerNotificacoes) { this._listenerNotificacoes(); this._listenerNotificacoes = null; }
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
+    this.mapa = null;
+    this._mapaInicializado = false;
     localStorage.removeItem('usuarioLPX'); 
     this.historicoTelas = []; 
     this.mostrarTela('loginScreen'); 
@@ -357,7 +671,10 @@ App.prototype.sair = function() {
     if (modal) modal.style.display = 'none';
 };
 
+// ==========================================================
 // ===== HOME =====
+// ==========================================================
+
 App.prototype.carregarHome = function() { 
     var s = this; 
     if (!s.usuarioLogado) { s.mostrarTela('loginScreen'); return; } 
@@ -370,7 +687,7 @@ App.prototype.carregarHome = function() {
     if (elSaudacao) elSaudacao.textContent = '👋 ' + saudacao + ', ' + u.nome + '!';
     
     var elResumo = document.getElementById('resumoTexto');
-    if (elResumo) elResumo.textContent = u.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
+    if (elResumo) elResumo.textContent = u.tipo === 'empreiteiro' ? '🏰 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
     
     var btnPublicar = document.getElementById('btnPublicar');
     var btnObras = document.getElementById('btnObras');
@@ -383,18 +700,19 @@ App.prototype.carregarHome = function() {
     // Garante que o feed listener está ativo
     if (!s._listenerFeed) s.iniciarFeedListener();
     
-    // Renderiza o feed com cache se disponível
+    // Renderiza o feed
     if (s.tabAtual === 'feed') {
         var container = document.getElementById('feedContainer');
-        if (container && s._vagasCache.length > 0) {
-            s.renderizarFeed(container, s._vagasCache);
-        } else if (container) {
-            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
+        if (container) {
+            if (s._vagasCache.length > 0) {
+                s.renderizarFeed(container, s._vagasCache);
+            } else {
+                container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
+            }
         }
     }
 };
 
-// ===== MUDAR TAB =====
 App.prototype.mudarTab = function(t) { 
     this.tabAtual = t; 
     
@@ -421,7 +739,10 @@ App.prototype.mudarTab = function(t) {
     if (t === 'rede') this.carregarRede(); 
 };
 
+// ==========================================================
 // ===== RENDERIZAR FEED =====
+// ==========================================================
+
 App.prototype.renderizarFeed = function(container, vagas) { 
     var s = this; 
     
@@ -485,16 +806,14 @@ App.prototype.renderizarFeed = function(container, vagas) {
 App.prototype.apagarObra = function(oid, ev) { 
     if (ev) ev.stopPropagation(); 
     if (!confirm('Apagar esta obra?')) return; 
-    if (typeof db !== 'undefined') {
-        db.collection('vagas').doc(oid).update({ ativa: false })
-            .then(function() {
-                console.log('✅ Obra apagada');
-            });
-    }
+    if (typeof db !== 'undefined') db.collection('vagas').doc(oid).update({ ativa: false }); 
     this.mostrarToast('Obra apagada!', 'sucesso'); 
 };
 
-// ===== PUBLICAR VAGA - CORRIGIDO =====
+// ==========================================================
+// ===== PUBLICAR VAGA =====
+// ==========================================================
+
 App.prototype.abrirTelaPublicacao = function() { 
     var s = this;
     s.mostrarTela('publicarVagaScreen');
@@ -524,11 +843,7 @@ App.prototype.previewFotoObra = function(e) {
 App.prototype.publicarVagaApp = function() { 
     var s = this; 
     
-    // Evita dupla publicação
-    if (s._publicando) {
-        console.log('⚠️ Publicação já em andamento');
-        return;
-    }
+    if (s._publicando) { console.log('⚠️ Publicação em andamento'); return; }
     
     var titulo = document.getElementById('vagaTitulo')?.value?.trim() || '';
     var endereco = document.getElementById('vagaEndereco')?.value?.trim() || '';
@@ -540,69 +855,52 @@ App.prototype.publicarVagaApp = function() {
     var profissoesStr = profissoes.length > 0 ? profissoes.join(', ') : 'Geral'; 
     
     if (!titulo || !endereco || !valor) { 
-        s.mostrarToast('Preencha título, endereço e valor!', 'erro'); 
-        return; 
+        s.mostrarToast('Preencha título, endereço e valor!', 'erro'); return; 
     } 
-    if (!s.usuarioLogado) { 
-        s.mostrarToast('Faça login!', 'erro'); 
-        return; 
-    }
+    if (!s.usuarioLogado) { s.mostrarToast('Faça login!', 'erro'); return; }
     
     s._publicando = true;
     s.mostrarToast('Publicando...', 'info'); 
     
     var vaga = { 
-        titulo: titulo, 
-        endereco: endereco, 
-        profissoes: profissoesStr, 
-        valorHora: parseFloat(valor) || 0, 
-        descricao: descricao, 
-        fotoObra: s.vagaFotoBase64 || '', 
-        status: 'disponivel', 
-        ativa: true, 
-        autorId: s.usuarioLogado.id, 
-        autorNome: s.usuarioLogado.nome, 
-        autorFoto: s.usuarioLogado.fotoPerfil || null, 
-        interessados: [], 
+        titulo: titulo, endereco: endereco, profissoes: profissoesStr, 
+        valorHora: parseFloat(valor) || 0, descricao: descricao, 
+        fotoObra: s.vagaFotoBase64 || '', status: 'disponivel', ativa: true, 
+        autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome, 
+        autorFoto: s.usuarioLogado.fotoPerfil || null, interessados: [], 
         dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
     }; 
-    
-    console.log('📤 Publicando vaga:', titulo);
     
     if (typeof db !== 'undefined') { 
         db.collection('vagas').add(vaga)
             .then(function(docRef) { 
-                console.log('✅ Vaga publicada com ID:', docRef.id);
-                s.mostrarToast('✅ Obra publicada com sucesso!', 'sucesso'); 
+                console.log('✅ Vaga publicada:', docRef.id);
+                s.mostrarToast('✅ Obra publicada!', 'sucesso'); 
                 s.vagaFotoBase64 = null;
                 s._publicando = false;
-                
-                // Volta para home sem limpar histórico
                 s.historicoTelas = []; 
                 s.mostrarTela('homeScreen');
-                
-                // Garante que está na tab feed
-                if (s.tabAtual !== 'feed') {
-                    s.mudarTab('feed');
-                }
+                if (s.tabAtual !== 'feed') s.mudarTab('feed');
             })
             .catch(function(err) {
-                console.error('❌ Erro ao publicar:', err);
-                s.mostrarToast('Erro ao publicar. Tente novamente.', 'erro');
+                console.error('❌ Erro:', err);
+                s.mostrarToast('Erro ao publicar', 'erro');
                 s._publicando = false;
             }); 
     } else {
         s._publicando = false;
-        s.mostrarToast('Firebase não disponível', 'erro');
     }
 };
 
+// ==========================================================
 // ===== REDE =====
+// ==========================================================
+
 App.prototype.carregarRede = function() { 
     var s = this;
     var container = document.getElementById('redeContainer'); 
     if (!container || !s.usuarioLogado) return; 
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>'; 
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando rede...</div>'; 
     
     if (typeof db !== 'undefined') { 
         if (s._listenerRede) s._listenerRede(); 
@@ -616,7 +914,7 @@ App.prototype.carregarRede = function() {
                 if (conexoes.length === 0) { 
                     container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
                         '<div style="font-size:50px;">🔗</div><h3>Sua rede está vazia</h3>' +
-                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary">🔍 Buscar</button></div>'; 
+                        '<button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary">🔍 Buscar Profissionais</button></div>'; 
                     return; 
                 } 
                 s.renderizarRede(container, conexoes); 
@@ -709,7 +1007,10 @@ App.prototype.recusarConvite = function(nid, deId) {
     this.mostrarToast('Convite recusado', 'info'); 
 };
 
+// ==========================================================
 // ===== CHAT =====
+// ==========================================================
+
 App.prototype.carregarListaConversas = function() {
     var s = this;
     s.usuarioSelecionado = null;
@@ -796,8 +1097,11 @@ App.prototype.iniciarListenerMensagens = function() {
             });
             
             mensagens.sort(function(a, b) {
-                var da = a.dataEnvio?.toDate?.() || new Date(a.dataEnvio || 0);
-                var db2 = b.dataEnvio?.toDate?.() || new Date(b.dataEnvio || 0);
+                var da = 0, db2 = 0;
+                try {
+                    da = a.dataEnvio?.toDate?.().getTime() || new Date(a.dataEnvio).getTime() || 0;
+                    db2 = b.dataEnvio?.toDate?.().getTime() || new Date(b.dataEnvio).getTime() || 0;
+                } catch(e) {}
                 return da - db2;
             });
             
@@ -823,7 +1127,7 @@ App.prototype.iniciarListenerMensagens = function() {
             }
         }, function(error) {
             console.error('❌ Erro chat:', error);
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">Erro: ' + error.message + '</div>';
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">Erro ao carregar</div>';
         });
 };
 
@@ -848,26 +1152,25 @@ App.prototype.enviarMensagem = function() {
     };
     
     db.collection('mensagens').add(mensagem).then(function() {
-        console.log('✅ Mensagem enviada');
         db.collection('notificacoes').add({
             usuarioId: s.usuarioSelecionado.id,
             titulo: '💬 ' + s.usuarioLogado.nome,
             mensagem: texto.substring(0, 50),
-            tipo: 'mensagem',
-            de: s.usuarioLogado.id,
-            lida: false,
-            dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+            tipo: 'mensagem', de: s.usuarioLogado.id,
+            lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(function(){});
     }).catch(function(err) {
-        console.error('Erro ao enviar:', err);
-        s.mostrarToast('Erro ao enviar', 'erro');
+        console.error('Erro:', err);
     }).finally(function() {
         s._enviandoMensagem = false;
         setTimeout(function() { if (input) input.focus(); }, 100);
     });
 };
 
-// ===== BUSCA =====
+// ==========================================================
+// ===== BUSCA / PERFIL / OBRAS / NOTIFICAÇÕES =====
+// ==========================================================
+
 App.prototype.buscarProfissionais = function() { 
     var s = this;
     var container = document.getElementById('buscaResultados'); 
@@ -902,7 +1205,6 @@ App.prototype.buscarProfissionais = function() {
     } 
 };
 
-// ===== PERFIL PÚBLICO =====
 App.prototype.verPerfil = function(uid) { 
     var s = this; 
     if (typeof db !== 'undefined') { 
@@ -914,7 +1216,8 @@ App.prototype.verPerfil = function(uid) {
                 conteudo.innerHTML = '<div style="text-align:center;padding:20px;">' +
                     '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #f0c27f;">' + 
                     (u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷') + '</div>' +
-                    '<h2>' + u.nome + '</h2><p>' + (u.profissao||u.tipo||'') + '</p></div>' +
+                    '<h2>' + u.nome + '</h2><p>' + (u.profissao||u.tipo||'') + ' • ⭐ ' + (u.score||0).toFixed(1) + '</p>' +
+                    '<p>📅 Experiência: ' + (u.experiencia||'0') + ' anos</p></div>' +
                     '<div class="card"><p>📧 ' + (u.email||'') + '</p><p>📱 ' + (u.celular||'') + '</p></div>' +
                     '<button onclick="window.app.iniciarChat(\'' + u.id + '\')" class="btn btn-primary">💬 Chat</button>' +
                     '<button onclick="window.app.adicionarNaRede(\'' + u.id + '\')" class="btn btn-success">🔗 Conectar</button>';
@@ -924,7 +1227,6 @@ App.prototype.verPerfil = function(uid) {
     } 
 };
 
-// ===== MEU PERFIL =====
 App.prototype.carregarMeuPerfil = function() { 
     var s = this; 
     if (!s.usuarioLogado) return; 
@@ -942,11 +1244,11 @@ App.prototype.carregarMeuPerfil = function() {
         '<div style="padding:16px;">' +
         '<button onclick="window.app.abrirEditarPerfil()" class="btn btn-primary">✏️ Editar</button>' +
         '<button onclick="window.app.gerarQRCodeCompartilhar()" class="btn btn-outline">📱 Compartilhar</button>' +
+        '<button onclick="window.app.abrirMapaLocalizacao()" class="btn btn-outline">📍 Localização</button>' +
         '<button onclick="window.app.mostrarTela(\'configScreen\')" class="btn btn-outline">⚙️ Configurações</button>' +
         '<button onclick="document.getElementById(\'modalSair\').style.display=\'flex\'" class="btn btn-danger">🚪 Sair</button></div>';
 };
 
-// ===== MINHAS OBRAS =====
 App.prototype.carregarMinhasObras = function() { 
     var s = this;
     var container = document.getElementById('listaObrasContainer'); 
@@ -984,7 +1286,6 @@ App.prototype.carregarMinhasObras = function() {
     } 
 };
 
-// ===== DETALHE DA OBRA =====
 App.prototype.verDetalheObra = function(oid) { 
     if (typeof db !== 'undefined') { 
         db.collection('vagas').doc(oid).get().then(function(doc) { 
@@ -1007,7 +1308,6 @@ App.prototype.verDetalheObra = function(oid) {
     } 
 };
 
-// ===== NOTIFICAÇÕES =====
 App.prototype.mostrarNotificacoes = function() { 
     var s = this; 
     if (!s.usuarioLogado) return; 
@@ -1019,8 +1319,11 @@ App.prototype.mostrarNotificacoes = function() {
                 snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); }); 
                 
                 ns.sort(function(a, b) {
-                    var da = a.dataCriacao?.toDate?.() || new Date(0);
-                    var db2 = b.dataCriacao?.toDate?.() || new Date(0);
+                    var da = 0, db2 = 0;
+                    try {
+                        da = a.dataCriacao?.toDate?.().getTime() || 0;
+                        db2 = b.dataCriacao?.toDate?.().getTime() || 0;
+                    } catch(e) {}
                     return db2 - da;
                 });
                 
@@ -1053,33 +1356,43 @@ App.prototype.mostrarNotificacoes = function() {
     } 
 };
 
-// ===== LOCALIZAÇÃO, UPLOAD, EDITAR, QR CODE, CONFIG =====
+// ==========================================================
+// ===== LOCALIZAÇÃO / UPLOAD / EDITAR / QR / CONFIG =====
+// ==========================================================
+
 App.prototype.abrirMapaLocalizacao = function() { 
     var s = this; if (!s.usuarioLogado) return; 
     var u = s.usuarioLogado; 
     var modalAntigo = document.getElementById('modalLoc'); if (modalAntigo) modalAntigo.remove();
     var modal = document.createElement('div'); modal.id = 'modalLoc';
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:white;z-index:9999;';
-    modal.innerHTML = '<div style="background:#1A3A5C;color:white;padding:20px;"><button onclick="document.getElementById(\'modalLoc\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅</button><h2>📍 Localização</h2></div>' +
-        '<div style="padding:20px;"><div class="input-group"><label>Estado</label><select id="locEstado" onchange="window.app.atualizarCidades()" class="input-field"><option value="">Selecione...</option>' + s.getEstadosHTML(u.localizacao?.estado) + '</select></div>' +
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:white;z-index:9999;overflow-y:auto;';
+    modal.innerHTML = '<div style="background:#1A3A5C;color:white;padding:20px;">' +
+        '<button onclick="document.getElementById(\'modalLoc\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅ Voltar</button>' +
+        '<h2>📍 Sua Localização</h2></div>' +
+        '<div style="padding:20px;">' +
+        '<div class="input-group"><label>Estado</label><select id="locEstado" onchange="window.app.atualizarCidades()" class="input-field"><option value="">Selecione...</option>' + s.getEstadosHTML(u.localizacao?.estado) + '</select></div>' +
         '<div class="input-group"><label>Cidade</label><select id="locCidade" onchange="window.app.atualizarBairros()" class="input-field"><option value="">Selecione...</option></select></div>' +
         '<div class="input-group"><label>Bairro</label><select id="locBairro" class="input-field"><option value="">Selecione...</option></select></div>' +
-        '<button onclick="window.app.salvarLocalizacao()" class="btn btn-success">💾 SALVAR</button></div>';
+        '<button onclick="window.app.salvarLocalizacao()" class="btn btn-success" style="margin-top:10px;">💾 SALVAR LOCALIZAÇÃO</button>' +
+        '<p style="text-align:center;color:#666;font-size:11px;margin-top:15px;">Sua localização aparecerá no mapa para outros profissionais</p></div>';
     document.body.appendChild(modal);
-    if (u.localizacao?.estado) { setTimeout(function() { window.app.atualizarCidades(u.localizacao.cidade); }, 300); }
+    if (u.localizacao?.estado) { 
+        setTimeout(function() { window.app.atualizarCidades(u.localizacao.cidade); }, 300);
+        if (u.localizacao.bairro) setTimeout(function() { window.app.atualizarBairros(u.localizacao.bairro); }, 600);
+    }
 };
 
 App.prototype.getEstadosHTML = function(sel) { 
-    var e = {'AC':'Acre','AL':'Alagoas','AP':'Amapá','AM':'Amazonas','BA':'Bahia','CE':'Ceará','DF':'DF','ES':'Espírito Santo','GO':'Goiás','MA':'Maranhão','MT':'Mato Grosso','MS':'Mato Grosso do Sul','MG':'Minas Gerais','PA':'Pará','PB':'Paraíba','PR':'Paraná','PE':'Pernambuco','PI':'Piauí','RJ':'Rio de Janeiro','RN':'Rio Grande do Norte','RS':'Rio Grande do Sul','RO':'Rondônia','RR':'Roraima','SC':'Santa Catarina','SP':'São Paulo','SE':'Sergipe','TO':'Tocantins'}; 
+    var e = {'AC':'Acre','AL':'Alagoas','AP':'Amapá','AM':'Amazonas','BA':'Bahia','CE':'Ceará','DF':'Distrito Federal','ES':'Espírito Santo','GO':'Goiás','MA':'Maranhão','MT':'Mato Grosso','MS':'Mato Grosso do Sul','MG':'Minas Gerais','PA':'Pará','PB':'Paraíba','PR':'Paraná','PE':'Pernambuco','PI':'Piauí','RJ':'Rio de Janeiro','RN':'Rio Grande do Norte','RS':'Rio Grande do Sul','RO':'Rondônia','RR':'Roraima','SC':'Santa Catarina','SP':'São Paulo','SE':'Sergipe','TO':'Tocantins'}; 
     var h = ''; for(var s in e) h += '<option value="'+s+'"'+(sel===s?' selected':'')+'>'+e[s]+'</option>'; return h; 
 };
 
 App.prototype.getTodasCidades = function() { 
-    return {'SP':['São Paulo','Campinas','Santos'],'RJ':['Rio de Janeiro','Niterói'],'MG':['Belo Horizonte','Uberlândia'],'BA':['Salvador','Feira de Santana'],'PR':['Curitiba','Londrina'],'RS':['Porto Alegre','Caxias do Sul'],'PE':['Recife','Jaboatão'],'CE':['Fortaleza','Caucaia'],'SC':['Florianópolis','Joinville'],'GO':['Goiânia','Anápolis'],'DF':['Brasília']}; 
+    return {'SP':['São Paulo','Campinas','Santos','Guarulhos','Ribeirão Preto'],'RJ':['Rio de Janeiro','Niterói','Duque de Caxias'],'MG':['Belo Horizonte','Uberlândia','Contagem'],'BA':['Salvador','Feira de Santana','Vitória da Conquista'],'PR':['Curitiba','Londrina','Maringá'],'RS':['Porto Alegre','Caxias do Sul','Canoas'],'PE':['Recife','Jaboatão','Olinda'],'CE':['Fortaleza','Caucaia','Juazeiro do Norte'],'SC':['Florianópolis','Joinville','Blumenau'],'GO':['Goiânia','Aparecida de Goiânia','Anápolis'],'DF':['Brasília','Taguatinga']}; 
 };
 
 App.prototype.getBairrosPorCidade = function(c) { 
-    var b = {'São Paulo':['Centro','Pinheiros'],'Rio de Janeiro':['Copacabana','Ipanema'],'Belo Horizonte':['Savassi','Pampulha'],'Florianópolis':['Centro','Lagoa'],'Curitiba':['Centro','Batel'],'Porto Alegre':['Moinhos','Bela Vista'],'Salvador':['Barra','Ondina'],'Recife':['Boa Viagem','Pina'],'Fortaleza':['Meireles','Aldeota'],'Brasília':['Asa Sul','Asa Norte']}; 
+    var b = {'São Paulo':['Centro','Pinheiros','Vila Mariana','Moema'],'Rio de Janeiro':['Copacabana','Ipanema','Leblon','Barra da Tijuca'],'Belo Horizonte':['Savassi','Lourdes','Pampulha'],'Florianópolis':['Centro','Lagoa da Conceição','Ingleses'],'Curitiba':['Centro','Batel','Água Verde'],'Porto Alegre':['Moinhos de Vento','Bela Vista'],'Salvador':['Barra','Ondina','Pituba'],'Recife':['Boa Viagem','Pina'],'Fortaleza':['Meireles','Aldeota'],'Brasília':['Asa Sul','Asa Norte']}; 
     return b[c]||['Centro']; 
 };
 
@@ -1104,9 +1417,17 @@ App.prototype.salvarLocalizacao = function() {
     if(!es||!ci){s.mostrarToast('Selecione estado e cidade!','erro');return;} 
     s.usuarioLogado.localizacao={estado:es,cidade:ci,bairro:ba}; 
     localStorage.setItem('usuarioLPX',JSON.stringify(s.usuarioLogado)); 
-    if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update({localizacao:s.usuarioLogado.localizacao}); 
+    if(typeof db!=='undefined') {
+        db.collection('usuarios').doc(s.usuarioLogado.id).update({localizacao:s.usuarioLogado.localizacao})
+            .then(function() {
+                console.log('✅ Localização salva');
+                // Recarrega marcadores do mapa
+                s.carregarMarcadoresMapa();
+            });
+    }
     document.getElementById('modalLoc')?.remove(); 
-    s.mostrarToast('Localização salva!','sucesso'); 
+    s.mostrarToast('📍 Localização salva!', 'sucesso'); 
+    s.carregarMeuPerfil(); 
 };
 
 App.prototype.uploadFoto = function(e) { 
@@ -1116,7 +1437,7 @@ App.prototype.uploadFoto = function(e) {
         s.usuarioLogado.fotoPerfil=ev.target.result; 
         localStorage.setItem('usuarioLPX',JSON.stringify(s.usuarioLogado)); 
         if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update({fotoPerfil:ev.target.result}); 
-        s.mostrarToast('Foto atualizada!','sucesso'); s.carregarMeuPerfil(); 
+        s.mostrarToast('📷 Foto atualizada!','sucesso'); s.carregarMeuPerfil(); 
     }; 
     r.readAsDataURL(f); 
 };
@@ -1126,11 +1447,11 @@ App.prototype.abrirEditarPerfil = function() {
     var modalAntigo=document.getElementById('modalEditar'); if(modalAntigo) modalAntigo.remove();
     var modal=document.createElement('div'); modal.id='modalEditar';
     modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML='<div class="modal-content"><div class="modal-header"><h3>✏️ Editar</h3><button class="modal-close" onclick="document.getElementById(\'modalEditar\').remove()">✕</button></div>'+
+    modal.innerHTML='<div class="modal-content"><div class="modal-header"><h3>✏️ Editar Perfil</h3><button class="modal-close" onclick="document.getElementById(\'modalEditar\').remove()">✕</button></div>'+
         '<div class="modal-body"><div class="input-group"><label>Nome</label><input id="editNome" value="'+(u.nome||'')+'" class="input-field"></div>'+
         '<div class="input-group"><label>Celular</label><input id="editCelular" value="'+(u.celular||'')+'" class="input-field"></div>'+
         '<div class="input-group"><label>Profissão</label><input id="editProfissao" value="'+(u.profissao||'')+'" class="input-field"></div>'+
-        '<div class="input-group"><label>Experiência</label><input id="editExperiencia" type="number" value="'+(u.experiencia||'0')+'" class="input-field"></div>'+
+        '<div class="input-group"><label>Experiência (anos)</label><input id="editExperiencia" type="number" value="'+(u.experiencia||'0')+'" class="input-field"></div>'+
         '<button onclick="window.app.salvarPerfil()" class="btn btn-success">💾 SALVAR</button>'+
         '<button onclick="document.getElementById(\'modalEditar\').remove()" class="btn btn-danger">CANCELAR</button></div></div>';
     document.body.appendChild(modal);
@@ -1144,7 +1465,7 @@ App.prototype.salvarPerfil = function() {
     localStorage.setItem('usuarioLPX',JSON.stringify(s.usuarioLogado)); 
     if(typeof db!=='undefined') db.collection('usuarios').doc(s.usuarioLogado.id).update(d); 
     document.getElementById('modalEditar')?.remove(); 
-    s.mostrarToast('Perfil atualizado!','sucesso'); s.carregarMeuPerfil(); 
+    s.mostrarToast('✅ Perfil atualizado!','sucesso'); s.carregarMeuPerfil(); 
 };
 
 App.prototype.gerarQRCodeCompartilhar = function() { 
@@ -1153,9 +1474,10 @@ App.prototype.gerarQRCodeCompartilhar = function() {
     var modalAntigo=document.getElementById('modalQR'); if(modalAntigo) modalAntigo.remove();
     var modal=document.createElement('div'); modal.id='modalQR';
     modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML='<div class="modal-content" style="text-align:center;padding:30px;"><h3>📱 Compartilhar</h3>'+
+    modal.innerHTML='<div class="modal-content" style="text-align:center;padding:30px;"><h3>📱 Compartilhar Perfil</h3>'+
         '<div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:10px auto;border:3px solid #F47920;">'+(u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;object-fit:cover;">':'👷')+'</div>'+
         '<p><strong>'+u.nome+'</strong></p><div id="qrcodeContainer" style="display:flex;justify-content:center;margin:15px 0;"></div>'+
+        '<p style="font-size:11px;color:#666;word-break:break-all;">'+url+'</p>'+
         '<button onclick="document.getElementById(\'modalQR\').remove()" class="btn btn-primary">FECHAR</button></div>';
     document.body.appendChild(modal);
     setTimeout(function(){var c=document.getElementById('qrcodeContainer');if(c&&typeof QRCode!=='undefined'){c.innerHTML='';new QRCode(c,{text:url,width:180,height:180,colorDark:'#1A3A5C',colorLight:'#ffffff'});}},300);
@@ -1168,14 +1490,14 @@ App.prototype.carregarConfigScreen = function() {
         '<button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='claro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='claro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='claro'?'white':'#1A3A5C')+';cursor:pointer;">☀️ Claro</button>'+
         '<button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='escuro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='escuro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='escuro'?'white':'#1A3A5C')+';cursor:pointer;">🌙 Escuro</button></div></div>'+
         '<div class="card"><h3>📄 Documentos</h3>'+
-        '<button onclick="window.app.mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos</button>'+
+        '<button onclick="window.app.mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos de Uso</button>'+
         '<button onclick="window.app.mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;cursor:pointer;">🔒 Privacidade</button></div>'+
-        '<div class="card"><p style="text-align:center;color:#666;">LPXCONSTRUTOR v1.0<br>© 2024</p></div></div>';
+        '<div class="card"><p style="text-align:center;color:#666;">LPXCONSTRUTOR v1.0<br>© 2024 Todos os direitos reservados</p></div></div>';
     s.mostrarTela('configScreen');
 };
 
 App.prototype.mostrarDocumento = function(tipo) { 
-    var s=this, tt={termos:'📄 Termos',privacidade:'🔒 Privacidade'}, cc={termos:'<h3>Termos</h3><p>Ao usar o LPXCONSTRUTOR, você concorda com os termos.</p>',privacidade:'<h3>Privacidade</h3><p>Seus dados são protegidos.</p>'};
+    var s=this, tt={termos:'📄 Termos de Uso',privacidade:'🔒 Privacidade'}, cc={termos:'<h3>Termos de Uso</h3><p>Ao utilizar o LPXCONSTRUTOR, você concorda com os termos de uso da plataforma.</p>',privacidade:'<h3>Política de Privacidade</h3><p>Seus dados são protegidos e não são compartilhados com terceiros.</p>'};
     var t=document.getElementById('documentoScreen'); if(!t){t=document.createElement('div');t.id='documentoScreen';t.className='screen';document.body.appendChild(t);}
     t.innerHTML='<div style="background:#1A3A5C;color:white;padding:20px;"><button onclick="window.app.voltarTela()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅</button><h2>'+(tt[tipo]||'')+'</h2></div><div style="padding:20px;">'+(cc[tipo]||'')+'</div>';
     s.mostrarTela('documentoScreen');
@@ -1184,7 +1506,7 @@ App.prototype.mostrarDocumento = function(tipo) {
 App.prototype.selecionarTema = function(tema) { 
     this.temaAtual=tema; localStorage.setItem('tema',tema); 
     if(tema==='escuro') document.body.classList.add('dark-theme'); else document.body.classList.remove('dark-theme'); 
-    this.mostrarToast('Tema alterado!','sucesso'); this.carregarConfigScreen(); 
+    this.mostrarToast('🎨 Tema alterado!','sucesso'); this.carregarConfigScreen(); 
 };
 
 App.prototype.proximaEtapa = function(e) {
@@ -1200,13 +1522,20 @@ App.prototype.toggleProfissao = function() {
 App.prototype.solicitarCodigo = function() {
     var s=this, email=document.getElementById('recEmail')?.value?.trim()||'';
     if(!email){s.mostrarToast('Digite seu email!','erro');return;}
-    if(typeof firebase!=='undefined'&&firebase.auth) firebase.auth().sendPasswordResetEmail(email).then(function(){s.mostrarToast('Email enviado!','sucesso');});
+    if(typeof firebase!=='undefined'&&firebase.auth) {
+        firebase.auth().sendPasswordResetEmail(email)
+            .then(function(){s.mostrarToast('📧 Email enviado!','sucesso');})
+            .catch(function(){s.mostrarToast('Email não encontrado!','erro');});
+    }
 };
 
-App.prototype.verificarCodigo = function() { this.mostrarToast('Use o link do email!','info'); };
+App.prototype.verificarCodigo = function() { this.mostrarToast('Use o link enviado por email!','info'); };
 App.prototype.voltarPasso1 = function() { document.getElementById('recPasso1').style.display='block'; document.getElementById('recPasso2').style.display='none'; };
 
+// ==========================================================
 // ===== TOAST =====
+// ==========================================================
+
 App.prototype.mostrarToast = function(mensagem, tipo) { 
     var toast = document.getElementById('toast'); 
     if (!toast) { 
@@ -1221,9 +1550,20 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
     this._toastTimeout = setTimeout(function() { toast.style.display = 'none'; }, 3000); 
 };
 
+// ==========================================================
 // ===== INICIALIZAÇÃO =====
+// ==========================================================
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR - VERSÃO CORRIGIDA');
-    var nav = document.getElementById('bottomNav'); if (nav) nav.style.display = 'none';
+    console.log('🏗️ LPXCONSTRUTOR - SISTEMA COMPLETO');
+    console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅' : '❌');
+    console.log('🗺️ Google Maps:', typeof google !== 'undefined' ? '✅' : '⏳ Aguardando...');
+    console.log('💬 Chat em tempo real');
+    console.log('🔥 Feed instantâneo');
+    console.log('🏰👷 Mapa com marcadores emoji');
+    
+    var nav = document.getElementById('bottomNav'); 
+    if (nav) nav.style.display = 'none';
+    
     window.app._app = new App();
 });
