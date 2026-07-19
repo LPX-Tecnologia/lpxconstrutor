@@ -1,5 +1,6 @@
 // ==========================================================
 // ===== LPXCONSTRUTOR - CORRIGIDO =====
+// ===== PUBLICAÇÃO INSTANTÂNEA + FEED CORRETO =====
 // ==========================================================
 
 window.app = window.app || {};
@@ -58,6 +59,8 @@ var App = function() {
     this._listenerChat = null;
     this._listenerNotificacoes = null;
     this._feedIniciado = false;
+    this._vagasCache = [];
+    this._publicando = false;
     this.init();
 };
 
@@ -122,21 +125,24 @@ App.prototype.init = function() {
     }
 };
 
-// ===== FEED - CORRIGIDO PARA MOSTRAR POSTS INSTANTANEAMENTE =====
+// ===== FEED CORRIGIDO - ÚNICO LISTENER =====
 App.prototype.iniciarFeedListener = function() {
     var s = this;
-    if (s._feedIniciado) return;
-    if (typeof db === 'undefined') {
-        console.error('❌ Firestore não disponível');
+    
+    // NUNCA recria o listener se já existe
+    if (s._listenerFeed) {
+        console.log('📡 Feed listener já ativo, apenas renderizando');
+        var container = document.getElementById('feedContainer');
+        if (container && s._vagasCache.length > 0) {
+            s.renderizarFeed(container, s._vagasCache);
+        }
         return;
     }
     
-    console.log('🔥 Iniciando listener do feed...');
+    if (typeof db === 'undefined') return;
     
-    if (s._listenerFeed) s._listenerFeed();
+    console.log('🔥 INICIANDO LISTENER DO FEED');
     
-    // Usando apenas where sem orderBy para evitar erro de índice
-    // Depois ordenamos no JavaScript
     s._listenerFeed = db.collection('vagas')
         .where('ativa', '==', true)
         .onSnapshot(function(snap) {
@@ -149,49 +155,39 @@ App.prototype.iniciarFeedListener = function() {
                 vagas.push(vaga);
             });
             
-            // Ordena por dataCriacao (mais recente primeiro)
+            // Ordena por data (mais recente primeiro)
             vagas.sort(function(a, b) {
-                var da = a.dataCriacao?.toDate?.() || new Date(a.dataCriacao || 0);
-                var db2 = b.dataCriacao?.toDate?.() || new Date(b.dataCriacao || 0);
+                var da = a.dataCriacao ? (a.dataCriacao.toDate ? a.dataCriacao.toDate().getTime() : new Date(a.dataCriacao).getTime()) : 0;
+                var db2 = b.dataCriacao ? (b.dataCriacao.toDate ? b.dataCriacao.toDate().getTime() : new Date(b.dataCriacao).getTime()) : 0;
                 return db2 - da;
             });
             
+            // Atualiza cache
+            s._vagasCache = vagas;
+            
+            // Renderiza o feed
             var container = document.getElementById('feedContainer');
-            if (container) {
+            if (container && s.tabAtual === 'feed') {
                 s.renderizarFeed(container, vagas);
             }
-            
-            // Notifica novas vagas
-            snap.docChanges().forEach(function(change) {
-                if (change.type === 'added' && s._feedIniciado) {
-                    var vaga = change.doc.data();
-                    console.log('🆕 Nova vaga:', vaga.titulo);
-                    if (vaga.autorId !== s.usuarioLogado?.id) {
-                        s.mostrarToast('🆕 Nova obra: ' + (vaga.titulo || 'Sem título'), 'info');
-                    }
-                }
-            });
         }, function(error) {
             console.error('❌ Erro no feed:', error);
-            s.mostrarToast('Erro ao carregar feed: ' + error.message, 'erro');
         });
-    
-    s._feedIniciado = true;
 };
 
 App.prototype.pararFeedListener = function() {
     if (this._listenerFeed) {
+        console.log('🛑 Parando feed listener');
         this._listenerFeed();
         this._listenerFeed = null;
     }
-    this._feedIniciado = false;
+    this._vagasCache = [];
 };
 
 App.prototype.iniciarListenerNotificacoes = function() { 
     var s = this; 
     if (typeof db === 'undefined' || !s.usuarioLogado) return; 
-    
-    if (s._listenerNotificacoes) s._listenerNotificacoes(); 
+    if (s._listenerNotificacoes) return;
     
     s._listenerNotificacoes = db.collection('notificacoes')
         .where('usuarioId', '==', s.usuarioLogado.id)
@@ -247,10 +243,7 @@ App.prototype.mostrarTela = function(id) {
         });
     }
     
-    if (id === 'homeScreen') {
-        s.carregarHome();
-        if (!s._feedIniciado) s.iniciarFeedListener();
-    }
+    if (id === 'homeScreen') s.carregarHome();
     if (id === 'meuPerfilScreen') s.carregarMeuPerfil(); 
     if (id === 'buscaScreen') s.buscarProfissionais(); 
     if (id === 'minhasObrasScreen') s.carregarMinhasObras(); 
@@ -289,8 +282,6 @@ App.prototype.fazerLogin = function() {
                                 s.historicoTelas = []; 
                                 s.mostrarToast('Bem-vindo, ' + s.usuarioLogado.nome + '!', 'sucesso'); 
                                 s.mostrarTela('homeScreen'); 
-                                s.iniciarListenerNotificacoes(); 
-                                s.iniciarFeedListener();
                             } 
                         }); 
                 } 
@@ -313,19 +304,14 @@ App.prototype.cadastrar = function() {
         senha: document.getElementById('cadSenha')?.value || '', 
         tipo: document.getElementById('cadTipo')?.value || 'profissional', 
         celular: document.getElementById('cadCelular')?.value?.trim() || '', 
-        cpf: document.getElementById('cadCPF')?.value?.trim() || '',
         profissao: document.getElementById('cadProfissao')?.value || '', 
         experiencia: document.getElementById('cadExperiencia')?.value || '0', 
-        habilidades: document.getElementById('cadHabilidades')?.value?.trim() || '',
-        score: 0, 
-        fotoPerfil: null, 
-        localizacao: null
+        score: 0, fotoPerfil: null, localizacao: null
     }; 
     
     if (!dados.nome || !dados.email || !dados.senha) { 
         s.mostrarToast('Preencha todos os campos!', 'erro'); return; 
     }
-    
     if (dados.senha.length < 6) {
         s.mostrarToast('Senha deve ter no mínimo 6 caracteres!', 'erro'); return;
     }
@@ -346,8 +332,6 @@ App.prototype.cadastrar = function() {
                             s.historicoTelas = []; 
                             s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); 
                             s.mostrarTela('homeScreen'); 
-                            s.iniciarListenerNotificacoes();
-                            s.iniciarFeedListener();
                         }); 
                 } 
             })
@@ -396,7 +380,18 @@ App.prototype.carregarHome = function() {
         btnObras.style.display = mostrar ? 'flex' : 'none';
     }
     
-    if (s.tabAtual === 'feed') s.carregarFeed();
+    // Garante que o feed listener está ativo
+    if (!s._listenerFeed) s.iniciarFeedListener();
+    
+    // Renderiza o feed com cache se disponível
+    if (s.tabAtual === 'feed') {
+        var container = document.getElementById('feedContainer');
+        if (container && s._vagasCache.length > 0) {
+            s.renderizarFeed(container, s._vagasCache);
+        } else if (container) {
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
+        }
+    }
 };
 
 // ===== MUDAR TAB =====
@@ -417,26 +412,24 @@ App.prototype.mudarTab = function(t) {
     if (fc) fc.style.display = t === 'feed' ? 'flex' : 'none'; 
     if (rc) rc.style.display = t === 'rede' ? 'flex' : 'none'; 
     
-    if (t === 'feed') this.carregarFeed(); 
+    if (t === 'feed') {
+        var container = document.getElementById('feedContainer');
+        if (container && this._vagasCache.length > 0) {
+            this.renderizarFeed(container, this._vagasCache);
+        }
+    }
     if (t === 'rede') this.carregarRede(); 
 };
 
-// ===== FEED =====
-App.prototype.carregarFeed = function() { 
-    var s = this;
-    var container = document.getElementById('feedContainer'); 
-    if (!container) return; 
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>'; 
-    if (typeof db !== 'undefined') s.iniciarFeedListener();
-};
-
+// ===== RENDERIZAR FEED =====
 App.prototype.renderizarFeed = function(container, vagas) { 
     var s = this; 
     
-    if (vagas.length === 0) { 
+    if (!vagas || vagas.length === 0) { 
         container.innerHTML = '<div class="card" style="text-align:center;padding:30px;">' +
             '<div style="font-size:50px;">🏗️</div>' +
             '<h3>Nenhuma obra publicada</h3>' +
+            '<p style="color:#666;">Seja o primeiro a publicar!</p>' +
             (s.usuarioLogado?.tipo === 'empreiteiro' ? 
                 '<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary" style="margin-top:15px;">📢 PUBLICAR OBRA</button>' : '') + 
             '</div>'; 
@@ -492,11 +485,16 @@ App.prototype.renderizarFeed = function(container, vagas) {
 App.prototype.apagarObra = function(oid, ev) { 
     if (ev) ev.stopPropagation(); 
     if (!confirm('Apagar esta obra?')) return; 
-    if (typeof db !== 'undefined') db.collection('vagas').doc(oid).update({ ativa: false }); 
+    if (typeof db !== 'undefined') {
+        db.collection('vagas').doc(oid).update({ ativa: false })
+            .then(function() {
+                console.log('✅ Obra apagada');
+            });
+    }
     this.mostrarToast('Obra apagada!', 'sucesso'); 
 };
 
-// ===== PUBLICAR VAGA =====
+// ===== PUBLICAR VAGA - CORRIGIDO =====
 App.prototype.abrirTelaPublicacao = function() { 
     var s = this;
     s.mostrarTela('publicarVagaScreen');
@@ -525,6 +523,13 @@ App.prototype.previewFotoObra = function(e) {
 
 App.prototype.publicarVagaApp = function() { 
     var s = this; 
+    
+    // Evita dupla publicação
+    if (s._publicando) {
+        console.log('⚠️ Publicação já em andamento');
+        return;
+    }
+    
     var titulo = document.getElementById('vagaTitulo')?.value?.trim() || '';
     var endereco = document.getElementById('vagaEndereco')?.value?.trim() || '';
     var valor = document.getElementById('vagaValorHora')?.value || '';
@@ -534,34 +539,61 @@ App.prototype.publicarVagaApp = function() {
     document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { profissoes.push(cb.value); });
     var profissoesStr = profissoes.length > 0 ? profissoes.join(', ') : 'Geral'; 
     
-    if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha título, endereço e valor!', 'erro'); return; } 
-    if (!s.usuarioLogado) { s.mostrarToast('Faça login!', 'erro'); return; }
+    if (!titulo || !endereco || !valor) { 
+        s.mostrarToast('Preencha título, endereço e valor!', 'erro'); 
+        return; 
+    } 
+    if (!s.usuarioLogado) { 
+        s.mostrarToast('Faça login!', 'erro'); 
+        return; 
+    }
     
+    s._publicando = true;
     s.mostrarToast('Publicando...', 'info'); 
     
     var vaga = { 
-        titulo: titulo, endereco: endereco, profissoes: profissoesStr, 
-        valorHora: parseFloat(valor) || 0, descricao: descricao, 
-        fotoObra: s.vagaFotoBase64 || '', status: 'disponivel', ativa: true, 
-        autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome, 
-        autorFoto: s.usuarioLogado.fotoPerfil || null, interessados: [], 
+        titulo: titulo, 
+        endereco: endereco, 
+        profissoes: profissoesStr, 
+        valorHora: parseFloat(valor) || 0, 
+        descricao: descricao, 
+        fotoObra: s.vagaFotoBase64 || '', 
+        status: 'disponivel', 
+        ativa: true, 
+        autorId: s.usuarioLogado.id, 
+        autorNome: s.usuarioLogado.nome, 
+        autorFoto: s.usuarioLogado.fotoPerfil || null, 
+        interessados: [], 
         dataCriacao: firebase.firestore.FieldValue.serverTimestamp() 
     }; 
+    
+    console.log('📤 Publicando vaga:', titulo);
     
     if (typeof db !== 'undefined') { 
         db.collection('vagas').add(vaga)
             .then(function(docRef) { 
-                console.log('✅ Vaga publicada:', docRef.id);
-                s.mostrarToast('✅ Obra publicada!', 'sucesso'); 
+                console.log('✅ Vaga publicada com ID:', docRef.id);
+                s.mostrarToast('✅ Obra publicada com sucesso!', 'sucesso'); 
                 s.vagaFotoBase64 = null;
+                s._publicando = false;
+                
+                // Volta para home sem limpar histórico
                 s.historicoTelas = []; 
                 s.mostrarTela('homeScreen');
-                s.mudarTab('feed');
+                
+                // Garante que está na tab feed
+                if (s.tabAtual !== 'feed') {
+                    s.mudarTab('feed');
+                }
             })
             .catch(function(err) {
-                console.error('Erro ao publicar:', err);
-                s.mostrarToast('Erro ao publicar', 'erro');
+                console.error('❌ Erro ao publicar:', err);
+                s.mostrarToast('Erro ao publicar. Tente novamente.', 'erro');
+                s._publicando = false;
             }); 
+    } else {
+        s._publicando = false;
+        s.mostrarToast('Firebase não disponível', 'erro');
     }
 };
 
@@ -677,7 +709,7 @@ App.prototype.recusarConvite = function(nid, deId) {
     this.mostrarToast('Convite recusado', 'info'); 
 };
 
-// ===== CHAT SIMPLIFICADO (SEM ORDENAÇÃO COMPLEXA) =====
+// ===== CHAT =====
 App.prototype.carregarListaConversas = function() {
     var s = this;
     s.usuarioSelecionado = null;
@@ -749,7 +781,6 @@ App.prototype.iniciarListenerMensagens = function() {
     
     if (s._listenerChat) s._listenerChat();
     
-    // Escuta sem orderBy para evitar erro de índice
     s._listenerChat = db.collection('mensagens')
         .where('participantes', 'array-contains', s.usuarioLogado.id)
         .onSnapshot(function(snap) {
@@ -764,7 +795,6 @@ App.prototype.iniciarListenerMensagens = function() {
                 }
             });
             
-            // Ordena no JavaScript
             mensagens.sort(function(a, b) {
                 var da = a.dataEnvio?.toDate?.() || new Date(a.dataEnvio || 0);
                 var db2 = b.dataEnvio?.toDate?.() || new Date(b.dataEnvio || 0);
@@ -808,11 +838,10 @@ App.prototype.enviarMensagem = function() {
     s._enviandoMensagem = true;
     input.value = '';
     
-    var participantes = [s.usuarioLogado.id, s.usuarioSelecionado.id];
     var mensagem = {
         remetenteId: s.usuarioLogado.id,
         destinatarioId: s.usuarioSelecionado.id,
-        participantes: participantes,
+        participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
         conteudo: texto,
         lida: false,
         dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
@@ -989,7 +1018,6 @@ App.prototype.mostrarNotificacoes = function() {
                 var ns = []; 
                 snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); }); 
                 
-                // Ordena no JS
                 ns.sort(function(a, b) {
                     var da = a.dataCriacao?.toDate?.() || new Date(0);
                     var db2 = b.dataCriacao?.toDate?.() || new Date(0);
@@ -1183,8 +1211,7 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
     var toast = document.getElementById('toast'); 
     if (!toast) { 
         toast = document.createElement('div'); toast.id = 'toast'; toast.className = 'toast';
-        var appContainer = document.querySelector('.app-container');
-        if (appContainer) appContainer.appendChild(toast);
+        document.body.appendChild(toast);
     } 
     if (!toast) return;
     toast.textContent = mensagem; 
@@ -1196,7 +1223,7 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR INICIADO');
+    console.log('🏗️ LPXCONSTRUTOR - VERSÃO CORRIGIDA');
     var nav = document.getElementById('bottomNav'); if (nav) nav.style.display = 'none';
     window.app._app = new App();
 });
