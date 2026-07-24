@@ -16,7 +16,12 @@
     <style>
         /* ===== RESET E BASE ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #f0f2f5; 
+            color: #1a1a2e;
+            -webkit-tap-highlight-color: transparent;
+        }
         
         /* ===== SCREENS ===== */
         .screen { display: none; min-height: 100vh; padding-bottom: 70px; }
@@ -57,16 +62,17 @@
             padding: 12px 24px; border: none; border-radius: 10px;
             font-weight: 600; cursor: pointer; transition: all 0.2s;
             display: inline-block; text-align: center; font-size: 14px;
+            -webkit-tap-highlight-color: transparent;
         }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-primary { background: #1A3A5C; color: white; }
-        .btn-primary:hover:not(:disabled) { background: #2a4a6c; transform: scale(1.02); }
+        .btn-primary:active { transform: scale(0.97); }
         .btn-success { background: #10B981; color: white; }
-        .btn-success:hover:not(:disabled) { background: #059669; }
+        .btn-success:active { transform: scale(0.97); }
         .btn-danger { background: #EF4444; color: white; }
-        .btn-danger:hover:not(:disabled) { background: #DC2626; }
+        .btn-danger:active { transform: scale(0.97); }
         .btn-outline { background: transparent; border: 2px solid #1A3A5C; color: #1A3A5C; }
-        .btn-outline:hover:not(:disabled) { background: #1A3A5C; color: white; }
+        .btn-outline:active { background: #1A3A5C; color: white; }
         .btn-small { padding: 8px 16px; font-size: 12px; }
         
         .input-group { margin-bottom: 16px; }
@@ -74,7 +80,7 @@
         .input-field {
             width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb;
             border-radius: 10px; font-size: 14px; transition: border 0.2s;
-            background: white;
+            background: white; -webkit-appearance: none;
         }
         .input-field:focus { outline: none; border-color: #1A3A5C; }
         
@@ -111,6 +117,7 @@
         .chat-messages {
             flex: 1; overflow-y: auto; padding: 16px;
             display: flex; flex-direction: column; gap: 8px;
+            -webkit-overflow-scrolling: touch;
         }
         .message {
             max-width: 80%; padding: 10px 14px; border-radius: 16px;
@@ -210,13 +217,17 @@
         
         /* ===== RESPONSIVO ===== */
         @media (max-width: 480px) {
-            .btn { padding: 10px 18px; font-size: 13px; }
+            .btn { padding: 14px 20px; font-size: 14px; }
             .vaga-card { margin: 8px 12px; }
-            .card { margin: 8px 12px; padding: 12px; }
+            .card { margin: 8px 12px; padding: 14px; }
+            .input-field { font-size: 16px; padding: 14px 16px; }
         }
         
         /* ===== VERSÃO ===== */
         #appVersion { display: none; }
+        
+        /* ===== TOUCH FEEDBACK ===== */
+        .touch-active:active { transform: scale(0.95); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -226,14 +237,14 @@
     <img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" alt="Logo" onerror="this.style.display='none'">
     <p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p>
     <p style="color:#f0c27f;font-size:12px;">Rede Profissional da Construção</p>
-    <p style="color:rgba(255,255,255,0.5);font-size:10px;margin-top:20px;">v2.0.1</p>
+    <p style="color:rgba(255,255,255,0.3);font-size:10px;margin-top:20px;">v2.0.2</p>
 </div>
 
 <!-- ===== TOAST ===== -->
 <div id="toast" class="toast"></div>
 
 <!-- ===== VERSÃO ===== -->
-<div id="appVersion">2.0.1</div>
+<div id="appVersion">2.0.2</div>
 
 <!-- ===== TELA DE LOGIN ===== -->
 <div id="loginScreen" class="screen">
@@ -535,7 +546,7 @@
             <button onclick="window.app.mostrarDocumento('privacidade')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;cursor:pointer;">🔒 Política de Privacidade</button>
         </div>
         <div class="card">
-            <p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v2.0.1<br>© 2024 Todos os direitos reservados</p>
+            <p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v2.0.2<br>© 2024 Todos os direitos reservados</p>
         </div>
     </div>
 </div>
@@ -584,7 +595,7 @@
 // ==========================================================
 // ===== VERSÃO DO APP =====
 // ==========================================================
-const APP_VERSION = "2.0.1";
+const APP_VERSION = "2.0.2";
 const APP_BUILD = "20240723";
 
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION} (Build ${APP_BUILD})`);
@@ -610,6 +621,21 @@ try {
 
 const db = firebase.firestore();
 db.settings({ timestampsInSnapshots: true });
+
+// ==========================================================
+// ===== CORREÇÃO PARA MOBILE =====
+// ==========================================================
+
+// Força persistência de sessão no mobile
+if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(function() {
+            console.log('✅ Persistência LOCAL configurada para mobile');
+        })
+        .catch(function(error) {
+            console.warn('⚠️ Erro na persistência:', error);
+        });
+}
 
 // ==========================================================
 // ===== APP PRINCIPAL =====
@@ -687,6 +713,7 @@ App.prototype.init = function() {
     console.log('🚀 LPXCONSTRUTOR v' + APP_VERSION + ' INICIADO');
     console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅' : '❌');
     console.log('📡 Firestore:', typeof db !== 'undefined' ? '✅' : '❌');
+    console.log('📱 Mobile:', /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '✅' : '❌');
     
     window.app._app = s;
     
@@ -695,15 +722,27 @@ App.prototype.init = function() {
     
     if (s.temaAtual === 'escuro') {
         document.body.classList.add('dark-theme');
-        document.getElementById('temaEscuroBtn').style.background = '#1A3A5C';
-        document.getElementById('temaEscuroBtn').style.color = 'white';
-        document.getElementById('temaClaroBtn').style.background = 'white';
-        document.getElementById('temaClaroBtn').style.color = '#1A3A5C';
+        atualizarBotoesTema('escuro');
     } else {
-        document.getElementById('temaClaroBtn').style.background = '#1A3A5C';
-        document.getElementById('temaClaroBtn').style.color = 'white';
-        document.getElementById('temaEscuroBtn').style.background = 'white';
-        document.getElementById('temaEscuroBtn').style.color = '#1A3A5C';
+        atualizarBotoesTema('claro');
+    }
+    
+    function atualizarBotoesTema(tema) {
+        var claro = document.getElementById('temaClaroBtn');
+        var escuro = document.getElementById('temaEscuroBtn');
+        if (claro && escuro) {
+            if (tema === 'claro') {
+                claro.style.background = '#1A3A5C';
+                claro.style.color = 'white';
+                escuro.style.background = 'white';
+                escuro.style.color = '#1A3A5C';
+            } else {
+                claro.style.background = 'white';
+                claro.style.color = '#1A3A5C';
+                escuro.style.background = '#1A3A5C';
+                escuro.style.color = 'white';
+            }
+        }
     }
     
     // Splash screen
@@ -742,7 +781,6 @@ App.prototype.init = function() {
                             s.iniciarListenerNotificacoes();
                             s.iniciarFeedListener();
                             
-                            // Fecha splash
                             setTimeout(function() {
                                 splash.style.opacity = '0';
                                 setTimeout(function() {
@@ -875,7 +913,7 @@ App.prototype.voltarTela = function() {
 };
 
 // ==========================================================
-// ===== LOGIN CORRIGIDO =====
+// ===== LOGIN CORRIGIDO PARA MOBILE =====
 // ==========================================================
 
 App.prototype.fazerLogin = function() { 
@@ -883,8 +921,8 @@ App.prototype.fazerLogin = function() {
     var email = document.getElementById('loginEmail')?.value?.trim() || '';
     var senha = document.getElementById('loginSenha')?.value || ''; 
     
-    console.log('🔍 Tentando login com:', email);
-    console.log('🔍 Firebase Auth:', typeof firebase !== 'undefined' && firebase.auth ? '✅' : '❌');
+    console.log('🔍 Tentando login mobile com:', email);
+    console.log('🔍 User Agent:', navigator.userAgent);
     
     if (!email || !senha) { 
         s.mostrarToast('Preencha email e senha!', 'erro'); 
@@ -895,86 +933,111 @@ App.prototype.fazerLogin = function() {
     if (btn) {
         btn.textContent = '⏳ Entrando...';
         btn.disabled = true;
+        btn.style.opacity = '0.7';
     }
     
     s.mostrarToast('Entrando...', 'info'); 
     
-    if (typeof firebase !== 'undefined' && firebase.auth) { 
-        firebase.auth().signInWithEmailAndPassword(email, senha)
-            .then(function(userCredential) { 
-                console.log('✅ Login bem-sucedido:', userCredential.user.uid);
-                
-                if (typeof db !== 'undefined') { 
-                    db.collection('usuarios').doc(userCredential.user.uid).get()
-                        .then(function(doc) { 
-                            if (doc.exists) { 
-                                s.usuarioLogado = doc.data(); 
-                                s.usuarioLogado.id = doc.id; 
-                                localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); 
-                                s.historicoTelas = []; 
-                                s.mostrarToast('Bem-vindo, ' + s.usuarioLogado.nome + '!', 'sucesso'); 
-                                
-                                if (s._listenerFeed) {
-                                    s._listenerFeed();
-                                    s._listenerFeed = null;
-                                }
-                                
-                                s.iniciarListenerNotificacoes();
-                                s.iniciarFeedListener();
-                                s.mostrarTela('homeScreen');
-                                s.carregarHome();
-                                
-                                console.log('✅ Usuário logado e navegação concluída');
-                            } else {
-                                console.error('❌ Documento do usuário não encontrado');
-                                s.mostrarToast('Erro ao carregar perfil!', 'erro');
-                                if (btn) {
-                                    btn.textContent = 'ENTRAR';
-                                    btn.disabled = false;
-                                }
-                            }
-                        })
-                        .catch(function(err) {
-                            console.error('❌ Erro ao buscar usuário:', err);
-                            s.mostrarToast('Erro ao carregar perfil!', 'erro');
-                            if (btn) {
-                                btn.textContent = 'ENTRAR';
-                                btn.disabled = false;
-                            }
-                        }); 
-                } else {
-                    console.error('❌ Firebase Firestore não disponível');
-                    s.mostrarToast('Erro no sistema!', 'erro');
-                    if (btn) {
-                        btn.textContent = 'ENTRAR';
-                        btn.disabled = false;
+    // Tenta login com fallback para mobile
+    function tentarLogin() {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            // Configura persistência LOCAL (importante para mobile)
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(function() {
+                    console.log('✅ Persistência LOCAL configurada para mobile');
+                    return firebase.auth().signInWithEmailAndPassword(email, senha);
+                })
+                .catch(function(err) {
+                    console.log('⚠️ Erro na persistência, tentando login direto:', err);
+                    return firebase.auth().signInWithEmailAndPassword(email, senha);
+                })
+                .then(function(userCredential) {
+                    console.log('✅ Login bem-sucedido mobile:', userCredential.user.uid);
+                    s.processarLogin(userCredential.user.uid);
+                })
+                .catch(function(err) {
+                    console.error('❌ Erro no login mobile:', err);
+                    tratarErroLogin(err);
+                });
+        } else {
+            console.error('❌ Firebase Auth não disponível');
+            s.mostrarToast('Sistema indisponível!', 'erro');
+            restaurarBotao();
+        }
+    }
+    
+    function processarLogin(uid) {
+        if (typeof db !== 'undefined') {
+            db.collection('usuarios').doc(uid).get()
+                .then(function(doc) {
+                    if (doc.exists) {
+                        s.usuarioLogado = doc.data();
+                        s.usuarioLogado.id = doc.id;
+                        localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+                        s.historicoTelas = [];
+                        s.mostrarToast('Bem-vindo, ' + s.usuarioLogado.nome + '!', 'sucesso');
+                        
+                        if (s._listenerFeed) {
+                            s._listenerFeed();
+                            s._listenerFeed = null;
+                        }
+                        
+                        s.iniciarListenerNotificacoes();
+                        s.iniciarFeedListener();
+                        
+                        console.log('🚀 Navegando para Home...');
+                        setTimeout(function() {
+                            s.mostrarTela('homeScreen');
+                            s.carregarHome();
+                            restaurarBotao();
+                        }, 300);
+                    } else {
+                        console.error('❌ Documento do usuário não encontrado');
+                        s.mostrarToast('Erro ao carregar perfil!', 'erro');
+                        restaurarBotao();
                     }
-                }
-            })
-            .catch(function(err) {
-                console.error('❌ Erro no login:', err);
-                var msg = 'Email ou senha incorretos!';
-                if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado!';
-                else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
-                else if (err.code === 'auth/invalid-email') msg = 'Email inválido!';
-                else if (err.code === 'auth/user-disabled') msg = 'Usuário desativado!';
-                else if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas! Aguarde.';
-                
-                s.mostrarToast(msg, 'erro');
-                
-                if (btn) {
-                    btn.textContent = 'ENTRAR';
-                    btn.disabled = false;
-                }
-            }); 
-    } else {
-        console.error('❌ Firebase Auth não disponível');
-        s.mostrarToast('Sistema indisponível!', 'erro');
+                })
+                .catch(function(err) {
+                    console.error('❌ Erro ao buscar usuário:', err);
+                    s.mostrarToast('Erro ao carregar perfil!', 'erro');
+                    restaurarBotao();
+                });
+        } else {
+            console.error('❌ Firestore não disponível');
+            s.mostrarToast('Erro no sistema!', 'erro');
+            restaurarBotao();
+        }
+    }
+    
+    function tratarErroLogin(err) {
+        var msg = 'Email ou senha incorretos!';
+        if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado!';
+        else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
+        else if (err.code === 'auth/invalid-email') msg = 'Email inválido!';
+        else if (err.code === 'auth/user-disabled') msg = 'Usuário desativado!';
+        else if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas! Aguarde.';
+        else if (err.code === 'auth/network-request-failed') {
+            msg = 'Erro de rede! Verifique sua internet.';
+            s.mostrarToast(msg, 'erro');
+            setTimeout(function() {
+                tentarLogin();
+            }, 3000);
+            return;
+        }
+        
+        s.mostrarToast(msg, 'erro');
+        restaurarBotao();
+    }
+    
+    function restaurarBotao() {
         if (btn) {
             btn.textContent = 'ENTRAR';
             btn.disabled = false;
+            btn.style.opacity = '1';
         }
     }
+    
+    tentarLogin();
 };
 
 // ==========================================================
@@ -1051,11 +1114,11 @@ App.prototype.sair = function() {
     var modal = document.getElementById('modalSair');
     if (modal) modal.style.display = 'none';
     
-    // Restaura botão login
     var btn = document.getElementById('btnLogin');
     if (btn) {
         btn.textContent = 'ENTRAR';
         btn.disabled = false;
+        btn.style.opacity = '1';
     }
     
     console.log('👋 Usuário desconectado, listeners removidos');
@@ -2185,10 +2248,11 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - SISTEMA COMPLETO');
     console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅' : '❌');
+    console.log('📱 Mobile:', /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '✅' : '❌');
     console.log('💬 Chat em tempo real - CORRIGIDO');
     console.log('🔥 Feed instantâneo - CORRIGIDO');
     console.log('🔔 Notificações em tempo real - CORRIGIDO');
-    console.log('🔐 Login - CORRIGIDO');
+    console.log('🔐 Login - CORRIGIDO PARA MOBILE');
     
     var nav = document.getElementById('bottomNav'); 
     if (nav) nav.style.display = 'none';
@@ -2198,7 +2262,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('✅ CÓDIGO COMPLETO ENTREGUE!');
 console.log('📌 Funcionalidades:');
-console.log('  ✅ Login/Cadastro (CORRIGIDO)');
+console.log('  ✅ Login/Cadastro (CORRIGIDO PARA MOBILE)');
 console.log('  ✅ Feed instantâneo com listener');
 console.log('  ✅ Chat em tempo real (CORRIGIDO)');
 console.log('  ✅ Notificações push');
@@ -2209,6 +2273,7 @@ console.log('  ✅ Localização');
 console.log('  ✅ QR Code');
 console.log('  ✅ Tema claro/escuro');
 console.log('  ✅ Versão: ' + APP_VERSION);
+console.log('  ✅ Otimizado para dispositivos móveis');
 </script>
 
 </body>
