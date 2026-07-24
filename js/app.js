@@ -10,9 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-    <!-- Google Maps -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB4Z6jzL5FZqWp_YKDYYaPZxJpN7JfG4Vk&libraries=places&callback=Function.prototype&loading=async"></script>
-    
     <!-- QRCode -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     
@@ -61,14 +58,15 @@
             font-weight: 600; cursor: pointer; transition: all 0.2s;
             display: inline-block; text-align: center; font-size: 14px;
         }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-primary { background: #1A3A5C; color: white; }
-        .btn-primary:hover { background: #2a4a6c; transform: scale(1.02); }
+        .btn-primary:hover:not(:disabled) { background: #2a4a6c; transform: scale(1.02); }
         .btn-success { background: #10B981; color: white; }
-        .btn-success:hover { background: #059669; }
+        .btn-success:hover:not(:disabled) { background: #059669; }
         .btn-danger { background: #EF4444; color: white; }
-        .btn-danger:hover { background: #DC2626; }
+        .btn-danger:hover:not(:disabled) { background: #DC2626; }
         .btn-outline { background: transparent; border: 2px solid #1A3A5C; color: #1A3A5C; }
-        .btn-outline:hover { background: #1A3A5C; color: white; }
+        .btn-outline:hover:not(:disabled) { background: #1A3A5C; color: white; }
         .btn-small { padding: 8px 16px; font-size: 12px; }
         
         .input-group { margin-bottom: 16px; }
@@ -144,6 +142,7 @@
             background: #1A3A5C; color: white; border: none;
             font-size: 20px; cursor: pointer;
         }
+        .chat-input-container button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         /* ===== PERFIL ===== */
         .profile-header-container { position: relative; }
@@ -209,47 +208,50 @@
         body.dark-theme .chat-input-container { background: #1f2937; border-top-color: #374151; }
         body.dark-theme .chat-input-container input { background: #1f2937; border-color: #374151; color: #f9fafb; }
         
-        /* ===== MAPA ===== */
-        #map { width: 100%; height: 300px; border-radius: 12px; margin: 10px 0; }
-        .custom-marker-label { font-size: 28px; }
-        
         /* ===== RESPONSIVO ===== */
         @media (max-width: 480px) {
             .btn { padding: 10px 18px; font-size: 13px; }
             .vaga-card { margin: 8px 12px; }
             .card { margin: 8px 12px; padding: 12px; }
         }
+        
+        /* ===== VERSÃO ===== */
+        #appVersion { display: none; }
     </style>
 </head>
 <body>
 
 <!-- ===== SPLASH ===== -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.5s;">
-    <img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" alt="Logo">
+    <img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;" alt="Logo" onerror="this.style.display='none'">
     <p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p>
     <p style="color:#f0c27f;font-size:12px;">Rede Profissional da Construção</p>
+    <p style="color:rgba(255,255,255,0.5);font-size:10px;margin-top:20px;">v2.0.1</p>
 </div>
 
 <!-- ===== TOAST ===== -->
 <div id="toast" class="toast"></div>
 
+<!-- ===== VERSÃO ===== -->
+<div id="appVersion">2.0.1</div>
+
 <!-- ===== TELA DE LOGIN ===== -->
 <div id="loginScreen" class="screen">
     <div style="padding:40px 20px;text-align:center;">
-        <img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;" alt="Logo">
+        <img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;" alt="Logo" onerror="this.style.display='none'">
         <h1 style="color:#1A3A5C;font-size:28px;">LPXCONSTRUTOR</h1>
         <p style="color:#6b7280;margin-bottom:30px;">Rede Profissional da Construção</p>
         
         <div class="card" style="text-align:left;">
             <div class="input-group">
                 <label>📧 Email</label>
-                <input id="loginEmail" type="email" class="input-field" placeholder="seu@email.com">
+                <input id="loginEmail" type="email" class="input-field" placeholder="seu@email.com" autocomplete="email">
             </div>
             <div class="input-group">
                 <label>🔒 Senha</label>
-                <input id="loginSenha" type="password" class="input-field" placeholder="••••••••">
+                <input id="loginSenha" type="password" class="input-field" placeholder="••••••••" autocomplete="current-password">
             </div>
-            <button onclick="window.app.fazerLogin()" class="btn btn-primary" style="width:100%;">ENTRAR</button>
+            <button id="btnLogin" onclick="window.app.fazerLogin()" class="btn btn-primary" style="width:100%;">ENTRAR</button>
             
             <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:13px;">
                 <a href="#" onclick="document.getElementById('loginScreen').style.display='none';document.getElementById('recuperarSenhaScreen').style.display='block';" style="color:#1A3A5C;">Esqueci a senha</a>
@@ -355,11 +357,11 @@
         </div>
         
         <div id="feedContainer" style="display:flex;flex-direction:column;padding-bottom:80px;">
-            <div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>
+            <div class="loading">⏳ Carregando feed...</div>
         </div>
         
         <div id="redeContainer" style="display:none;padding-bottom:80px;">
-            <div class="loading">Carregando rede...</div>
+            <div class="loading">⏳ Carregando rede...</div>
         </div>
     </div>
 </div>
@@ -378,7 +380,7 @@
         </div>
         <div class="chat-input-container" style="display:none;">
             <input id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter') window.app.enviarMensagem()">
-            <button onclick="window.app.enviarMensagem()">➤</button>
+            <button id="btnEnviarMsg" onclick="window.app.enviarMensagem()">➤</button>
         </div>
     </div>
 </div>
@@ -394,7 +396,7 @@
             <div class="profile-cover"></div>
             <div class="profile-avatar-container">
                 <div class="profile-avatar" onclick="document.getElementById('inputFoto').click()">
-                    <img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;">
+                    <img id="perfilAvatar" src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:100%;object-fit:contain;">
                 </div>
             </div>
             <input type="file" id="inputFoto" accept="image/*" onchange="window.app.uploadFoto(event)" style="display:none;">
@@ -423,7 +425,7 @@
         <h2>👤 Perfil</h2>
     </div>
     <div id="perfilPublicoConteudo" style="padding:16px;">
-        <div class="loading">Carregando...</div>
+        <div class="loading">⏳ Carregando...</div>
     </div>
 </div>
 
@@ -508,7 +510,7 @@
                     </label>
                 </div>
             </div>
-            <button onclick="window.app.publicarVagaApp()" class="btn btn-success" style="width:100%;">📢 PUBLICAR</button>
+            <button id="btnPublicar" onclick="window.app.publicarVagaApp()" class="btn btn-success" style="width:100%;">📢 PUBLICAR</button>
         </div>
     </div>
 </div>
@@ -523,8 +525,8 @@
         <div class="card">
             <h3>🎨 Tema</h3>
             <div style="display:flex;gap:10px;margin-top:10px;">
-                <button onclick="window.app.selecionarTema('claro')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #1A3A5C;background:#1A3A5C;color:white;cursor:pointer;">☀️ Claro</button>
-                <button onclick="window.app.selecionarTema('escuro')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #e5e7eb;background:white;color:#1A3A5C;cursor:pointer;">🌙 Escuro</button>
+                <button id="temaClaroBtn" onclick="window.app.selecionarTema('claro')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #1A3A5C;background:#1A3A5C;color:white;cursor:pointer;">☀️ Claro</button>
+                <button id="temaEscuroBtn" onclick="window.app.selecionarTema('escuro')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #e5e7eb;background:white;color:#1A3A5C;cursor:pointer;">🌙 Escuro</button>
             </div>
         </div>
         <div class="card">
@@ -533,7 +535,7 @@
             <button onclick="window.app.mostrarDocumento('privacidade')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;cursor:pointer;">🔒 Política de Privacidade</button>
         </div>
         <div class="card">
-            <p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v2.0<br>© 2024 Todos os direitos reservados</p>
+            <p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v2.0.1<br>© 2024 Todos os direitos reservados</p>
         </div>
     </div>
 </div>
@@ -580,6 +582,14 @@
 <!-- ========================================================== -->
 <script>
 // ==========================================================
+// ===== VERSÃO DO APP =====
+// ==========================================================
+const APP_VERSION = "2.0.1";
+const APP_BUILD = "20240723";
+
+console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION} (Build ${APP_BUILD})`);
+
+// ==========================================================
 // ===== CONFIGURAÇÃO FIREBASE =====
 // ==========================================================
 const firebaseConfig = {
@@ -591,7 +601,13 @@ const firebaseConfig = {
     appId: "1:1234567890:web:abcdef1234567890"
 };
 
-firebase.initializeApp(firebaseConfig);
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log('✅ Firebase inicializado');
+} catch(e) {
+    console.error('❌ Erro ao inicializar Firebase:', e);
+}
+
 const db = firebase.firestore();
 db.settings({ timestampsInSnapshots: true });
 
@@ -668,15 +684,27 @@ var App = function() {
 
 App.prototype.init = function() {
     var s = this;
-    console.log('🚀 LPXCONSTRUTOR INICIADO');
+    console.log('🚀 LPXCONSTRUTOR v' + APP_VERSION + ' INICIADO');
     console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅' : '❌');
+    console.log('📡 Firestore:', typeof db !== 'undefined' ? '✅' : '❌');
     
     window.app._app = s;
     
     var nav = document.getElementById('bottomNav'); 
     if (nav) nav.style.display = 'none';
     
-    if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
+    if (s.temaAtual === 'escuro') {
+        document.body.classList.add('dark-theme');
+        document.getElementById('temaEscuroBtn').style.background = '#1A3A5C';
+        document.getElementById('temaEscuroBtn').style.color = 'white';
+        document.getElementById('temaClaroBtn').style.background = 'white';
+        document.getElementById('temaClaroBtn').style.color = '#1A3A5C';
+    } else {
+        document.getElementById('temaClaroBtn').style.background = '#1A3A5C';
+        document.getElementById('temaClaroBtn').style.color = 'white';
+        document.getElementById('temaEscuroBtn').style.background = 'white';
+        document.getElementById('temaEscuroBtn').style.color = '#1A3A5C';
+    }
     
     // Splash screen
     var splashAntigo = document.getElementById('splashScreen'); 
@@ -685,8 +713,19 @@ App.prototype.init = function() {
     var splash = document.createElement('div'); 
     splash.id = 'splashScreen';
     splash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1A3A5C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.5s;';
-    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;">Rede Profissional da Construção</p>';
+    splash.innerHTML = '<img src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:120px;height:120px;object-fit:contain;animation:float 2s ease-in-out infinite;"><p style="color:white;font-size:22px;font-weight:900;margin-top:16px;">LPXCONSTRUTOR</p><p style="color:#f0c27f;font-size:12px;">Rede Profissional da Construção</p><p style="color:rgba(255,255,255,0.3);font-size:10px;margin-top:20px;">v' + APP_VERSION + '</p>';
     document.body.appendChild(splash);
+    
+    // Verifica se já tem usuário no localStorage
+    var savedUser = localStorage.getItem('usuarioLPX');
+    if (savedUser) {
+        try {
+            s.usuarioLogado = JSON.parse(savedUser);
+            console.log('📦 Usuário carregado do localStorage:', s.usuarioLogado.nome);
+        } catch(e) {
+            console.error('❌ Erro ao carregar usuário do localStorage:', e);
+        }
+    }
     
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged(function(user) {
@@ -698,12 +737,37 @@ App.prototype.init = function() {
                             s.usuarioLogado = doc.data();
                             s.usuarioLogado.id = doc.id;
                             localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+                            console.log('✅ Dados do usuário carregados:', s.usuarioLogado.nome);
                             s.mostrarTela('homeScreen');
                             s.iniciarListenerNotificacoes();
                             s.iniciarFeedListener();
+                            
+                            // Fecha splash
+                            setTimeout(function() {
+                                splash.style.opacity = '0';
+                                setTimeout(function() {
+                                    if (splash.parentNode) splash.parentNode.removeChild(splash);
+                                }, 500);
+                            }, 500);
+                        } else {
+                            console.error('❌ Documento do usuário não encontrado');
+                            s.mostrarTela('loginScreen');
+                            setTimeout(function() {
+                                splash.style.opacity = '0';
+                                setTimeout(function() {
+                                    if (splash.parentNode) splash.parentNode.removeChild(splash);
+                                }, 500);
+                            }, 500);
                         }
                     }).catch(function(err) {
-                        console.error('Erro ao carregar usuário:', err);
+                        console.error('❌ Erro ao carregar usuário:', err);
+                        s.mostrarTela('loginScreen');
+                        setTimeout(function() {
+                            splash.style.opacity = '0';
+                            setTimeout(function() {
+                                if (splash.parentNode) splash.parentNode.removeChild(splash);
+                            }, 500);
+                        }, 500);
                     });
                 }
             } else {
@@ -711,15 +775,16 @@ App.prototype.init = function() {
                 localStorage.removeItem('usuarioLPX');
                 s.pararFeedListener();
                 s.mostrarTela('loginScreen');
-            }
-            setTimeout(function() {
-                splash.style.opacity = '0';
                 setTimeout(function() {
-                    if (splash.parentNode) splash.parentNode.removeChild(splash);
+                    splash.style.opacity = '0';
+                    setTimeout(function() {
+                        if (splash.parentNode) splash.parentNode.removeChild(splash);
+                    }, 500);
                 }, 500);
-            }, 1500);
+            }
         });
     } else {
+        console.error('❌ Firebase Auth não disponível');
         setTimeout(function() {
             splash.style.opacity = '0';
             setTimeout(function() {
@@ -737,6 +802,8 @@ App.prototype.init = function() {
 App.prototype.mostrarTela = function(id) { 
     var s = this; 
     
+    console.log('📱 Navegando para:', id);
+    
     if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen') {
         s.historicoTelas.push(s.telaAtual);
     }
@@ -749,6 +816,7 @@ App.prototype.mostrarTela = function(id) {
     
     var tela = document.getElementById(id); 
     if (!tela) { 
+        console.warn('⚠️ Tela não encontrada, criando:', id);
         tela = document.createElement('div'); 
         tela.id = id; 
         tela.className = 'screen'; 
@@ -762,8 +830,12 @@ App.prototype.mostrarTela = function(id) {
     
     var nav = document.getElementById('bottomNav'); 
     if (nav) { 
-        var telasSemNav = ['loginScreen', 'cadastroScreen', 'recuperarSenhaScreen']; 
-        nav.style.display = telasSemNav.indexOf(id) >= 0 ? 'none' : 'flex'; 
+        var telasSemNav = ['loginScreen', 'cadastroScreen', 'recuperarSenhaScreen', 'documentoScreen']; 
+        if (telasSemNav.indexOf(id) >= 0) {
+            nav.style.display = 'none'; 
+        } else {
+            nav.style.display = 'flex';
+        }
         
         var navItems = nav.querySelectorAll('.nav-item');
         navItems.forEach(function(item) {
@@ -772,7 +844,6 @@ App.prototype.mostrarTela = function(id) {
         });
     }
     
-    // Carrega conteúdo específico
     switch(id) {
         case 'homeScreen':
             s.carregarHome();
@@ -804,7 +875,7 @@ App.prototype.voltarTela = function() {
 };
 
 // ==========================================================
-// ===== LOGIN / CADASTRO / SAIR =====
+// ===== LOGIN CORRIGIDO =====
 // ==========================================================
 
 App.prototype.fazerLogin = function() { 
@@ -812,13 +883,27 @@ App.prototype.fazerLogin = function() {
     var email = document.getElementById('loginEmail')?.value?.trim() || '';
     var senha = document.getElementById('loginSenha')?.value || ''; 
     
-    if (!email || !senha) { s.mostrarToast('Preencha email e senha!', 'erro'); return; } 
+    console.log('🔍 Tentando login com:', email);
+    console.log('🔍 Firebase Auth:', typeof firebase !== 'undefined' && firebase.auth ? '✅' : '❌');
+    
+    if (!email || !senha) { 
+        s.mostrarToast('Preencha email e senha!', 'erro'); 
+        return; 
+    } 
+    
+    var btn = document.getElementById('btnLogin');
+    if (btn) {
+        btn.textContent = '⏳ Entrando...';
+        btn.disabled = true;
+    }
     
     s.mostrarToast('Entrando...', 'info'); 
     
     if (typeof firebase !== 'undefined' && firebase.auth) { 
         firebase.auth().signInWithEmailAndPassword(email, senha)
             .then(function(userCredential) { 
+                console.log('✅ Login bem-sucedido:', userCredential.user.uid);
+                
                 if (typeof db !== 'undefined') { 
                     db.collection('usuarios').doc(userCredential.user.uid).get()
                         .then(function(doc) { 
@@ -828,21 +913,73 @@ App.prototype.fazerLogin = function() {
                                 localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); 
                                 s.historicoTelas = []; 
                                 s.mostrarToast('Bem-vindo, ' + s.usuarioLogado.nome + '!', 'sucesso'); 
-                                s.mostrarTela('homeScreen');
+                                
+                                if (s._listenerFeed) {
+                                    s._listenerFeed();
+                                    s._listenerFeed = null;
+                                }
+                                
                                 s.iniciarListenerNotificacoes();
                                 s.iniciarFeedListener();
-                            } 
+                                s.mostrarTela('homeScreen');
+                                s.carregarHome();
+                                
+                                console.log('✅ Usuário logado e navegação concluída');
+                            } else {
+                                console.error('❌ Documento do usuário não encontrado');
+                                s.mostrarToast('Erro ao carregar perfil!', 'erro');
+                                if (btn) {
+                                    btn.textContent = 'ENTRAR';
+                                    btn.disabled = false;
+                                }
+                            }
+                        })
+                        .catch(function(err) {
+                            console.error('❌ Erro ao buscar usuário:', err);
+                            s.mostrarToast('Erro ao carregar perfil!', 'erro');
+                            if (btn) {
+                                btn.textContent = 'ENTRAR';
+                                btn.disabled = false;
+                            }
                         }); 
-                } 
+                } else {
+                    console.error('❌ Firebase Firestore não disponível');
+                    s.mostrarToast('Erro no sistema!', 'erro');
+                    if (btn) {
+                        btn.textContent = 'ENTRAR';
+                        btn.disabled = false;
+                    }
+                }
             })
             .catch(function(err) {
+                console.error('❌ Erro no login:', err);
                 var msg = 'Email ou senha incorretos!';
                 if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado!';
-                if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
-                s.mostrarToast(msg, 'erro'); 
+                else if (err.code === 'auth/wrong-password') msg = 'Senha incorreta!';
+                else if (err.code === 'auth/invalid-email') msg = 'Email inválido!';
+                else if (err.code === 'auth/user-disabled') msg = 'Usuário desativado!';
+                else if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas! Aguarde.';
+                
+                s.mostrarToast(msg, 'erro');
+                
+                if (btn) {
+                    btn.textContent = 'ENTRAR';
+                    btn.disabled = false;
+                }
             }); 
+    } else {
+        console.error('❌ Firebase Auth não disponível');
+        s.mostrarToast('Sistema indisponível!', 'erro');
+        if (btn) {
+            btn.textContent = 'ENTRAR';
+            btn.disabled = false;
+        }
     }
 };
+
+// ==========================================================
+// ===== CADASTRO =====
+// ==========================================================
 
 App.prototype.cadastrar = function() { 
     var s = this; 
@@ -892,6 +1029,10 @@ App.prototype.cadastrar = function() {
     }
 };
 
+// ==========================================================
+// ===== SAIR =====
+// ==========================================================
+
 App.prototype.sair = function() { 
     this.limparTodosListeners();
     
@@ -910,6 +1051,13 @@ App.prototype.sair = function() {
     var modal = document.getElementById('modalSair');
     if (modal) modal.style.display = 'none';
     
+    // Restaura botão login
+    var btn = document.getElementById('btnLogin');
+    if (btn) {
+        btn.textContent = 'ENTRAR';
+        btn.disabled = false;
+    }
+    
     console.log('👋 Usuário desconectado, listeners removidos');
 };
 
@@ -919,7 +1067,14 @@ App.prototype.sair = function() {
 
 App.prototype.carregarHome = function() { 
     var s = this; 
-    if (!s.usuarioLogado) { s.mostrarTela('loginScreen'); return; } 
+    
+    if (!s.usuarioLogado) { 
+        console.log('⚠️ Usuário não logado, redirecionando para login');
+        s.mostrarTela('loginScreen'); 
+        return; 
+    } 
+    
+    console.log('🏠 Carregando Home para:', s.usuarioLogado.nome);
     
     var u = s.usuarioLogado; 
     var hr = new Date().getHours();
@@ -931,23 +1086,39 @@ App.prototype.carregarHome = function() {
     var elResumo = document.getElementById('resumoTexto');
     if (elResumo) elResumo.textContent = u.tipo === 'empreiteiro' ? '🏰 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
     
-    // Atualiza perfil na tela de perfil
     this.carregarMeuPerfil();
     
-    // Garante que o feed listener está ativo
-    if (!s._listenerFeed) s.iniciarFeedListener();
+    if (!s._listenerFeed) {
+        console.log('🔥 Iniciando feed listener...');
+        s.iniciarFeedListener();
+    }
     
-    // Renderiza o feed
     if (s.tabAtual === 'feed') {
         var container = document.getElementById('feedContainer');
         if (container) {
-            if (s._vagasCache.length > 0) {
+            if (s._vagasCache && s._vagasCache.length > 0) {
                 s.renderizarFeed(container, s._vagasCache);
             } else {
-                container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
+                container.innerHTML = '<div class="loading">⏳ Carregando feed...</div>';
+                setTimeout(function() {
+                    if (s._vagasCache && s._vagasCache.length > 0) {
+                        s.renderizarFeed(container, s._vagasCache);
+                    } else {
+                        container.innerHTML = '<div class="card" style="text-align:center;padding:30px;">' +
+                            '<div style="font-size:50px;">🏗️</div>' +
+                            '<h3>Nenhuma obra publicada</h3>' +
+                            '<p style="color:#666;">Seja o primeiro a publicar!</p>' +
+                            (s.usuarioLogado?.tipo === 'empreiteiro' ? 
+                                '<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary" style="margin-top:15px;">📢 PUBLICAR OBRA</button>' : '') + 
+                            '</div>';
+                    }
+                }, 2000);
             }
         }
     }
+    
+    var nav = document.getElementById('bottomNav');
+    if (nav) nav.style.display = 'flex';
 };
 
 App.prototype.mudarTab = function(t) { 
@@ -1019,7 +1190,6 @@ App.prototype.iniciarFeedListener = function() {
                 s.renderizarFeed(container, vagas);
             }
             
-            // Notifica novas vagas apenas se não for do próprio usuário
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added' && s._feedIniciado && s.usuarioLogado) {
                     var vaga = change.doc.data();
@@ -1127,6 +1297,11 @@ App.prototype.abrirTelaPublicacao = function() {
             var el = document.getElementById(id); if (el) el.value = '';
         });
         document.querySelectorAll('#profissoesCheckboxes input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
+        var btn = document.getElementById('btnPublicar');
+        if (btn) {
+            btn.textContent = '📢 PUBLICAR';
+            btn.disabled = false;
+        }
     }, 100);
 };
 
@@ -1161,6 +1336,11 @@ App.prototype.publicarVagaApp = function() {
     if (!s.usuarioLogado) { s.mostrarToast('Faça login!', 'erro'); return; }
     
     s._publicando = true;
+    var btn = document.getElementById('btnPublicar');
+    if (btn) {
+        btn.textContent = '⏳ Publicando...';
+        btn.disabled = true;
+    }
     s.mostrarToast('Publicando...', 'info'); 
     
     var vaga = { 
@@ -1179,6 +1359,10 @@ App.prototype.publicarVagaApp = function() {
                 s.mostrarToast('✅ Obra publicada!', 'sucesso'); 
                 s.vagaFotoBase64 = null;
                 s._publicando = false;
+                if (btn) {
+                    btn.textContent = '📢 PUBLICAR';
+                    btn.disabled = false;
+                }
                 s.historicoTelas = []; 
                 s.mostrarTela('homeScreen');
                 if (s.tabAtual !== 'feed') s.mudarTab('feed');
@@ -1187,9 +1371,17 @@ App.prototype.publicarVagaApp = function() {
                 console.error('❌ Erro:', err);
                 s.mostrarToast('Erro ao publicar', 'erro');
                 s._publicando = false;
+                if (btn) {
+                    btn.textContent = '📢 PUBLICAR';
+                    btn.disabled = false;
+                }
             }); 
     } else {
         s._publicando = false;
+        if (btn) {
+            btn.textContent = '📢 PUBLICAR';
+            btn.disabled = false;
+        }
     }
 };
 
@@ -1201,7 +1393,7 @@ App.prototype.carregarRede = function() {
     var s = this;
     var container = document.getElementById('redeContainer'); 
     if (!container || !s.usuarioLogado) return; 
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando rede...</div>'; 
+    container.innerHTML = '<div class="loading">⏳ Carregando rede...</div>'; 
     
     if (typeof db !== 'undefined') { 
         if (s._listenerRede) s._listenerRede(); 
@@ -1330,24 +1522,20 @@ App.prototype.iniciarChat = function(uid) {
     var s = this;
     console.log('💬 Iniciando chat com:', uid);
     
-    // Remove listener anterior se existir
     if (s._listenerChat) { 
         s._listenerChat(); 
         s._listenerChat = null; 
     }
     
-    // Limpa mensagens anteriores
     var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Carregando...</div>';
+    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">⏳ Carregando...</div>';
     
     if (typeof db !== 'undefined' && s.usuarioLogado) {
-        // Busca dados do usuário selecionado
         db.collection('usuarios').doc(uid).get().then(function(doc) {
             if (doc.exists) {
                 s.usuarioSelecionado = doc.data();
                 s.usuarioSelecionado.id = doc.id;
             } else {
-                // Usuário não encontrado, cria objeto básico
                 s.usuarioSelecionado = { 
                     id: uid, 
                     nome: 'Usuário', 
@@ -1382,7 +1570,7 @@ App.prototype.abrirInterfaceChat = function() {
         chatHeader.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
             '<button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">⬅</button>' +
             '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #f0c27f;">' +
-            (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">" : '👷') + '</div>' +
+            (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;">' : '👷') + '</div>' +
             '<strong>💬 ' + (user.nome || 'Usuário') + '</strong></div>';
     }
     
@@ -1390,7 +1578,10 @@ App.prototype.abrirInterfaceChat = function() {
     if (inputContainer) inputContainer.style.display = 'flex';
     
     var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:20px;">Carregando...</div>';
+    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:20px;">⏳ Carregando...</div>';
+    
+    var btnEnviar = document.getElementById('btnEnviarMsg');
+    if (btnEnviar) btnEnviar.disabled = false;
     
     setTimeout(function() {
         var input = document.getElementById('chatInput');
@@ -1406,7 +1597,6 @@ App.prototype.iniciarListenerMensagensCorrigido = function() {
         return;
     }
     
-    // Remove listener anterior
     if (s._listenerChat) {
         s._listenerChat();
         s._listenerChat = null;
@@ -1417,7 +1607,6 @@ App.prototype.iniciarListenerMensagensCorrigido = function() {
     var user1 = s.usuarioLogado.id;
     var user2 = s.usuarioSelecionado.id;
     
-    // Escuta mensagens onde o usuário logado está envolvido
     s._listenerChat = db.collection('mensagens')
         .where('participantes', 'array-contains', user1)
         .onSnapshot(function(snap) {
@@ -1427,7 +1616,6 @@ App.prototype.iniciarListenerMensagensCorrigido = function() {
                     var msg = doc.data();
                     msg.id = doc.id;
                     
-                    // Verifica se a mensagem é entre os dois participantes
                     if (msg.participantes && 
                         msg.participantes.indexOf(user1) >= 0 && 
                         msg.participantes.indexOf(user2) >= 0) {
@@ -1435,7 +1623,6 @@ App.prototype.iniciarListenerMensagensCorrigido = function() {
                     }
                 });
                 
-                // Ordena por data
                 mensagens.sort(function(a, b) {
                     var da = 0, db2 = 0;
                     try {
@@ -1445,7 +1632,6 @@ App.prototype.iniciarListenerMensagensCorrigido = function() {
                     return da - db2;
                 });
                 
-                // Renderiza mensagens
                 if (mensagens.length === 0) {
                     container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Diga olá! 👋</div>';
                 } else {
@@ -1490,6 +1676,8 @@ App.prototype.enviarMensagem = function() {
     if (!texto || s._enviandoMensagem) return;
     
     s._enviandoMensagem = true;
+    var btn = document.getElementById('btnEnviarMsg');
+    if (btn) btn.disabled = true;
     input.value = '';
     input.disabled = true;
     
@@ -1502,12 +1690,10 @@ App.prototype.enviarMensagem = function() {
         dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    // Adiciona a mensagem
     db.collection('mensagens').add(mensagem)
         .then(function() {
             console.log('✅ Mensagem enviada');
             
-            // Cria notificação para o destinatário
             db.collection('notificacoes').add({
                 usuarioId: s.usuarioSelecionado.id,
                 titulo: '💬 ' + s.usuarioLogado.nome,
@@ -1523,12 +1709,12 @@ App.prototype.enviarMensagem = function() {
         .catch(function(err) {
             console.error('❌ Erro ao enviar mensagem:', err);
             s.mostrarToast('❌ Erro ao enviar mensagem', 'erro');
-            // Restaura o texto no input
             input.value = texto;
         })
         .finally(function() {
             s._enviandoMensagem = false;
             input.disabled = false;
+            if (btn) btn.disabled = false;
             setTimeout(function() { 
                 if (input) input.focus(); 
             }, 100);
@@ -1564,7 +1750,6 @@ App.prototype.iniciarListenerNotificacoes = function() {
                 badge.style.display = count > 0 ? 'flex' : 'none'; 
             }
             
-            // Notifica sobre novas mensagens
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added') {
                     var notif = change.doc.data();
@@ -1590,7 +1775,7 @@ App.prototype.buscarProfissionais = function() {
     if (!container) return; 
     
     var termo = document.getElementById('buscaInput')?.value?.trim()?.toLowerCase() || '';
-    container.innerHTML = '<div class="loading">Buscando...</div>'; 
+    container.innerHTML = '<div class="loading">⏳ Buscando...</div>'; 
     
     if (typeof db !== 'undefined') { 
         db.collection('usuarios').get().then(function(snap) { 
@@ -1600,7 +1785,6 @@ App.prototype.buscarProfissionais = function() {
                 if (u.id !== s.usuarioLogado?.id) todos.push(u); 
             }); 
             
-            // Filtra por termo
             if (termo) {
                 todos = todos.filter(function(u) {
                     return (u.nome || '').toLowerCase().includes(termo) || 
@@ -1662,17 +1846,15 @@ App.prototype.carregarMeuPerfil = function() {
     var elProfissao = document.getElementById('perfilProfissao');
     var elEmail = document.getElementById('perfilEmail');
     var elCelular = document.getElementById('perfilCelular');
+    var elAvatar = document.getElementById('perfilAvatar');
     
     if (elNome) elNome.textContent = u.nome || 'Nome';
     if (elProfissao) elProfissao.textContent = '👷 ' + (u.profissao || u.tipo || 'Profissional');
     if (elEmail) elEmail.textContent = '📧 ' + (u.email || '');
     if (elCelular) elCelular.textContent = '📱 ' + (u.celular || '');
-    
-    // Atualiza a foto
-    var avatar = document.querySelector('.profile-avatar img');
-    if (avatar) {
-        avatar.src = u.fotoPerfil || 'imagem/logo-sem-fundo-lpxconstrutor.png';
-        avatar.style.objectFit = u.fotoPerfil ? 'cover' : 'contain';
+    if (elAvatar) {
+        elAvatar.src = u.fotoPerfil || 'imagem/logo-sem-fundo-lpxconstrutor.png';
+        elAvatar.style.objectFit = u.fotoPerfil ? 'cover' : 'contain';
     }
 };
 
@@ -1680,7 +1862,7 @@ App.prototype.carregarMinhasObras = function() {
     var s = this;
     var container = document.getElementById('listaObrasContainer'); 
     if (!container || !s.usuarioLogado) return; 
-    container.innerHTML = '<div class="loading">Carregando...</div>'; 
+    container.innerHTML = '<div class="loading">⏳ Carregando...</div>'; 
     
     if (typeof db !== 'undefined') { 
         db.collection('vagas').where('autorId', '==', s.usuarioLogado.id).where('ativa', '==', true).get()
@@ -1721,14 +1903,14 @@ App.prototype.verDetalheObra = function(oid) {
             var modalAntigo = document.getElementById('modalObra'); if (modalAntigo) modalAntigo.remove();
             
             var modal = document.createElement('div'); modal.id = 'modalObra';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;display:flex;align-items:center;justify-content:center;';
             modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
             
-            var html = '<div style="background:white;min-height:100vh;max-width:500px;margin:0 auto;border-radius:12px;">';
-            if (v.fotoObra?.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:12px 12px 0 0;">';
-            html += '<div style="padding:20px;"><h2>' + v.titulo + '</h2><p>📍 ' + v.endereco + '</p><p>👷 ' + v.profissoes + '</p>' +
+            var html = '<div class="modal-content" style="max-width:500px;width:95%;">';
+            if (v.fotoObra?.length > 100) html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;margin-bottom:12px;">';
+            html += '<h2>' + v.titulo + '</h2><p>📍 ' + v.endereco + '</p><p>👷 ' + v.profissoes + '</p>' +
                 '<p>💰 R$' + v.valorHora + '/h</p><p>' + (v.descricao||'') + '</p>' +
-                '<button onclick="document.getElementById(\'modalObra\').remove()" style="width:100%;background:#6b7280;color:white;border:none;padding:15px;border-radius:10px;cursor:pointer;">Fechar</button></div></div>';
+                '<button onclick="document.getElementById(\'modalObra\').remove()" class="btn btn-outline" style="width:100%;">Fechar</button></div>';
             modal.innerHTML = html;
             document.body.appendChild(modal);
         }); 
@@ -1756,7 +1938,7 @@ App.prototype.mostrarNotificacoes = function() {
                 
                 var modalAntigo = document.getElementById('modalNotif'); if (modalAntigo) modalAntigo.remove();
                 var modal = document.createElement('div'); modal.id = 'modalNotif';
-                modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;display:flex;align-items:center;justify-content:center;';
+                modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
                 modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
                 
                 var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;">' +
@@ -1903,14 +2085,15 @@ App.prototype.gerarQRCodeCompartilhar = function() {
 
 App.prototype.carregarConfigScreen = function() { 
     var s=this, tela=document.getElementById('configScreen'); if(!tela) return;
+    var temaClaro = s.temaAtual === 'claro';
     tela.innerHTML='<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;"><button onclick="window.app.voltarTela()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;">⬅</button><h2>⚙️ Configurações</h2></div>'+
         '<div style="padding:16px;"><div class="card"><h3>🎨 Tema</h3><div style="display:flex;gap:10px;margin-top:10px;">'+
-        '<button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='claro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='claro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='claro'?'white':'#1A3A5C')+';cursor:pointer;">☀️ Claro</button>'+
-        '<button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(s.temaAtual==='escuro'?'#1A3A5C':'#e5e7eb')+';background:'+(s.temaAtual==='escuro'?'#1A3A5C':'white')+';color:'+(s.temaAtual==='escuro'?'white':'#1A3A5C')+';cursor:pointer;">🌙 Escuro</button></div></div>'+
+        '<button id="temaClaroBtn" onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(temaClaro?'#1A3A5C':'#e5e7eb')+';background:'+(temaClaro?'#1A3A5C':'white')+';color:'+(temaClaro?'white':'#1A3A5C')+';cursor:pointer;">☀️ Claro</button>'+
+        '<button id="temaEscuroBtn" onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid '+(temaClaro?'#e5e7eb':'#1A3A5C')+';background:'+(temaClaro?'white':'#1A3A5C')+';color:'+(temaClaro?'#1A3A5C':'white')+';cursor:pointer;">🌙 Escuro</button></div></div>'+
         '<div class="card"><h3>📄 Documentos</h3>'+
         '<button onclick="window.app.mostrarDocumento(\'termos\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;margin-bottom:5px;cursor:pointer;">📄 Termos de Uso</button>'+
-        '<button onclick="window.app.mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;cursor:pointer;">🔒 Privacidade</button></div>'+
-        '<div class="card"><p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v2.0<br>© 2024 Todos os direitos reservados</p></div></div>';
+        '<button onclick="window.app.mostrarDocumento(\'privacidade\')" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;cursor:pointer;">🔒 Política de Privacidade</button></div>'+
+        '<div class="card"><p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v'+APP_VERSION+'<br>© 2024 Todos os direitos reservados</p></div></div>';
     s.mostrarTela('configScreen');
 };
 
@@ -2000,11 +2183,12 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR - SISTEMA COMPLETO v2.0');
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - SISTEMA COMPLETO');
     console.log('📡 Firebase:', typeof firebase !== 'undefined' ? '✅' : '❌');
     console.log('💬 Chat em tempo real - CORRIGIDO');
     console.log('🔥 Feed instantâneo - CORRIGIDO');
     console.log('🔔 Notificações em tempo real - CORRIGIDO');
+    console.log('🔐 Login - CORRIGIDO');
     
     var nav = document.getElementById('bottomNav'); 
     if (nav) nav.style.display = 'none';
@@ -2014,7 +2198,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('✅ CÓDIGO COMPLETO ENTREGUE!');
 console.log('📌 Funcionalidades:');
-console.log('  ✅ Login/Cadastro');
+console.log('  ✅ Login/Cadastro (CORRIGIDO)');
 console.log('  ✅ Feed instantâneo com listener');
 console.log('  ✅ Chat em tempo real (CORRIGIDO)');
 console.log('  ✅ Notificações push');
@@ -2024,6 +2208,7 @@ console.log('  ✅ Publicação de obras');
 console.log('  ✅ Localização');
 console.log('  ✅ QR Code');
 console.log('  ✅ Tema claro/escuro');
+console.log('  ✅ Versão: ' + APP_VERSION);
 </script>
 
 </body>
