@@ -13,16 +13,7 @@
     "dir": "ltr",
     "categories": ["business", "productivity", "social"],
     "prefer_related_applications": false,
-  {
     "icons": [
-        {
-            "src": "./imagem/logo-sem-fundo-lpxconstrutor.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ]
-},
         {
             "src": "./imagem/logo-lpxconstrutor.png",
             "sizes": "96x96",
