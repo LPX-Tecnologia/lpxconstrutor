@@ -6,13 +6,25 @@
     <meta name="theme-color" content="#1A3A5C">
     <meta name="description" content="LPXConstrutor - Rede Profissional da Construção Civil">
     <title>🏗️ LPXConstrutor</title>
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Firebase Compat (carregado primeiro) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- QR Code -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    
+    <!-- PWA -->
     <link rel="manifest" href="./manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -27,6 +39,7 @@
 
 <div class="app-container">
     
+    <!-- HEADER -->
     <header class="app-header">
         <div class="header-content">
             <h1><img src="imagem/logo-sem-fundo-lpxconstrutor.png" alt="LPXConstrutor" class="header-logo">LPXCONSTRUTOR</h1>
@@ -34,9 +47,10 @@
         </div>
     </header>
 
+    <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!-- LOGIN -->
+    <!-- TELAS -->
     <div class="screen active" id="loginScreen">
         <div class="login-container">
             <div class="login-logo"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" alt="LPXConstrutor" class="logo-login"></div>
@@ -52,7 +66,6 @@
         </div>
     </div>
 
-    <!-- CADASTRO -->
     <div class="screen" id="cadastroScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Criar Conta</h2></div>
         <div class="card">
@@ -74,14 +87,12 @@
         </div>
     </div>
 
-    <!-- RECUPERAR SENHA -->
     <div class="screen" id="recuperarSenhaScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Recuperar Senha</h2></div>
         <div id="recPasso1"><div class="card"><div style="text-align:center;"><h3>Esqueceu sua senha?</h3></div><div class="input-group"><label>Email</label><input type="email" class="input-field" id="recEmail"></div><button class="btn btn-primary" onclick="window.app.solicitarCodigo()">ENVIAR CÓDIGO</button></div></div>
         <div id="recPasso2" style="display:none;"><div class="card"><div style="text-align:center;"><h3>Digite o código</h3></div><div class="input-group"><label>Código</label><input type="text" class="input-field" id="recCodigo" maxlength="6"></div><div class="input-group"><label>Nova Senha</label><input type="password" class="input-field" id="recNovaSenha"></div><button class="btn btn-primary" onclick="window.app.verificarCodigo()">REDEFINIR</button><button class="btn btn-outline" onclick="window.app.voltarPasso1()">Voltar</button></div></div>
     </div>
 
-    <!-- HOME -->
     <div class="screen" id="homeScreen">
         <div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;margin-bottom:16px;padding:14px 16px;">
             <div style="display:flex;align-items:center;gap:10px;"><img src="imagem/logo-sem-fundo-lpxconstrutor.png" class="logo-saudacao"><div><div id="saudacao" style="font-size:16px;font-weight:700;">Bem-vindo!</div><div id="resumoTexto" style="font-size:12px;opacity:.85;">Carregando...</div></div></div>
@@ -95,37 +106,26 @@
         <div id="redeContainer" class="feed-container" style="display:none;"><div class="loading">Carregando...</div></div>
     </div>
 
-    <!-- BUSCA -->
     <div class="screen" id="buscaScreen">
         <div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Buscar Profissionais</h2></div>
         <div class="search-container"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="buscaInput" placeholder="Nome ou profissão..." oninput="window.app.buscarProfissionais()"></div>
         <div id="buscaResultados" class="feed-container"></div>
     </div>
 
-    <!-- PERFIL PÚBLICO -->
     <div class="screen" id="perfilPublicoScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Perfil</h2></div><div id="perfilPublicoConteudo"></div></div>
 
-    <!-- MEU PERFIL -->
     <div class="screen" id="meuPerfilScreen"></div>
-
-    <!-- CONFIGURAÇÕES -->
     <div class="screen" id="configScreen"></div>
 
-    <!-- CHAT -->
     <div class="screen" id="chatScreen">
-        <div class="screen-header" style="padding:0;">
-            <div id="chatHeaderInfo" style="width:100%;"></div>
-        </div>
-        <div class="chat-messages" id="chatMessages">
-            <div style="text-align:center;padding:60px;color:#999;">Selecione um contato para conversar</div>
-        </div>
+        <div class="screen-header" style="padding:0;"><div id="chatHeaderInfo" style="width:100%;"></div></div>
+        <div class="chat-messages" id="chatMessages"><div style="text-align:center;padding:60px;color:#999;">Selecione um contato para conversar</div></div>
         <div class="chat-input-container" id="chatInputContainer" style="display:none;">
             <input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')window.app.enviarMensagem()">
             <button class="btn-send" onclick="window.app.enviarMensagem()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
-    <!-- PUBLICAR VAGA -->
     <div class="screen" id="publicarVagaScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Publicar Vaga</h2></div>
         <div class="card">
             <div class="input-group" style="text-align:center;"><label>Foto da Obra</label><div class="foto-obra-container" onclick="document.getElementById('vagaFoto').click()"><img id="vagaFotoPreview" src="imagem/logo-sem-fundo-lpxconstrutor.png" style="width:100%;height:200px;object-fit:cover;border-radius:12px;"><div class="foto-obra-overlay"><i class="fas fa-camera"></i> Adicionar Foto</div></div><input type="file" id="vagaFoto" accept="image/*" style="display:none;" onchange="window.app.previewFotoObra(event)"></div>
@@ -138,7 +138,6 @@
         </div>
     </div>
 
-    <!-- MINHAS OBRAS -->
     <div class="screen" id="minhasObrasScreen"><div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Minhas Obras</h2><button class="icon-btn" onclick="window.app.novaObra()" style="background:#10B981;color:white;">➕</button></div><div class="card" style="background:linear-gradient(135deg,#1A3A5C,#2C5F8A);color:white;text-align:center;"><div style="font-size:36px;font-weight:900;" id="totalObras">0</div><div>Total de Obras</div></div><div id="listaObrasContainer" class="feed-container" style="margin-top:16px;"></div></div>
 
     <!-- MODAL SAIR -->
@@ -156,8 +155,24 @@
 
 </div>
 
+<!-- JavaScript Modules -->
 <script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/database.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/videos.js"></script>
 <script src="js/app.js"></script>
+
+<!-- Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+        .then(function() { console.log('✅ SW registrado'); })
+        .catch(function(err) { console.warn('⚠️ SW:', err); });
+}
+</script>
 
 </body>
 </html>
