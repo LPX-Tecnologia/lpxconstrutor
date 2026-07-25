@@ -1,4 +1,5 @@
-// js/firebase-config.js - CORRIGIDO
+// js/firebase-config.js - CORRIGIDO PARA OFFLINE
+
 const firebaseConfig = {
     apiKey: "AIzaSyB_HKuYMVnBn_rhKfvazjs-7SCmb9NOrDQ",
     authDomain: "construtorlpx.firebaseapp.com",
@@ -9,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-3J4XN3K2PG"
 };
 
-// Verifica se já foi inicializado
+// Inicializa Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -17,9 +18,35 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Configuração offline
-db.enablePersistence()
-    .then(() => console.log('🔥 Modo offline ativado'))
-    .catch(err => console.warn('⚠️ Erro offline:', err));
+// Configuração para funcionar OFFLINE e ONLINE
+db.settings({
+    cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+    merge: true
+});
 
-console.log('✅ Firebase configurado - v2.0.3');
+// Habilita persistência offline
+db.enablePersistence({ synchronizeTabs: true })
+    .then(function() {
+        console.log('🔥 Modo offline ATIVADO');
+    })
+    .catch(function(err) {
+        if (err.code === 'failed-precondition') {
+            console.warn('⚠️ Múltiplas abas abertas - offline limitado');
+        } else if (err.code === 'unimplemented') {
+            console.warn('⚠️ Navegador não suporta offline');
+        }
+    });
+
+// Verifica conexão
+window.addEventListener('online', function() {
+    console.log('🌐 ONLINE - reconectando ao Firestore');
+    db.enableNetwork().then(function() {
+        console.log('✅ Reconectado ao Firestore');
+    });
+});
+
+window.addEventListener('offline', function() {
+    console.log('📴 OFFLINE - usando cache local');
+});
+
+console.log('✅ Firebase configurado - v2.0.4');
