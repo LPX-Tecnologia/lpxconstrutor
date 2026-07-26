@@ -1,9 +1,9 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.0.7 - FEED E CHAT 100% INSTANTÂNEO
+// LPXCONSTRUTOR v2.0.8 - TUDO INSTANTÂNEO + PERSISTÊNCIA
 // ==========================================================
 
-const APP_VERSION = "2.0.7";
-console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION} - TEMPO REAL`);
+const APP_VERSION = "2.0.8";
+console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 // Interface global
 window.app = { _app: null };
@@ -33,6 +33,7 @@ var App = function() {
     this._listenerFeed = null;
     this._listenerChat = null;
     this._listenerNotificacoes = null;
+    this._listenerMensagensNaoLidas = null;
     this._vagasCache = [];
     this._publicando = false;
     this._mapaInicializado = false;
@@ -40,10 +41,10 @@ var App = function() {
     this.init();
 };
 
-// ===== INICIALIZAÇÃO =====
+// ===== INICIALIZAÇÃO COM PERSISTÊNCIA =====
 App.prototype.init = function() {
     var s = this;
-    console.log('🚀 App v' + APP_VERSION + ' iniciado');
+    console.log('🚀 App v' + APP_VERSION);
     window.app._app = s;
     
     var nav = document.getElementById('bottomNav');
@@ -51,7 +52,25 @@ App.prototype.init = function() {
     
     if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
     
+    // Verifica se tem sessão salva
+    var savedUser = localStorage.getItem('usuarioLPX');
+    if (savedUser) {
+        try {
+            s.usuarioLogado = JSON.parse(savedUser);
+            console.log('📦 Sessão restaurada:', s.usuarioLogado.nome);
+        } catch(e) {}
+    }
+    
     if (typeof firebase !== 'undefined' && firebase.auth) {
+        // Configura persistência LOCAL (não desloga ao atualizar)
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(function() {
+                console.log('✅ Persistência LOCAL configurada');
+            })
+            .catch(function(err) {
+                console.warn('⚠️ Erro persistência:', err);
+            });
+        
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 console.log('✅ Auth:', user.uid);
@@ -63,15 +82,25 @@ App.prototype.init = function() {
                         s.mostrarTela('homeScreen');
                         s.iniciarFeedListener();
                         s.iniciarListenerNotificacoes();
+                        s.iniciarListenerMensagensNaoLidas();
                     } else {
                         s.mostrarTela('loginScreen');
                     }
                 }).catch(function() { s.mostrarTela('loginScreen'); });
             } else {
-                s.usuarioLogado = null;
-                localStorage.removeItem('usuarioLPX');
-                s.pararListeners();
-                s.mostrarTela('loginScreen');
+                // Se tem sessão salva, tenta restaurar
+                if (s.usuarioLogado) {
+                    console.log('🔄 Restaurando sessão...');
+                    s.mostrarTela('homeScreen');
+                    s.iniciarFeedListener();
+                    s.iniciarListenerNotificacoes();
+                    s.iniciarListenerMensagensNaoLidas();
+                } else {
+                    s.usuarioLogado = null;
+                    localStorage.removeItem('usuarioLPX');
+                    s.pararListeners();
+                    s.mostrarTela('loginScreen');
+                }
             }
         });
     } else {
@@ -129,8 +158,13 @@ App.prototype.fazerLogin = function() {
     var btn = document.getElementById('btnLogin');
     if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
     
-    firebase.auth().signInWithEmailAndPassword(email, senha)
-        .then(function(uc) { return db.collection('usuarios').doc(uc.user.uid).get(); })
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(function() {
+            return firebase.auth().signInWithEmailAndPassword(email, senha);
+        })
+        .then(function(uc) {
+            return db.collection('usuarios').doc(uc.user.uid).get();
+        })
         .then(function(doc) {
             if (doc.exists) {
                 s.usuarioLogado = doc.data(); s.usuarioLogado.id = doc.id;
@@ -175,7 +209,7 @@ App.prototype.cadastrar = function() {
         })
         .then(function() {
             s.usuarioLogado = d; localStorage.setItem('usuarioLPX', JSON.stringify(d));
-            s.notificarTodosUsuarios({ titulo: '👤 Novo Profissional!', mensagem: d.nome + ' acabou de se cadastrar!', tipo: 'novo_usuario' });
+            s.notificarTodosUsuarios({ titulo: '👤 Novo Profissional!', mensagem: d.nome + ' (' + (d.profissao || d.tipo) + ') acabou de se cadastrar!', tipo: 'novo_usuario' });
             s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); s.mostrarTela('homeScreen');
         })
         .catch(function(err) {
@@ -185,7 +219,8 @@ App.prototype.cadastrar = function() {
 
 // ===== SAIR =====
 App.prototype.sair = function() {
-    this.pararListeners(); firebase.auth().signOut();
+    this.pararListeners(); 
+    firebase.auth().signOut();
     this.usuarioLogado = null; this.usuarioSelecionado = null;
     localStorage.removeItem('usuarioLPX'); this.historicoTelas = [];
     var modal = document.getElementById('modalSair'); if (modal) modal.style.display = 'none';
@@ -197,13 +232,19 @@ App.prototype.confirmarSair = function() { this.sair(); };
 // ===== HOME =====
 App.prototype.carregarHome = function() {
     var s = this;
-    if (!s.usuarioLogado) { s.mostrarTela('loginScreen'); return; }
+    if (!s.usuarioLogado) { 
+        var saved = localStorage.getItem('usuarioLPX');
+        if (saved) {
+            try { s.usuarioLogado = JSON.parse(saved); } catch(e) { s.mostrarTela('loginScreen'); return; }
+        } else { s.mostrarTela('loginScreen'); return; }
+    }
     var u = s.usuarioLogado, hr = new Date().getHours();
     var saudacao = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
     var el = document.getElementById('saudacao'); if (el) el.textContent = '👋 ' + saudacao + ', ' + u.nome + '!';
     var er = document.getElementById('resumoTexto'); if (er) er.textContent = u.tipo === 'empreiteiro' ? '🏰 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
     if (!s._mapaInicializado && typeof mapaService !== 'undefined') { setTimeout(function() { mapaService.initMap(); }, 500); s._mapaInicializado = true; }
     if (!s._listenerFeed) s.iniciarFeedListener();
+    if (!s._listenerMensagensNaoLidas) s.iniciarListenerMensagensNaoLidas();
 };
 
 App.prototype.mudarTab = function(t) {
@@ -215,68 +256,38 @@ App.prototype.mudarTab = function(t) {
 };
 
 // ==========================================================
-// 🔥 FEED 100% INSTANTÂNEO - CORRIGIDO
+// 🔥 FEED 100% INSTANTÂNEO
 // ==========================================================
 App.prototype.iniciarFeedListener = function() {
     var s = this;
-    
-    // Remove listener antigo
     if (s._listenerFeed) { s._listenerFeed(); s._listenerFeed = null; }
+    if (typeof db === 'undefined') return;
     
-    if (typeof db === 'undefined') { console.error('❌ Firestore não disponível'); return; }
-    
-    console.log('🔥 INICIANDO FEED EM TEMPO REAL');
-    
+    console.log('🔥 FEED TEMPO REAL');
     var container = document.getElementById('feedContainer');
-    if (container && s.tabAtual === 'feed') {
-        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando feed...</div>';
-    }
     
-    // USA onSnapshot PARA ATUALIZAÇÃO EM TEMPO REAL
-    s._listenerFeed = db.collection('vagas')
-        .where('ativa', '==', true)
+    s._listenerFeed = db.collection('vagas').where('ativa', '==', true)
         .onSnapshot(function(snap) {
-            console.log('📢 FEED ATUALIZADO:', snap.size, 'vagas');
-            
             var vagas = [];
-            snap.forEach(function(doc) {
-                var v = doc.data(); v.id = doc.id; vagas.push(v);
-            });
-            
-            // Ordena por data
-            vagas.sort(function(a, b) {
-                var da = a.dataCriacao?.toDate?.().getTime() || 0;
-                var db = b.dataCriacao?.toDate?.().getTime() || 0;
-                return db - da;
-            });
-            
+            snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; vagas.push(v); });
+            vagas.sort(function(a, b) { return (b.dataCriacao?.toDate?.()||0) - (a.dataCriacao?.toDate?.()||0); });
             s._vagasCache = vagas;
+            if (container && s.tabAtual === 'feed') s.renderizarFeed(vagas);
             
-            // Renderiza IMEDIATAMENTE
-            if (container && s.tabAtual === 'feed') {
-                s.renderizarFeed(vagas);
-            }
-            
-            // Notifica sobre novas vagas
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added' && s._feedJaCarregado && s.usuarioLogado) {
                     var vaga = change.doc.data();
                     if (vaga.autorId !== s.usuarioLogado.id) {
-                        s.mostrarToast('🆕 Nova obra: ' + (vaga.titulo || 'Publicação'), 'info');
+                        s.mostrarToast('🆕 ' + (vaga.autorNome||'Alguém') + ' publicou: ' + (vaga.titulo||'Nova obra'), 'info');
                     }
                 }
             });
-            
             s._feedJaCarregado = true;
-        }, function(error) {
-            console.error('❌ Erro feed:', error);
-            if (container) container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:#EF4444;">Erro ao carregar feed. <button onclick="window.app._app.iniciarFeedListener()" class="btn btn-primary btn-small">Tentar</button></div>';
         });
 };
 
 App.prototype.renderizarFeed = function(vagas) {
-    var s = this;
-    var container = document.getElementById('feedContainer');
+    var s = this, container = document.getElementById('feedContainer');
     if (!container || s.tabAtual !== 'feed') return;
     
     if (!vagas || vagas.length === 0) {
@@ -288,7 +299,7 @@ App.prototype.renderizarFeed = function(vagas) {
     for (var i = 0; i < vagas.length; i++) {
         var v = vagas[i], dono = s.usuarioLogado && v.autorId === s.usuarioLogado.id;
         var data = ''; try { data = v.dataCriacao?.toDate?.().toLocaleDateString('pt-BR') || ''; } catch(e) {}
-        html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar">' + (v.autorFoto && v.autorFoto.length > 10 ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '👷') + '</div><div class="vaga-info"><div class="vaga-nome">' + (v.autorNome || 'Anônimo') + '</div><div class="vaga-data">' + data + '</div></div>' + (dono ? '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>' : '') + '</div><div class="vaga-body">' + (v.fotoObra && v.fotoObra.length > 100 ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') + '<div class="vaga-titulo">' + (v.titulo || 'Sem título') + '</div><div style="color:#666;font-size:13px;">📍 ' + (v.endereco || '') + '</div><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.profissoes || 'Geral') + '</span></div></div><div class="vaga-footer"><button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>' + (dono ? '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️</button>' : '') + '</div></div>';
+        html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar">' + (v.autorFoto && v.autorFoto.length > 10 ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '👷') + '</div><div class="vaga-info"><div class="vaga-nome" style="cursor:pointer;color:#1A3A5C;" onclick="event.stopPropagation();window.app.verPerfil(\'' + v.autorId + '\')">' + (v.autorNome || 'Anônimo') + '</div><div class="vaga-data">' + data + '</div></div>' + (dono ? '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>' : '') + '</div><div class="vaga-body">' + (v.fotoObra && v.fotoObra.length > 100 ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') + '<div class="vaga-titulo">' + (v.titulo || 'Sem título') + '</div><div style="color:#666;font-size:13px;">📍 ' + (v.endereco || '') + '</div><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.profissoes || 'Geral') + '</span></div></div><div class="vaga-footer"><button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>' + (dono ? '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️</button>' : '') + '</div></div>';
     }
     container.innerHTML = html;
 };
@@ -303,22 +314,44 @@ App.prototype.apagarObra = function(oid, ev) {
 // ===== PERFIL =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this; if (!s.usuarioLogado) return; var u = s.usuarioLogado, tela = document.getElementById('meuPerfilScreen'); if (!tela) return;
-    tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Meu Perfil</h2></div><div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar" onclick="document.getElementById(\'inputFoto\').click()"><img id="perfilAvatar" src="' + (u.fotoPerfil || 'imagem/logo-sem-fundo-lpxconstrutor.png') + '" style="width:100%;height:100%;object-fit:' + (u.fotoPerfil ? 'cover' : 'contain') + ';"></div></div><input type="file" id="inputFoto" accept="image/*" onchange="window.app.uploadFoto(event)" style="display:none;"></div><div class="profile-info-card"><h2>' + (u.nome || 'Nome') + '</h2><p>👷 ' + (u.profissao || u.tipo || 'Profissional') + '</p><p>📧 ' + (u.email || '') + '</p><p>📱 ' + (u.celular || '') + '</p><p>⭐ Score: ' + (u.score || '0') + ' | 📅 Experiência: ' + (u.experiencia || '0') + ' anos</p><div class="stars-container">' + '⭐'.repeat(Math.min(Math.round(u.score || 0), 5)) + '</div></div><div style="display:flex;flex-direction:column;gap:10px;padding:0 16px;"><button onclick="window.app.abrirEditarPerfil()" class="btn btn-primary"><i class="fas fa-edit"></i> Editar Perfil</button><button onclick="window.app.gerarQRCodeCompartilhar()" class="btn btn-outline"><i class="fas fa-qrcode"></i> Compartilhar</button><button onclick="window.app.abrirMapaLocalizacao()" class="btn btn-outline"><i class="fas fa-map-marker-alt"></i> Localização</button><button onclick="window.app.mostrarTela(\'minhasObrasScreen\')" class="btn btn-outline"><i class="fas fa-building"></i> Minhas Obras</button><button onclick="window.app.mostrarTela(\'configScreen\')" class="btn btn-outline"><i class="fas fa-cog"></i> Configurações</button><button onclick="document.getElementById(\'modalSair\').style.display=\'flex\'" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Sair</button></div>';
+    tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Meu Perfil</h2></div><div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar" onclick="document.getElementById(\'inputFoto\').click()"><img id="perfilAvatar" src="' + (u.fotoPerfil || 'imagem/logo-sem-fundo-lpxconstrutor.png') + '" style="width:100%;height:100%;object-fit:' + (u.fotoPerfil ? 'cover' : 'contain') + ';"></div></div><input type="file" id="inputFoto" accept="image/*" onchange="window.app.uploadFoto(event)" style="display:none;"></div><div class="profile-info-card"><h2>' + (u.nome || 'Nome') + '</h2><p>👷 ' + (u.profissao || u.tipo || 'Profissional') + '</p><p>📧 ' + (u.email || '') + '</p><p>📱 ' + (u.celular || '') + '</p><p>⭐ Score: ' + (u.score || '0') + ' | 📅 Exp: ' + (u.experiencia || '0') + ' anos</p></div><div style="display:flex;flex-direction:column;gap:10px;padding:0 16px;"><button onclick="window.app.abrirEditarPerfil()" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</button><button onclick="window.app.gerarQRCodeCompartilhar()" class="btn btn-outline"><i class="fas fa-qrcode"></i> QR Code</button><button onclick="window.app.mostrarTela(\'minhasObrasScreen\')" class="btn btn-outline"><i class="fas fa-building"></i> Obras</button><button onclick="window.app.mostrarTela(\'configScreen\')" class="btn btn-outline"><i class="fas fa-cog"></i> Config</button><button onclick="document.getElementById(\'modalSair\').style.display=\'flex\'" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Sair</button></div>';
 };
 
-// ===== BUSCA =====
+// ==========================================================
+// 🔍 BUSCA - CLICAR NO NOME VAI PRO PERFIL
+// ==========================================================
 App.prototype.buscarProfissionais = function() {
     var s = this, container = document.getElementById('buscaResultados'); if (!container) return;
     var termo = (document.getElementById('buscaInput')?.value || '').toLowerCase().trim();
     container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+    
     db.collection('usuarios').where('ativo', '==', true).get().then(function(snap) {
         var usuarios = []; snap.forEach(function(doc) { var u = doc.data(); u.id = doc.id; if (u.id !== s.usuarioLogado?.id) usuarios.push(u); });
         if (termo) usuarios = usuarios.filter(function(u) { return (u.nome||'').toLowerCase().includes(termo) || (u.profissao||'').toLowerCase().includes(termo) || (u.tipo||'').toLowerCase().includes(termo); });
+        
         if (usuarios.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum profissional encontrado</div>'; return; }
+        
         var html = '';
         for (var i = 0; i < usuarios.length; i++) {
-            var u = usuarios[i], foto = u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '<i class="fas fa-user" style="font-size:24px;color:#1A3A5C;"></i>';
-            html += '<div class="vaga-card" style="padding:12px;cursor:pointer;" onclick="window.app.verPerfil(\'' + u.id + '\')"><div style="display:flex;align-items:center;gap:12px;"><div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;display:flex;align-items:center;justify-content:center;background:#f0f0f0;flex-shrink:0;">' + foto + '</div><div style="flex:1;"><strong>' + (u.nome||'Sem nome') + '</strong><br><small>' + (u.tipo==='empreiteiro'?'🏢 Empreiteiro':'👷 '+(u.profissao||'Profissional')) + '</small></div><button onclick="event.stopPropagation();window.app.iniciarChat(\'' + u.id + '\')" style="background:#1A3A5C;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;">💬</button></div></div>';
+            var u = usuarios[i];
+            var foto = u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '<i class="fas fa-user" style="font-size:24px;color:#1A3A5C;"></i>';
+            var tipo = u.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
+            
+            // NOME CLICÁVEL - VAI PRO PERFIL
+            html += '<div class="vaga-card" style="padding:12px;">' +
+                '<div style="display:flex;align-items:center;gap:12px;">' +
+                    '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;display:flex;align-items:center;justify-content:center;background:#f0f0f0;flex-shrink:0;cursor:pointer;" onclick="window.app.verPerfil(\'' + u.id + '\')">' + foto + '</div>' +
+                    '<div style="flex:1;cursor:pointer;" onclick="window.app.verPerfil(\'' + u.id + '\')">' +
+                        '<strong style="color:#1A3A5C;">' + (u.nome || 'Sem nome') + '</strong><br>' +
+                        '<small style="color:#666;">' + tipo + '</small><br>' +
+                        '<small style="color:#F59E0B;">⭐ ' + (u.score || '0') + ' | 📅 ' + (u.experiencia || '0') + ' anos</small>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:4px;flex-shrink:0;">' +
+                        '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + u.id + '\')" style="background:#1A3A5C;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;">💬</button>' +
+                        '<button onclick="event.stopPropagation();window.app.adicionarNaRede(\'' + u.id + '\')" style="background:#10B981;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;">🔗</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
         }
         container.innerHTML = html;
     });
@@ -332,7 +365,27 @@ App.prototype.verPerfil = function(uid) {
         var u = doc.data(); u.id = doc.id;
         var conteudo = document.getElementById('perfilPublicoConteudo'); if (!conteudo) return;
         var foto = u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '<i class="fas fa-user" style="font-size:60px;color:#1A3A5C;"></i>';
-        conteudo.innerHTML = '<div style="text-align:center;padding:20px;"><div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #F47920;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">' + foto + '</div><h2>' + (u.nome||'Usuário') + '</h2><p>' + (u.tipo==='empreiteiro'?'🏢 Empreiteiro':'👷 '+(u.profissao||'Profissional')) + ' • ⭐ ' + (u.score||0).toFixed(1) + '</p></div><div class="card"><p>📧 ' + (u.email||'') + '</p><p>📱 ' + (u.celular||'') + '</p></div><div style="display:flex;gap:10px;margin-top:10px;"><button onclick="window.app.iniciarChat(\'' + u.id + '\')" class="btn btn-primary" style="flex:1;">💬 Chat</button><button onclick="window.app.adicionarNaRede(\'' + u.id + '\')" class="btn btn-success" style="flex:1;">🔗 Conectar</button></div>';
+        var tipo = u.tipo === 'empreiteiro' ? '🏢 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
+        
+        conteudo.innerHTML = 
+            '<div style="text-align:center;padding:20px;">' +
+                '<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 15px;border:4px solid #F47920;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">' + foto + '</div>' +
+                '<h2>' + (u.nome || 'Usuário') + '</h2>' +
+                '<p style="color:#666;">' + tipo + ' • ⭐ ' + (u.score || '0').toFixed(1) + '</p>' +
+                '<p style="color:#666;">📅 Experiência: ' + (u.experiencia || '0') + ' anos</p>' +
+                '<div style="color:#F59E0B;font-size:20px;">' + '⭐'.repeat(Math.min(Math.round(u.score || 0), 5)) + '</div>' +
+            '</div>' +
+            '<div class="card">' +
+                '<p><i class="fas fa-envelope"></i> ' + (u.email || 'Não informado') + '</p>' +
+                '<p><i class="fas fa-phone"></i> ' + (u.celular || 'Não informado') + '</p>' +
+                '<p><i class="fas fa-tools"></i> ' + (u.habilidades || 'Não informado') + '</p>' +
+                (u.localizacao ? '<p><i class="fas fa-map-marker-alt"></i> ' + u.localizacao.cidade + '/' + u.localizacao.estado + '</p>' : '') +
+            '</div>' +
+            '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">' +
+                '<button onclick="window.app.iniciarChat(\'' + u.id + '\')" class="btn btn-primary" style="flex:1;"><i class="fas fa-comments"></i> Chat</button>' +
+                '<button onclick="window.app.adicionarNaRede(\'' + u.id + '\')" class="btn btn-success" style="flex:1;"><i class="fas fa-link"></i> Conectar</button>' +
+            '</div>';
+        
         s.mostrarTela('perfilPublicoScreen');
     });
 };
@@ -343,7 +396,7 @@ App.prototype.carregarRede = function() {
     container.innerHTML = '<div class="loading">Carregando rede...</div>';
     db.collection('conexoes').where('participantes', 'array-contains', s.usuarioLogado.id).where('status', '==', 'ativo').get().then(function(snap) {
         var conexoes = []; snap.forEach(function(doc) { conexoes.push({id:doc.id, data:doc.data()}); });
-        if (conexoes.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Sua rede está vazia</h3><button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary">Buscar Profissionais</button></div>'; return; }
+        if (conexoes.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Sua rede está vazia</h3><button onclick="window.app.mostrarTela(\'buscaScreen\')" class="btn btn-primary">Buscar</button></div>'; return; }
         var html = '<div style="text-align:center;padding:10px;">🔗 ' + conexoes.length + ' conexão(ões)</div>', carregados = 0;
         conexoes.forEach(function(conn) {
             var amigoId = conn.data.participantes.find(function(p) { return p !== s.usuarioLogado.id; }); if (!amigoId) return;
@@ -369,7 +422,6 @@ App.prototype.adicionarNaRede = function(pid) {
         });
     });
 };
-
 App.prototype.aceitarConvite = function(nid, deId) {
     var s = this;
     db.collection('conexoes').where('participantes', 'array-contains', s.usuarioLogado.id).get().then(function(snap) {
@@ -380,8 +432,39 @@ App.prototype.aceitarConvite = function(nid, deId) {
 App.prototype.recusarConvite = function(nid) { db.collection('notificacoes').doc(nid).update({ lida: true }); this.mostrarToast('Convite recusado', 'info'); };
 
 // ==========================================================
-// 💬 CHAT 100% INSTANTÂNEO - CORRIGIDO
+// 💬 CHAT 100% INSTANTÂNEO + BADGE
 // ==========================================================
+App.prototype.iniciarListenerMensagensNaoLidas = function() {
+    var s = this;
+    if (!s.usuarioLogado) return;
+    if (s._listenerMensagensNaoLidas) s._listenerMensagensNaoLidas();
+    
+    s._listenerMensagensNaoLidas = db.collection('mensagens')
+        .where('destinatarioId', '==', s.usuarioLogado.id)
+        .where('lida', '==', false)
+        .onSnapshot(function(snap) {
+            var count = snap.size;
+            // Atualiza badge no ícone do chat no bottom nav
+            var chatNavItem = document.querySelector('.nav-item[data-screen="chatScreen"]');
+            if (chatNavItem) {
+                var badgeEl = chatNavItem.querySelector('.badge-chat');
+                if (!badgeEl) {
+                    badgeEl = document.createElement('span');
+                    badgeEl.className = 'badge-chat';
+                    badgeEl.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#EF4444;color:white;border-radius:50%;width:20px;height:20px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:bold;';
+                    chatNavItem.style.position = 'relative';
+                    chatNavItem.appendChild(badgeEl);
+                }
+                if (count > 0) {
+                    badgeEl.textContent = count > 99 ? '99+' : count;
+                    badgeEl.style.display = 'flex';
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+            }
+        });
+};
+
 App.prototype.carregarListaConversas = function() {
     var s = this; s.usuarioSelecionado = null;
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
@@ -420,7 +503,6 @@ App.prototype.iniciarChat = function(uid) {
         
         var user1 = s.usuarioLogado.id, user2 = uid;
         
-        // LISTENER EM TEMPO REAL DAS MENSAGENS
         s._listenerChat = db.collection('mensagens')
             .where('participantes', 'array-contains', user1)
             .onSnapshot(function(snap) {
@@ -429,7 +511,6 @@ App.prototype.iniciarChat = function(uid) {
                     var msg = doc.data();
                     if (msg.participantes && msg.participantes.indexOf(user1) >= 0 && msg.participantes.indexOf(user2) >= 0) {
                         msg.id = doc.id; mensagens.push(msg);
-                        // Marca como lida
                         if (msg.destinatarioId === user1 && !msg.lida) {
                             db.collection('mensagens').doc(doc.id).update({ lida: true }).catch(function(){});
                         }
@@ -470,17 +551,25 @@ App.prototype.enviarMensagem = function() {
         participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
         conteudo: texto, lida: false, dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
     }).then(function() {
+        // Notificação com nome do perfil
         db.collection('notificacoes').add({
-            usuarioId: s.usuarioSelecionado.id, titulo: '💬 ' + s.usuarioLogado.nome,
-            mensagem: texto.substring(0, 80), tipo: 'mensagem', de: s.usuarioLogado.id,
-            deNome: s.usuarioLogado.nome, lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+            usuarioId: s.usuarioSelecionado.id, 
+            titulo: '💬 Nova mensagem de ' + s.usuarioLogado.nome,
+            mensagem: texto.substring(0, 80) + (texto.length > 80 ? '...' : ''), 
+            tipo: 'mensagem', 
+            de: s.usuarioLogado.id,
+            deNome: s.usuarioLogado.nome, 
+            lida: false, 
+            dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(function(){});
         setTimeout(function() { if (input) input.focus(); }, 100);
     }).catch(function(err) { s.mostrarToast('Erro ao enviar', 'erro'); input.value = texto; })
     .finally(function() { s._enviandoMensagem = false; if (btn) btn.disabled = false; });
 };
 
-// ===== NOTIFICAÇÕES =====
+// ==========================================================
+// 🔔 NOTIFICAÇÕES COM NOME DO PERFIL
+// ==========================================================
 App.prototype.notificarTodosUsuarios = function(dados) {
     var s = this;
     db.collection('usuarios').where('ativo', '==', true).get().then(function(snap) {
@@ -488,14 +577,20 @@ App.prototype.notificarTodosUsuarios = function(dados) {
         snap.forEach(function(doc) {
             if (doc.id !== s.usuarioLogado.id) {
                 batch.set(db.collection('notificacoes').doc(), {
-                    usuarioId: doc.id, titulo: dados.titulo, mensagem: dados.mensagem,
-                    tipo: dados.tipo || 'info', vagaId: dados.vagaId || null,
-                    de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome,
-                    lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-                }); count++;
+                    usuarioId: doc.id, 
+                    titulo: dados.titulo, 
+                    mensagem: dados.mensagem,
+                    tipo: dados.tipo || 'info', 
+                    vagaId: dados.vagaId || null,
+                    de: s.usuarioLogado.id, 
+                    deNome: s.usuarioLogado.nome,
+                    lida: false, 
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                }); 
+                count++;
             }
         });
-        if (count > 0) batch.commit().then(function() { console.log('✅ Notificações enviadas:', count); });
+        if (count > 0) batch.commit().then(function() { console.log('✅ Notificações:', count); });
     });
 };
 
@@ -507,42 +602,73 @@ App.prototype.iniciarListenerNotificacoes = function() {
     s._listenerNotificacoes = db.collection('notificacoes')
         .where('usuarioId', '==', s.usuarioLogado.id).where('lida', '==', false)
         .onSnapshot(function(snap) {
+            // Badge de notificações
             var badge = document.getElementById('badgeNotificacoes');
-            if (badge) { var c = snap.size; if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; } else badge.style.display = 'none'; }
+            if (badge) { 
+                var c = snap.size; 
+                if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; } 
+                else badge.style.display = 'none'; 
+            }
+            
+            // Toast com nome do perfil
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added') {
                     var n = change.doc.data(), msg = '';
-                    if (n.tipo === 'mensagem') msg = '💬 Mensagem de ' + (n.deNome||'alguém');
-                    else if (n.tipo === 'nova_vaga') msg = '🏗️ ' + n.titulo;
-                    else if (n.tipo === 'novo_usuario') msg = '👤 ' + n.titulo;
+                    if (n.tipo === 'mensagem') msg = '💬 ' + (n.deNome || 'Alguém') + ' enviou uma mensagem';
+                    else if (n.tipo === 'nova_vaga') msg = '🏗️ ' + (n.deNome || 'Alguém') + ' publicou: ' + (n.titulo || 'Nova obra');
+                    else if (n.tipo === 'novo_usuario') msg = '👤 ' + (n.titulo || 'Novo cadastro');
+                    else if (n.tipo === 'convite') msg = '🔗 ' + (n.deNome || 'Alguém') + ' quer se conectar';
                     if (msg) s.mostrarToast(msg, 'info');
+                    
+                    // Notificação nativa (se permitido)
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('LPXConstrutor', { body: msg, icon: 'imagem/logo-sem-fundo-lpxconstrutor.png' });
+                    }
                 }
             });
         });
 };
 
+// Solicita permissão para notificações nativas
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
 App.prototype.mostrarNotificacoes = function() {
     var s = this; if (!s.usuarioLogado) return;
+    
+    // Marca como lidas
     db.collection('notificacoes').where('usuarioId', '==', s.usuarioLogado.id).where('lida', '==', false).get().then(function(snap) {
         var batch = db.batch(); snap.forEach(function(doc) { batch.update(doc.ref, { lida: true }); }); return batch.commit();
     }).then(function() { var badge = document.getElementById('badgeNotificacoes'); if (badge) badge.style.display = 'none'; });
-    // Modal simples
+    
+    // Mostra modal
     db.collection('notificacoes').where('usuarioId', '==', s.usuarioLogado.id).orderBy('dataCriacao', 'desc').limit(50).get().then(function(snap) {
         var ns = []; snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); });
+        
         var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
         modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+        
         var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()"><div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="this.closest(\'.modal-content\').parentElement.remove()">✕</button></div><div style="max-height:60vh;overflow-y:auto;padding:10px;">';
+        
         if (ns.length === 0) html += '<div style="text-align:center;padding:40px;">Nenhuma notificação</div>';
         else ns.forEach(function(n) {
             var icone = '📢', cor = '#f0f9ff';
             if (n.tipo === 'nova_vaga') { icone = '🏗️'; cor = '#fef3c7'; }
             else if (n.tipo === 'mensagem') { icone = '💬'; cor = '#e0f2fe'; }
             else if (n.tipo === 'convite') { icone = '🔗'; cor = '#ede9fe'; }
-            html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;"><strong>' + (n.titulo||'') + '</strong><br><small>' + (n.mensagem||'') + '</small>';
+            else if (n.tipo === 'novo_usuario') { icone = '👤'; cor = '#d1fae5'; }
+            
+            var data = ''; try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
+            
+            html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;">' +
+                '<div style="display:flex;align-items:start;gap:8px;"><div style="font-size:24px;">' + icone + '</div><div style="flex:1;"><strong>' + (n.titulo||'') + '</strong><br><small>' + (n.mensagem||'') + '</small><br><small style="color:#999;">' + data + '</small>';
+            
             if (n.tipo === 'convite') html += '<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button><button onclick="window.app.recusarConvite(\'' + n.id + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
             if (n.tipo === 'nova_vaga' && n.vagaId) html += '<button onclick="window.app.verDetalheObra(\'' + n.vagaId + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#1A3A5C;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">👀 Ver Obra</button>';
             if (n.tipo === 'mensagem' && n.de) html += '<button onclick="window.app.iniciarChat(\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">💬 Responder</button>';
-            html += '</div>';
+            
+            html += '</div></div></div>';
         });
         html += '</div></div>'; modal.innerHTML = html; document.body.appendChild(modal);
     });
@@ -559,7 +685,7 @@ App.prototype.publicarVagaApp = function() {
     var valor = document.getElementById('vagaValorHora')?.value || '';
     var descricao = document.getElementById('vagaDescricao')?.value?.trim() || '';
     var profs = []; document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { profs.push(cb.value); });
-    if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha título, endereço e valor!', 'erro'); return; }
+    if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha todos!', 'erro'); return; }
     s._publicando = true; var btn = document.querySelector('#publicarVagaScreen .btn-primary'); if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
     
     db.collection('vagas').add({
@@ -569,10 +695,10 @@ App.prototype.publicarVagaApp = function() {
         autorNome: s.usuarioLogado.nome, autorFoto: s.usuarioLogado.fotoPerfil || null,
         interessados: [], dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
     }).then(function(docRef) {
-        s.notificarTodosUsuarios({ titulo: '📢 Nova Obra!', mensagem: s.usuarioLogado.nome + ': ' + titulo + ' - R$' + valor + '/h', tipo: 'nova_vaga', vagaId: docRef.id });
-        s.mostrarToast('✅ Obra publicada!', 'sucesso'); s.vagaFotoBase64 = null; s._publicando = false;
+        s.notificarTodosUsuarios({ titulo: '📢 Nova Obra!', mensagem: s.usuarioLogado.nome + ' publicou: ' + titulo, tipo: 'nova_vaga', vagaId: docRef.id });
+        s.mostrarToast('✅ Publicado!', 'sucesso'); s.vagaFotoBase64 = null; s._publicando = false;
         if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; } s.mostrarTela('homeScreen');
-    }).catch(function() { s.mostrarToast('Erro ao publicar', 'erro'); s._publicando = false; if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; } });
+    }).catch(function() { s.mostrarToast('Erro', 'erro'); s._publicando = false; if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; } });
 };
 
 App.prototype.verDetalheObra = function(oid) {
@@ -580,7 +706,7 @@ App.prototype.verDetalheObra = function(oid) {
         if (!doc.exists) return; var v = doc.data();
         var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
         modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
-        modal.innerHTML = '<div class="modal-content" style="max-width:500px;width:95%;" onclick="event.stopPropagation()">' + (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') + '<h2>' + (v.titulo||'') + '</h2><p>📍 ' + (v.endereco||'') + '</p><p>👷 ' + (v.profissoes||'') + '</p><p>💰 R$' + (v.valorHora||0) + '/h</p><p>' + (v.descricao||'') + '</p><button onclick="this.closest(\'.modal-content\').parentElement.remove()" class="btn btn-outline" style="width:100%;">Fechar</button></div>';
+        modal.innerHTML = '<div class="modal-content" style="max-width:500px;width:95%;" onclick="event.stopPropagation()">' + (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;">' : '') + '<h2>' + (v.titulo||'') + '</h2><p>📍 ' + (v.endereco||'') + '</p><p>👷 ' + (v.profissoes||'') + '</p><p>💰 R$' + (v.valorHora||0) + '/h</p><p>' + (v.descricao||'') + '</p><button onclick="this.closest(\'.modal-content\').parentElement.remove()" class="btn btn-outline" style="width:100%;">Fechar</button></div>';
         document.body.appendChild(modal);
     });
 };
@@ -590,9 +716,9 @@ App.prototype.carregarMinhasObras = function() {
     container.innerHTML = '<div class="loading">Carregando...</div>';
     db.collection('vagas').where('autorId', '==', s.usuarioLogado.id).where('ativa', '==', true).get().then(function(snap) {
         var obras = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; obras.push(v); });
-        var total = document.getElementById('totalObras'); if (total) total.textContent = obras.length;
+        document.getElementById('totalObras').textContent = obras.length;
         if (obras.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma obra</h3><button onclick="window.app.novaObra()" class="btn btn-primary">Publicar</button></div>'; return; }
-        var html = ''; obras.forEach(function(v) { html += '<div class="vaga-card">' + (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:150px;object-fit:cover;">' : '') + '<div style="padding:15px;"><strong>' + (v.titulo||'') + '</strong><br><small>📍 ' + (v.endereco||'') + '</small><br><span class="vaga-tag">💰 R$' + (v.valorHora||0) + '/h</span> <span class="vaga-tag">👷 ' + (v.profissoes||'Geral') + '</span></div></div>'; });
+        var html = ''; obras.forEach(function(v) { html += '<div class="vaga-card">' + (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:150px;object-fit:cover;">' : '') + '<div style="padding:15px;"><strong>' + (v.titulo||'') + '</strong><br><small>📍 ' + (v.endereco||'') + '</small><br><span class="vaga-tag">💰 R$' + (v.valorHora||0) + '/h</span></div></div>'; });
         container.innerHTML = html;
     });
 };
@@ -600,9 +726,9 @@ App.prototype.carregarMinhasObras = function() {
 // ===== UPLOAD / EDITAR / CONFIG =====
 App.prototype.uploadFoto = function(e) { var s = this, f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { s.usuarioLogado.fotoPerfil = ev.target.result; localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); db.collection('usuarios').doc(s.usuarioLogado.id).update({ fotoPerfil: ev.target.result }); s.mostrarToast('📷 Foto atualizada!', 'sucesso'); s.carregarMeuPerfil(); }; r.readAsDataURL(f); };
 App.prototype.abrirEditarPerfil = function() { var s = this, u = s.usuarioLogado; var m = document.createElement('div'); m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;'; m.onclick = function(e) { if (e.target === m) m.remove(); }; m.innerHTML = '<div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header"><h3>✏️ Editar Perfil</h3><button class="modal-close" onclick="this.closest(\'.modal-content\').parentElement.remove()">✕</button></div><div class="modal-body"><div class="input-group"><label>Nome</label><input id="editNome" value="' + (u.nome||'') + '" class="input-field"></div><div class="input-group"><label>Celular</label><input id="editCelular" value="' + (u.celular||'') + '" class="input-field"></div><div class="input-group"><label>Profissão</label><input id="editProfissao" value="' + (u.profissao||'') + '" class="input-field"></div><div class="input-group"><label>Experiência</label><input id="editExperiencia" type="number" value="' + (u.experiencia||'0') + '" class="input-field"></div><button onclick="window.app.salvarPerfil()" class="btn btn-success" style="width:100%;">💾 SALVAR</button></div></div>'; document.body.appendChild(m); };
-App.prototype.salvarPerfil = function() { var s = this; var d = { nome: document.getElementById('editNome')?.value?.trim() || s.usuarioLogado.nome, celular: document.getElementById('editCelular')?.value?.trim() || '', profissao: document.getElementById('editProfissao')?.value?.trim() || '', experiencia: document.getElementById('editExperiencia')?.value?.trim() || '0' }; if (!d.nome) { s.mostrarToast('Nome obrigatório!', 'erro'); return; } Object.assign(s.usuarioLogado, d); localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); db.collection('usuarios').doc(s.usuarioLogado.id).update(d); var modal = document.querySelector('.modal-content')?.parentElement; if (modal) modal.remove(); s.mostrarToast('✅ Perfil atualizado!', 'sucesso'); s.carregarMeuPerfil(); };
+App.prototype.salvarPerfil = function() { var s = this; var d = { nome: document.getElementById('editNome')?.value?.trim() || s.usuarioLogado.nome, celular: document.getElementById('editCelular')?.value?.trim() || '', profissao: document.getElementById('editProfissao')?.value?.trim() || '', experiencia: document.getElementById('editExperiencia')?.value?.trim() || '0' }; if (!d.nome) { s.mostrarToast('Nome obrigatório!', 'erro'); return; } Object.assign(s.usuarioLogado, d); localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); db.collection('usuarios').doc(s.usuarioLogado.id).update(d); var modal = document.querySelector('.modal-content')?.parentElement; if (modal) modal.remove(); s.mostrarToast('✅ Atualizado!', 'sucesso'); s.carregarMeuPerfil(); };
 App.prototype.selecionarTema = function(t) { this.temaAtual = t; localStorage.setItem('tema', t); if (t === 'escuro') document.body.classList.add('dark-theme'); else document.body.classList.remove('dark-theme'); this.mostrarToast('🎨 Tema alterado!', 'sucesso'); this.carregarConfigScreen(); };
-App.prototype.carregarConfigScreen = function() { var s = this, tela = document.getElementById('configScreen'); if (!tela) return; var tc = s.temaAtual === 'claro'; tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>⚙️ Configurações</h2></div><div style="padding:16px;"><div class="card"><h3>🎨 Tema</h3><div style="display:flex;gap:10px;"><button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid ' + (tc?'#1A3A5C':'#e5e7eb') + ';background:' + (tc?'#1A3A5C':'white') + ';color:' + (tc?'white':'#1A3A5C') + ';cursor:pointer;">☀️ Claro</button><button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid ' + (tc?'#e5e7eb':'#1A3A5C') + ';background:' + (tc?'white':'#1A3A5C') + ';color:' + (tc?'#1A3A5C':'white') + ';cursor:pointer;">🌙 Escuro</button></div></div><div class="card"><h3>📄 Documentos</h3><a href="termos.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">📄 Termos de Uso</a><a href="privacidade.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">🔒 Privacidade</a></div><div class="card"><p style="text-align:center;color:#6b7280;">LPXCONSTRUTOR v' + APP_VERSION + '</p></div></div>'; };
+App.prototype.carregarConfigScreen = function() { var s = this, tela = document.getElementById('configScreen'); if (!tela) return; var tc = s.temaAtual === 'claro'; tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>⚙️ Configurações</h2></div><div style="padding:16px;"><div class="card"><h3>🎨 Tema</h3><div style="display:flex;gap:10px;"><button onclick="window.app.selecionarTema(\'claro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid ' + (tc?'#1A3A5C':'#e5e7eb') + ';background:' + (tc?'#1A3A5C':'white') + ';color:' + (tc?'white':'#1A3A5C') + ';cursor:pointer;">☀️ Claro</button><button onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid ' + (tc?'#e5e7eb':'#1A3A5C') + ';background:' + (tc?'white':'#1A3A5C') + ';color:' + (tc?'#1A3A5C':'white') + ';cursor:pointer;">🌙 Escuro</button></div></div><div class="card"><h3>📄 Documentos</h3><a href="termos.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">📄 Termos</a><a href="privacidade.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;text-decoration:none;color:inherit;">🔒 Privacidade</a></div><div class="card"><p style="text-align:center;">v' + APP_VERSION + '</p></div></div>'; };
 App.prototype.proximaEtapa = function(e) { document.getElementById('etapa1').style.display = e === 1 ? 'block' : 'none'; document.getElementById('etapa2').style.display = e === 2 ? 'block' : 'none'; };
 App.prototype.toggleProfissao = function() { var g = document.getElementById('grupoProfissao'); if (g) g.style.display = document.getElementById('cadTipo')?.value === 'profissional' ? 'block' : 'none'; };
 App.prototype.solicitarCodigo = function() { var email = document.getElementById('recEmail')?.value?.trim() || ''; if (!email) { this.mostrarToast('Digite seu email!', 'erro'); return; } firebase.auth().sendPasswordResetEmail(email).then(function() { window.app._app.mostrarToast('📧 Email enviado!', 'sucesso'); }).catch(function() { window.app._app.mostrarToast('Email não encontrado!', 'erro'); }); };
@@ -615,17 +741,18 @@ App.prototype.pararListeners = function() {
     if (this._listenerFeed) { this._listenerFeed(); this._listenerFeed = null; }
     if (this._listenerChat) { this._listenerChat(); this._listenerChat = null; }
     if (this._listenerNotificacoes) { this._listenerNotificacoes(); this._listenerNotificacoes = null; }
+    if (this._listenerMensagensNaoLidas) { this._listenerMensagensNaoLidas(); this._listenerMensagensNaoLidas = null; }
 };
 
 App.prototype.mostrarToast = function(msg, tipo) {
     var toast = document.getElementById('toast'); if (!toast) return;
     toast.textContent = msg; toast.style.background = tipo === 'erro' ? '#EF4444' : tipo === 'sucesso' ? '#10B981' : '#1A3A5C';
     toast.style.color = 'white'; toast.style.display = 'block';
-    clearTimeout(this._toastTimeout); this._toastTimeout = setTimeout(function() { toast.style.display = 'none'; }, 3000);
+    clearTimeout(this._toastTimeout); this._toastTimeout = setTimeout(function() { toast.style.display = 'none'; }, 4000);
 };
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - TEMPO REAL');
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - COMPLETO');
     window.app._app = new App();
 });
