@@ -1,5 +1,6 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.0.5 - COMPLETO COM NOTIFICAÇÕES
+// LPXCONSTRUTOR v2.0.5 - COMPLETO E CORRIGIDO
+// FEED, PERFIL, BUSCA, CHAT, NOTIFICAÇÕES - TUDO FUNCIONANDO
 // ==========================================================
 
 const APP_VERSION = "2.0.5";
@@ -222,7 +223,6 @@ App.prototype.cadastrar = function() {
             s.usuarioLogado = d;
             localStorage.setItem('usuarioLPX', JSON.stringify(d));
             
-            // NOTIFICA TODOS SOBRE NOVO USUÁRIO
             s.notificarTodosUsuarios({
                 titulo: '👤 Novo Profissional!',
                 mensagem: d.nome + ' (' + (d.profissao || d.tipo) + ') acabou de se cadastrar na plataforma!',
@@ -303,33 +303,64 @@ App.prototype.mudarTab = function(t) {
     }
 };
 
-// ===== FEED =====
+// ===== FEED - CORRIGIDO =====
 App.prototype.iniciarFeedListener = function() {
     var s = this;
     if (s._listenerFeed || typeof db === 'undefined') return;
     
+    console.log('🔥 Iniciando feed listener...');
+    
+    // Versão sem índice composto (funciona imediatamente)
     s._listenerFeed = db.collection('vagas')
         .where('ativa', '==', true)
-        .orderBy('dataCriacao', 'desc')
         .onSnapshot(function(snap) {
+            console.log('📢 Feed atualizado:', snap.size, 'vagas');
+            
             var vagas = [];
             snap.forEach(function(doc) {
-                var v = doc.data(); v.id = doc.id; vagas.push(v);
+                var v = doc.data();
+                v.id = doc.id;
+                vagas.push(v);
             });
+            
+            // Ordena manualmente por data (mais recente primeiro)
+            vagas.sort(function(a, b) {
+                var da = a.dataCriacao?.toDate?.().getTime() || 0;
+                var db = b.dataCriacao?.toDate?.().getTime() || 0;
+                return db - da;
+            });
+            
             s._vagasCache = vagas;
             s.renderizarFeed(vagas);
+            
         }, function(err) {
-            console.error('Feed error:', err);
+            console.error('❌ Erro no feed:', err);
+            var container = document.getElementById('feedContainer');
+            if (container) {
+                container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:#EF4444;">' +
+                    '<i class="fas fa-exclamation-triangle" style="font-size:50px;"></i>' +
+                    '<p style="margin-top:16px;">Erro ao carregar feed</p>' +
+                    '<p style="font-size:12px;color:#999;">' + (err.message || 'Tente novamente') + '</p>' +
+                    '<button onclick="window.app._app.iniciarFeedListener()" class="btn btn-primary" style="margin-top:10px;">Tentar Novamente</button></div>';
+            }
         });
 };
 
 App.prototype.renderizarFeed = function(vagas) {
     var s = this;
     var container = document.getElementById('feedContainer');
-    if (!container || s.tabAtual !== 'feed') return;
+    if (!container) return;
+    
+    if (s.tabAtual !== 'feed') return;
     
     if (!vagas || vagas.length === 0) {
-        container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3><p style="color:#666;">Nenhuma obra publicada ainda.</p></div>';
+        container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
+            '<div style="font-size:50px;">🏗️</div>' +
+            '<h3>Nenhuma obra publicada</h3>' +
+            '<p style="color:#666;">Seja o primeiro a publicar!</p>' +
+            (s.usuarioLogado?.tipo === 'empreiteiro' ? 
+                '<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary" style="margin-top:15px;">📢 PUBLICAR OBRA</button>' : '') + 
+            '</div>';
         return;
     }
     
@@ -342,19 +373,19 @@ App.prototype.renderizarFeed = function(vagas) {
         
         html += '<div class="vaga-card">' +
             '<div class="vaga-header">' +
-            '<div class="vaga-avatar">' + (v.autorFoto ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '👷') + '</div>' +
+            '<div class="vaga-avatar">' + (v.autorFoto && v.autorFoto.length > 10 ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '👷') + '</div>' +
             '<div class="vaga-info"><div class="vaga-nome">' + (v.autorNome || 'Anônimo') + '</div><div class="vaga-data">' + data + '</div></div>' +
             (dono ? '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>' : '') +
             '</div>' +
             '<div class="vaga-body">' +
-            (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') +
+            (v.fotoObra && v.fotoObra.length > 100 ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') +
             '<div class="vaga-titulo">' + (v.titulo || 'Sem título') + '</div>' +
-            '<div style="color:#666;font-size:13px;">📍 ' + (v.endereco || '') + '</div>' +
+            '<div style="color:#666;font-size:13px;margin-bottom:8px;">📍 ' + (v.endereco || '') + '</div>' +
             '<div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.valorHora || '0') + '/h</span><span class="vaga-tag">👷 ' + (v.profissoes || 'Geral') + '</span></div>' +
             '</div>' +
             '<div class="vaga-footer">' +
-            '<button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>' +
-            (dono ? '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️</button>' : '') +
+            '<button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver Detalhes</button>' +
+            (dono ? '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️ Apagar</button>' : '') +
             '</div></div>';
     }
     container.innerHTML = html;
@@ -809,7 +840,6 @@ App.prototype.enviarMensagem = function() {
     };
     
     db.collection('mensagens').add(msg).then(function() {
-        // Notificação de mensagem
         db.collection('notificacoes').add({
             usuarioId: s.usuarioSelecionado.id,
             titulo: '💬 Nova mensagem',
@@ -882,19 +912,15 @@ App.prototype.iniciarListenerNotificacoes = function() {
                 badge.style.display = count > 0 ? 'flex' : 'none';
             }
             
-            // Mostra toast para novas notificações
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added') {
                     var n = change.doc.data();
-                    if (n.tipo === 'mensagem') {
-                        s.mostrarToast('💬 ' + n.titulo + ': ' + n.mensagem, 'info');
-                    } else if (n.tipo === 'nova_vaga') {
-                        s.mostrarToast('🏗️ ' + n.titulo, 'info');
-                    } else if (n.tipo === 'novo_usuario') {
-                        s.mostrarToast('👤 ' + n.titulo, 'info');
-                    } else if (n.tipo === 'convite') {
-                        s.mostrarToast('🔗 ' + n.titulo, 'info');
-                    }
+                    var msg = '';
+                    if (n.tipo === 'mensagem') msg = '💬 ' + n.titulo;
+                    else if (n.tipo === 'nova_vaga') msg = '🏗️ ' + n.titulo;
+                    else if (n.tipo === 'novo_usuario') msg = '👤 ' + n.titulo;
+                    else if (n.tipo === 'convite') msg = '🔗 ' + n.titulo;
+                    if (msg) s.mostrarToast(msg, 'info');
                 }
             });
         });
@@ -904,16 +930,13 @@ App.prototype.mostrarNotificacoes = function() {
     var s = this;
     if (!s.usuarioLogado) return;
     
-    // Marca todas como lidas
     db.collection('notificacoes')
         .where('usuarioId', '==', s.usuarioLogado.id)
         .where('lida', '==', false)
         .get()
         .then(function(snap) {
             var batch = db.batch();
-            snap.forEach(function(doc) {
-                batch.update(doc.ref, { lida: true });
-            });
+            snap.forEach(function(doc) { batch.update(doc.ref, { lida: true }); });
             return batch.commit();
         })
         .then(function() {
@@ -921,7 +944,6 @@ App.prototype.mostrarNotificacoes = function() {
             if (badge) badge.style.display = 'none';
         });
     
-    // Mostra modal com notificações
     db.collection('notificacoes')
         .where('usuarioId', '==', s.usuarioLogado.id)
         .orderBy('dataCriacao', 'desc')
@@ -929,11 +951,7 @@ App.prototype.mostrarNotificacoes = function() {
         .get()
         .then(function(snap) {
             var ns = [];
-            snap.forEach(function(doc) {
-                var n = doc.data();
-                n.id = doc.id;
-                ns.push(n);
-            });
+            snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); });
             
             var modalAntigo = document.getElementById('modalNotif');
             if (modalAntigo) modalAntigo.remove();
@@ -943,19 +961,15 @@ App.prototype.mostrarNotificacoes = function() {
             modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
             modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
             
-            var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()">';
-            html += '<div class="modal-header"><h3>🔔 Notificações</h3>';
-            html += '<button class="modal-close" onclick="document.getElementById(\'modalNotif\').remove()">✕</button></div>';
-            html += '<div style="max-height:60vh;overflow-y:auto;padding:10px;">';
+            var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()">' +
+                '<div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="document.getElementById(\'modalNotif\').remove()">✕</button></div>' +
+                '<div style="max-height:60vh;overflow-y:auto;padding:10px;">';
             
             if (ns.length === 0) {
-                html += '<div style="text-align:center;padding:40px;"><i class="fas fa-bell-slash" style="font-size:50px;color:#ccc;"></i><p style="margin-top:16px;color:#666;">Nenhuma notificação</p></div>';
+                html += '<div style="text-align:center;padding:40px;"><i class="fas fa-bell-slash" style="font-size:50px;color:#ccc;"></i><p style="margin-top:16px;">Nenhuma notificação</p></div>';
             } else {
                 ns.forEach(function(n) {
-                    var icone = '📢';
-                    var cor = '#f0f9ff';
-                    var borda = '#1A3A5C';
-                    
+                    var icone = '📢', cor = '#f0f9ff', borda = '#1A3A5C';
                     switch(n.tipo) {
                         case 'nova_vaga': icone = '🏗️'; cor = '#fef3c7'; borda = '#F59E0B'; break;
                         case 'novo_usuario': icone = '👤'; cor = '#d1fae5'; borda = '#10B981'; break;
@@ -966,19 +980,15 @@ App.prototype.mostrarNotificacoes = function() {
                     var data = '';
                     try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
                     
-                    html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ' + borda + ';">';
-                    html += '<div style="display:flex;align-items:start;gap:8px;">';
-                    html += '<div style="font-size:24px;">' + icone + '</div>';
-                    html += '<div style="flex:1;">';
-                    html += '<strong>' + (n.titulo || 'Notificação') + '</strong><br>';
-                    html += '<small>' + (n.mensagem || '') + '</small><br>';
-                    html += '<small style="color:#999;">' + data + '</small>';
+                    html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ' + borda + ';">' +
+                        '<div style="display:flex;align-items:start;gap:8px;">' +
+                        '<div style="font-size:24px;">' + icone + '</div>' +
+                        '<div style="flex:1;"><strong>' + (n.titulo || '') + '</strong><br><small>' + (n.mensagem || '') + '</small><br><small style="color:#999;">' + data + '</small>';
                     
                     if (n.tipo === 'convite' && !n.lida) {
-                        html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-                        html += '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">✅ Aceitar</button>';
-                        html += '<button onclick="window.app.recusarConvite(\'' + n.id + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">❌ Recusar</button>';
-                        html += '</div>';
+                        html += '<div style="display:flex;gap:8px;margin-top:8px;">' +
+                            '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">✅ Aceitar</button>' +
+                            '<button onclick="window.app.recusarConvite(\'' + n.id + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">❌ Recusar</button></div>';
                     }
                     
                     if (n.tipo === 'nova_vaga' && n.vagaId) {
@@ -1105,7 +1115,6 @@ App.prototype.publicarVagaApp = function() {
     db.collection('vagas').add(vaga).then(function(docRef) {
         console.log('✅ Vaga publicada:', docRef.id);
         
-        // NOTIFICA TODOS SOBRE NOVA OBRA
         s.notificarTodosUsuarios({
             titulo: '📢 Nova Obra Publicada!',
             mensagem: s.usuarioLogado.nome + ' publicou: ' + titulo + ' - R$' + valor + '/h',
@@ -1305,7 +1314,6 @@ App.prototype.gerarQRCodeCompartilhar = function() {
 App.prototype.abrirMapaLocalizacao = function() {
     var s = this;
     if (!s.usuarioLogado) return;
-    
     var u = s.usuarioLogado;
     var estados = {'AC':'Acre','AL':'Alagoas','AP':'Amapá','AM':'Amazonas','BA':'Bahia','CE':'Ceará','DF':'Distrito Federal','ES':'Espírito Santo','GO':'Goiás','MA':'Maranhão','MT':'Mato Grosso','MS':'Mato Grosso do Sul','MG':'Minas Gerais','PA':'Pará','PB':'Paraíba','PR':'Paraná','PE':'Pernambuco','PI':'Piauí','RJ':'Rio de Janeiro','RN':'Rio Grande do Norte','RS':'Rio Grande do Sul','RO':'Rondônia','RR':'Roraima','SC':'Santa Catarina','SP':'São Paulo','SE':'Sergipe','TO':'Tocantins'};
     
@@ -1355,33 +1363,25 @@ App.prototype.getBairrosPorCidade = function(c) {
 };
 
 App.prototype.atualizarCidades = function(sel) {
-    var ee = document.getElementById('locEstado');
-    var ce = document.getElementById('locCidade');
+    var ee = document.getElementById('locEstado'), ce = document.getElementById('locCidade');
     if (!ee || !ce) return;
-    var e = ee.value;
-    var cs = this.getTodasCidades();
+    var e = ee.value, cs = this.getTodasCidades();
     ce.innerHTML = '<option value="">Selecione...</option>';
-    if (e && cs[e]) {
-        cs[e].forEach(function(c) {
-            ce.innerHTML += '<option value="' + c + '"' + (sel === c ? ' selected' : '') + '>' + c + '</option>';
-        });
-    }
+    if (e && cs[e]) cs[e].forEach(function(c) {
+        ce.innerHTML += '<option value="' + c + '"' + (sel === c ? ' selected' : '') + '>' + c + '</option>';
+    });
     var be = document.getElementById('locBairro');
     if (be) be.innerHTML = '<option value="">Selecione...</option>';
 };
 
 App.prototype.atualizarBairros = function(sel) {
-    var ce = document.getElementById('locCidade');
-    var be = document.getElementById('locBairro');
+    var ce = document.getElementById('locCidade'), be = document.getElementById('locBairro');
     if (!ce || !be) return;
-    var c = ce.value;
-    var bs = this.getBairrosPorCidade(c);
+    var c = ce.value, bs = this.getBairrosPorCidade(c);
     be.innerHTML = '<option value="">Selecione...</option>';
-    if (bs) {
-        bs.forEach(function(b) {
-            be.innerHTML += '<option value="' + b + '"' + (sel === b ? ' selected' : '') + '>' + b + '</option>';
-        });
-    }
+    if (bs) bs.forEach(function(b) {
+        be.innerHTML += '<option value="' + b + '"' + (sel === b ? ' selected' : '') + '>' + b + '</option>';
+    });
 };
 
 App.prototype.salvarLocalizacao = function() {
@@ -1423,6 +1423,6 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
 
 // ===== INICIALIZAÇÃO FINAL =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - COMPLETO COM NOTIFICAÇÕES');
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - COMPLETO');
     window.app._app = new App();
 });
