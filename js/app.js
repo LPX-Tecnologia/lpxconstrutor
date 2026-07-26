@@ -1,8 +1,8 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.0.4 - CORRIGIDO
+// LPXCONSTRUTOR v2.0.5 - COMPLETO COM NOTIFICAÇÕES
 // ==========================================================
 
-const APP_VERSION = "2.0.4";
+const APP_VERSION = "2.0.5";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 // Interface global
@@ -97,7 +97,6 @@ App.prototype.mostrarTela = function(id) {
         s.historicoTelas.push(s.telaAtual);
     }
     
-    // Esconde todas as telas
     document.querySelectorAll('.screen').forEach(function(t) {
         t.classList.remove('active');
         t.style.display = 'none';
@@ -115,7 +114,6 @@ App.prototype.mostrarTela = function(id) {
     tela.style.display = 'block';
     s.telaAtual = id;
     
-    // Navbar
     var nav = document.getElementById('bottomNav');
     if (nav) {
         var hide = ['loginScreen','cadastroScreen','recuperarSenhaScreen'];
@@ -126,7 +124,6 @@ App.prototype.mostrarTela = function(id) {
         });
     }
     
-    // Ações por tela
     switch(id) {
         case 'homeScreen': s.carregarHome(); break;
         case 'meuPerfilScreen': s.carregarMeuPerfil(); break;
@@ -137,7 +134,6 @@ App.prototype.mostrarTela = function(id) {
         case 'perfilPublicoScreen': break;
     }
     
-    // Botões empreiteiro
     if (id === 'homeScreen' && s.usuarioLogado) {
         var bp = document.getElementById('btnPublicar');
         var bo = document.getElementById('btnObras');
@@ -194,7 +190,7 @@ App.prototype.fazerLogin = function() {
         });
 };
 
-// ===== CADASTRO =====
+// ===== CADASTRO COM NOTIFICAÇÃO =====
 App.prototype.cadastrar = function() {
     var s = this;
     var d = {
@@ -225,6 +221,14 @@ App.prototype.cadastrar = function() {
         .then(function() {
             s.usuarioLogado = d;
             localStorage.setItem('usuarioLPX', JSON.stringify(d));
+            
+            // NOTIFICA TODOS SOBRE NOVO USUÁRIO
+            s.notificarTodosUsuarios({
+                titulo: '👤 Novo Profissional!',
+                mensagem: d.nome + ' (' + (d.profissao || d.tipo) + ') acabou de se cadastrar na plataforma!',
+                tipo: 'novo_usuario'
+            });
+            
             s.mostrarToast('✅ Cadastro realizado!', 'sucesso');
             s.mostrarTela('homeScreen');
         })
@@ -242,12 +246,14 @@ App.prototype.sair = function() {
     this.usuarioSelecionado = null;
     localStorage.removeItem('usuarioLPX');
     this.historicoTelas = [];
-    document.getElementById('modalSair').style.display = 'none';
+    var modal = document.getElementById('modalSair');
+    if (modal) modal.style.display = 'none';
     this.mostrarTela('loginScreen');
 };
 
 App.prototype.fecharModalSair = function() {
-    document.getElementById('modalSair').style.display = 'none';
+    var modal = document.getElementById('modalSair');
+    if (modal) modal.style.display = 'none';
 };
 
 App.prototype.confirmarSair = function() {
@@ -269,13 +275,11 @@ App.prototype.carregarHome = function() {
     var er = document.getElementById('resumoTexto');
     if (er) er.textContent = u.tipo === 'empreiteiro' ? '🏰 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
     
-    // Mapa
     if (!s._mapaInicializado && typeof mapaService !== 'undefined') {
         setTimeout(function() { mapaService.initMap(); }, 500);
         s._mapaInicializado = true;
     }
     
-    // Inicia feed se não tiver
     if (!s._listenerFeed) s.iniciarFeedListener();
 };
 
@@ -325,7 +329,7 @@ App.prototype.renderizarFeed = function(vagas) {
     if (!container || s.tabAtual !== 'feed') return;
     
     if (!vagas || vagas.length === 0) {
-        container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3></div>';
+        container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3><p style="color:#666;">Nenhuma obra publicada ainda.</p></div>';
         return;
     }
     
@@ -363,10 +367,7 @@ App.prototype.apagarObra = function(oid, ev) {
     this.mostrarToast('Obra apagada!', 'sucesso');
 };
 
-// ==========================================================
-// ===== PERFIL - CORRIGIDO =====
-// ==========================================================
-
+// ===== PERFIL =====
 App.prototype.carregarMeuPerfil = function() {
     var s = this;
     if (!s.usuarioLogado) return;
@@ -404,10 +405,7 @@ App.prototype.carregarMeuPerfil = function() {
         '</div>';
 };
 
-// ==========================================================
-// ===== BUSCA - CORRIGIDO =====
-// ==========================================================
-
+// ===== BUSCA =====
 App.prototype.buscarProfissionais = function() {
     var s = this;
     var container = document.getElementById('buscaResultados');
@@ -424,7 +422,6 @@ App.prototype.buscarProfissionais = function() {
             if (u.id !== s.usuarioLogado?.id) usuarios.push(u);
         });
         
-        // Filtra pelo termo
         if (termo) {
             usuarios = usuarios.filter(function(u) {
                 return (u.nome || '').toLowerCase().includes(termo) ||
@@ -466,10 +463,7 @@ App.prototype.buscarProfissionais = function() {
     });
 };
 
-// ==========================================================
 // ===== VER PERFIL PÚBLICO =====
-// ==========================================================
-
 App.prototype.verPerfil = function(uid) {
     var s = this;
     
@@ -511,10 +505,7 @@ App.prototype.verPerfil = function(uid) {
     });
 };
 
-// ==========================================================
 // ===== REDE =====
-// ==========================================================
-
 App.prototype.carregarRede = function() {
     var s = this;
     var container = document.getElementById('redeContainer');
@@ -596,12 +587,14 @@ App.prototype.adicionarNaRede = function(pid) {
                 db.collection('notificacoes').add({
                     usuarioId: pid,
                     titulo: '🔗 Convite de Rede',
-                    mensagem: s.usuarioLogado.nome + ' quer se conectar!',
+                    mensagem: s.usuarioLogado.nome + ' quer se conectar com você!',
                     tipo: 'convite',
                     de: s.usuarioLogado.id,
+                    deNome: s.usuarioLogado.nome,
                     lida: false,
                     dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
                 s.mostrarToast('✅ Convite enviado!', 'sucesso');
             });
         });
@@ -631,10 +624,7 @@ App.prototype.recusarConvite = function(nid) {
     this.mostrarToast('Convite recusado', 'info');
 };
 
-// ==========================================================
-// ===== CHAT - CORRIGIDO (SÓ REDE + ÚLTIMAS CONVERSAS) =====
-// ==========================================================
-
+// ===== CHAT =====
 App.prototype.carregarListaConversas = function() {
     var s = this;
     s.usuarioSelecionado = null;
@@ -654,12 +644,10 @@ App.prototype.carregarListaConversas = function() {
     var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
     if (inputContainer) inputContainer.style.display = 'none';
     
-    // Busca conversas únicas
     db.collection('mensagens')
         .where('participantes', 'array-contains', s.usuarioLogado.id)
         .get()
         .then(function(snap) {
-            // Agrupa por outro usuário
             var conversas = {};
             snap.forEach(function(doc) {
                 var msg = doc.data();
@@ -739,7 +727,6 @@ App.prototype.iniciarChat = function(uid) {
             s.usuarioSelecionado = { id: uid, nome: 'Usuário', fotoPerfil: null };
         }
         
-        // Atualiza header
         var user = s.usuarioSelecionado;
         var chatHeader = document.getElementById('chatHeaderInfo');
         if (chatHeader) {
@@ -753,7 +740,6 @@ App.prototype.iniciarChat = function(uid) {
         var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
         if (inputContainer) inputContainer.style.display = 'flex';
         
-        // Listener de mensagens
         var user1 = s.usuarioLogado.id;
         var user2 = uid;
         
@@ -823,13 +809,14 @@ App.prototype.enviarMensagem = function() {
     };
     
     db.collection('mensagens').add(msg).then(function() {
-        // Notificação
+        // Notificação de mensagem
         db.collection('notificacoes').add({
             usuarioId: s.usuarioSelecionado.id,
-            titulo: '💬 ' + s.usuarioLogado.nome,
-            mensagem: texto.substring(0, 50),
+            titulo: '💬 Nova mensagem',
+            mensagem: s.usuarioLogado.nome + ': ' + texto.substring(0, 80) + (texto.length > 80 ? '...' : ''),
             tipo: 'mensagem',
             de: s.usuarioLogado.id,
+            deNome: s.usuarioLogado.nome,
             lida: false,
             dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(function() {});
@@ -845,9 +832,40 @@ App.prototype.enviarMensagem = function() {
     });
 };
 
-// ==========================================================
 // ===== NOTIFICAÇÕES =====
-// ==========================================================
+App.prototype.notificarTodosUsuarios = function(dados) {
+    var s = this;
+    
+    db.collection('usuarios').where('ativo', '==', true).get()
+        .then(function(snap) {
+            var batch = db.batch();
+            var count = 0;
+            
+            snap.forEach(function(doc) {
+                if (doc.id !== s.usuarioLogado.id) {
+                    var notifRef = db.collection('notificacoes').doc();
+                    batch.set(notifRef, {
+                        usuarioId: doc.id,
+                        titulo: dados.titulo,
+                        mensagem: dados.mensagem,
+                        tipo: dados.tipo || 'info',
+                        vagaId: dados.vagaId || null,
+                        de: s.usuarioLogado.id,
+                        deNome: s.usuarioLogado.nome,
+                        lida: false,
+                        dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    count++;
+                }
+            });
+            
+            if (count > 0) {
+                batch.commit().then(function() {
+                    console.log('📢 Notificações enviadas para ' + count + ' usuários');
+                });
+            }
+        });
+};
 
 App.prototype.iniciarListenerNotificacoes = function() {
     var s = this;
@@ -863,6 +881,22 @@ App.prototype.iniciarListenerNotificacoes = function() {
                 badge.textContent = count > 99 ? '99+' : count;
                 badge.style.display = count > 0 ? 'flex' : 'none';
             }
+            
+            // Mostra toast para novas notificações
+            snap.docChanges().forEach(function(change) {
+                if (change.type === 'added') {
+                    var n = change.doc.data();
+                    if (n.tipo === 'mensagem') {
+                        s.mostrarToast('💬 ' + n.titulo + ': ' + n.mensagem, 'info');
+                    } else if (n.tipo === 'nova_vaga') {
+                        s.mostrarToast('🏗️ ' + n.titulo, 'info');
+                    } else if (n.tipo === 'novo_usuario') {
+                        s.mostrarToast('👤 ' + n.titulo, 'info');
+                    } else if (n.tipo === 'convite') {
+                        s.mostrarToast('🔗 ' + n.titulo, 'info');
+                    }
+                }
+            });
         });
 };
 
@@ -870,51 +904,102 @@ App.prototype.mostrarNotificacoes = function() {
     var s = this;
     if (!s.usuarioLogado) return;
     
+    // Marca todas como lidas
+    db.collection('notificacoes')
+        .where('usuarioId', '==', s.usuarioLogado.id)
+        .where('lida', '==', false)
+        .get()
+        .then(function(snap) {
+            var batch = db.batch();
+            snap.forEach(function(doc) {
+                batch.update(doc.ref, { lida: true });
+            });
+            return batch.commit();
+        })
+        .then(function() {
+            var badge = document.getElementById('badgeNotificacoes');
+            if (badge) badge.style.display = 'none';
+        });
+    
+    // Mostra modal com notificações
     db.collection('notificacoes')
         .where('usuarioId', '==', s.usuarioLogado.id)
         .orderBy('dataCriacao', 'desc')
-        .limit(50)
+        .limit(100)
         .get()
         .then(function(snap) {
             var ns = [];
             snap.forEach(function(doc) {
-                var n = doc.data(); n.id = doc.id; ns.push(n);
+                var n = doc.data();
+                n.id = doc.id;
+                ns.push(n);
             });
             
+            var modalAntigo = document.getElementById('modalNotif');
+            if (modalAntigo) modalAntigo.remove();
+            
             var modal = document.createElement('div');
+            modal.id = 'modalNotif';
             modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
             modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
             
-            var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()">' +
-                '<div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="this.closest(\'.modal-content\').parentElement.remove()">✕</button></div>' +
-                '<div style="max-height:60vh;overflow-y:auto;padding:10px;">';
+            var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()">';
+            html += '<div class="modal-header"><h3>🔔 Notificações</h3>';
+            html += '<button class="modal-close" onclick="document.getElementById(\'modalNotif\').remove()">✕</button></div>';
+            html += '<div style="max-height:60vh;overflow-y:auto;padding:10px;">';
             
             if (ns.length === 0) {
-                html += '<div style="text-align:center;padding:40px;"><i class="fas fa-bell-slash" style="font-size:50px;color:#ccc;"></i><p>Nenhuma notificação</p></div>';
+                html += '<div style="text-align:center;padding:40px;"><i class="fas fa-bell-slash" style="font-size:50px;color:#ccc;"></i><p style="margin-top:16px;color:#666;">Nenhuma notificação</p></div>';
             } else {
                 ns.forEach(function(n) {
-                    html += '<div style="background:' + (n.lida ? '#f9fafb' : '#f0f9ff') + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;">' +
-                        '<strong>' + (n.titulo || '') + '</strong><br>' +
-                        '<small>' + (n.mensagem || '') + '</small>';
+                    var icone = '📢';
+                    var cor = '#f0f9ff';
+                    var borda = '#1A3A5C';
+                    
+                    switch(n.tipo) {
+                        case 'nova_vaga': icone = '🏗️'; cor = '#fef3c7'; borda = '#F59E0B'; break;
+                        case 'novo_usuario': icone = '👤'; cor = '#d1fae5'; borda = '#10B981'; break;
+                        case 'mensagem': icone = '💬'; cor = '#e0f2fe'; borda = '#3B82F6'; break;
+                        case 'convite': icone = '🔗'; cor = '#ede9fe'; borda = '#8B5CF6'; break;
+                    }
+                    
+                    var data = '';
+                    try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
+                    
+                    html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ' + borda + ';">';
+                    html += '<div style="display:flex;align-items:start;gap:8px;">';
+                    html += '<div style="font-size:24px;">' + icone + '</div>';
+                    html += '<div style="flex:1;">';
+                    html += '<strong>' + (n.titulo || 'Notificação') + '</strong><br>';
+                    html += '<small>' + (n.mensagem || '') + '</small><br>';
+                    html += '<small style="color:#999;">' + data + '</small>';
                     
                     if (n.tipo === 'convite' && !n.lida) {
-                        html += '<div style="display:flex;gap:10px;margin-top:10px;">' +
-                            '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button>' +
-                            '<button onclick="window.app.recusarConvite(\'' + n.id + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
+                        html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+                        html += '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">✅ Aceitar</button>';
+                        html += '<button onclick="window.app.recusarConvite(\'' + n.id + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">❌ Recusar</button>';
+                        html += '</div>';
                     }
-                    html += '</div>';
+                    
+                    if (n.tipo === 'nova_vaga' && n.vagaId) {
+                        html += '<button onclick="window.app.verDetalheObra(\'' + n.vagaId + '\');document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:8px;background:#1A3A5C;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">👀 Ver Obra</button>';
+                    }
+                    
+                    if (n.tipo === 'mensagem' && n.de) {
+                        html += '<button onclick="window.app.iniciarChat(\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">💬 Responder</button>';
+                    }
+                    
+                    html += '</div></div></div>';
                 });
             }
+            
             html += '</div></div>';
             modal.innerHTML = html;
             document.body.appendChild(modal);
         });
 };
 
-// ==========================================================
 // ===== OBRAS / PUBLICAÇÃO =====
-// ==========================================================
-
 App.prototype.carregarMinhasObras = function() {
     var s = this;
     var container = document.getElementById('listaObrasContainer');
@@ -1017,7 +1102,17 @@ App.prototype.publicarVagaApp = function() {
         dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    db.collection('vagas').add(vaga).then(function() {
+    db.collection('vagas').add(vaga).then(function(docRef) {
+        console.log('✅ Vaga publicada:', docRef.id);
+        
+        // NOTIFICA TODOS SOBRE NOVA OBRA
+        s.notificarTodosUsuarios({
+            titulo: '📢 Nova Obra Publicada!',
+            mensagem: s.usuarioLogado.nome + ' publicou: ' + titulo + ' - R$' + valor + '/h',
+            tipo: 'nova_vaga',
+            vagaId: docRef.id
+        });
+        
         s.mostrarToast('✅ Obra publicada!', 'sucesso');
         s.vagaFotoBase64 = null;
         s._publicando = false;
@@ -1053,10 +1148,7 @@ App.prototype.verDetalheObra = function(oid) {
     });
 };
 
-// ==========================================================
 // ===== UPLOAD / EDITAR PERFIL =====
-// ==========================================================
-
 App.prototype.uploadFoto = function(e) {
     var s = this;
     var f = e.target.files[0];
@@ -1109,7 +1201,6 @@ App.prototype.salvarPerfil = function() {
     localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
     db.collection('usuarios').doc(s.usuarioLogado.id).update(d);
     
-    // Remove modal
     var modal = document.querySelector('.modal-content')?.parentElement;
     if (modal) modal.remove();
     
@@ -1117,10 +1208,7 @@ App.prototype.salvarPerfil = function() {
     s.carregarMeuPerfil();
 };
 
-// ==========================================================
-// ===== CONFIGURAÇÕES / TEMA =====
-// ==========================================================
-
+// ===== CONFIGURAÇÕES =====
 App.prototype.carregarConfigScreen = function() {
     var s = this;
     var tela = document.getElementById('configScreen');
@@ -1136,9 +1224,9 @@ App.prototype.carregarConfigScreen = function() {
                 '<button id="temaEscuroBtn" onclick="window.app.selecionarTema(\'escuro\')" style="flex:1;padding:12px;border-radius:10px;border:2px solid ' + (temaClaro ? '#e5e7eb' : '#1A3A5C') + ';background:' + (temaClaro ? 'white' : '#1A3A5C') + ';color:' + (temaClaro ? '#1A3A5C' : 'white') + ';cursor:pointer;">🌙 Escuro</button>' +
             '</div></div>' +
             '<div class="card"><h3>📄 Documentos</h3>' +
-                '<a href="termos.html" target="_blank" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">📄 Termos de Uso</a>' +
-                '<a href="privacidade.html" target="_blank" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">🔒 Política de Privacidade</a>' +
-                '<a href="excluir-conta.html" target="_blank" style="display:block;width:100%;text-align:left;padding:12px;background:#f9fafb;border:none;border-radius:8px;text-decoration:none;color:inherit;">🗑️ Excluir Conta</a>' +
+                '<a href="termos.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">📄 Termos de Uso</a>' +
+                '<a href="privacidade.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:5px;text-decoration:none;color:inherit;">🔒 Política de Privacidade</a>' +
+                '<a href="excluir-conta.html" target="_blank" style="display:block;padding:12px;background:#f9fafb;border-radius:8px;text-decoration:none;color:inherit;">🗑️ Excluir Conta</a>' +
             '</div>' +
             '<div class="card"><p style="text-align:center;color:#6b7280;font-size:12px;">LPXCONSTRUTOR v' + APP_VERSION + '<br>© 2024 Todos os direitos reservados</p></div>' +
         '</div>';
@@ -1156,10 +1244,7 @@ App.prototype.selecionarTema = function(tema) {
     this.carregarConfigScreen();
 };
 
-// ==========================================================
 // ===== OUTROS MÉTODOS =====
-// ==========================================================
-
 App.prototype.proximaEtapa = function(e) {
     document.getElementById('etapa1').style.display = e === 1 ? 'block' : 'none';
     document.getElementById('etapa2').style.display = e === 2 ? 'block' : 'none';
@@ -1317,20 +1402,14 @@ App.prototype.salvarLocalizacao = function() {
     s.mostrarToast('📍 Localização salva!', 'sucesso');
 };
 
-// ==========================================================
 // ===== LIMPEZA =====
-// ==========================================================
-
 App.prototype.pararListeners = function() {
     if (this._listenerFeed) { this._listenerFeed(); this._listenerFeed = null; }
     if (this._listenerChat) { this._listenerChat(); this._listenerChat = null; }
     if (this._listenerNotificacoes) { this._listenerNotificacoes(); this._listenerNotificacoes = null; }
 };
 
-// ==========================================================
 // ===== TOAST =====
-// ==========================================================
-
 App.prototype.mostrarToast = function(mensagem, tipo) {
     var toast = document.getElementById('toast');
     if (!toast) return;
@@ -1342,11 +1421,8 @@ App.prototype.mostrarToast = function(mensagem, tipo) {
     this._toastTimeout = setTimeout(function() { toast.style.display = 'none'; }, 3000);
 };
 
-// ==========================================================
 // ===== INICIALIZAÇÃO FINAL =====
-// ==========================================================
-
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - CORRIGIDO E COMPLETO');
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - COMPLETO COM NOTIFICAÇÕES');
     window.app._app = new App();
 });
