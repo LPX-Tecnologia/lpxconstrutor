@@ -1,12 +1,28 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.0.9 - CHAT E FEED CORRIGIDOS
+// LPXCONSTRUTOR v2.1.0 - COMPLETO E CORRIGIDO
+// MAPA | SOM | MODAL PERSONALIZADO | PUSH | CLICÁVEL
 // ==========================================================
 
-const APP_VERSION = "2.0.9";
+const APP_VERSION = "2.1.0";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
-window.app = { _app: null };
+// Sons
+function tocarSomNotificacao() {
+    try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 800; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(0); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {}
+}
+function tocarSomMensagem() {
+    try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 600; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(0); osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.15); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {}
+}
 
+// Força atualização
+if (localStorage.getItem('appVersion') !== APP_VERSION) {
+    localStorage.setItem('appVersion', APP_VERSION);
+    if (window.caches) { caches.keys().then(function(names) { names.forEach(function(name) { caches.delete(name); }); }); }
+    setTimeout(function() { window.location.reload(true); }, 500);
+}
+
+// Interface global
+window.app = { _app: null };
 ['fazerLogin','mostrarTela','voltarTela','cadastrar','sair','confirmarSair','fecharModalSair',
  'buscarProfissionais','verPerfil','abrirTelaPublicacao','publicarVagaApp','previewFotoObra',
  'carregarMinhasObras','verDetalheObra','uploadFoto','abrirEditarPerfil','salvarPerfil',
@@ -19,6 +35,7 @@ window.app = { _app: null };
     window.app[m] = function() { var a = window.app._app; if (a && a[m]) return a[m].apply(a, arguments); };
 });
 
+// ===== APP PRINCIPAL =====
 var App = function() {
     this.usuarioLogado = null;
     this.usuarioSelecionado = null;
@@ -32,13 +49,14 @@ var App = function() {
     this._listenerChat = null;
     this._listenerNotificacoes = null;
     this._listenerMsgBadge = null;
+    this._listenerConversas = null;
     this._vagasCache = [];
     this._publicando = false;
-    this._mapaInicializado = false;
     this._feedJaCarregado = false;
     this.init();
 };
 
+// ===== INICIALIZAÇÃO =====
 App.prototype.init = function() {
     var s = this;
     console.log('🚀 App v' + APP_VERSION);
@@ -46,7 +64,6 @@ App.prototype.init = function() {
     
     var nav = document.getElementById('bottomNav');
     if (nav) nav.style.display = 'none';
-    
     if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
     
     var savedUser = localStorage.getItem('usuarioLPX');
@@ -54,7 +71,6 @@ App.prototype.init = function() {
     
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
-        
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 db.collection('usuarios').doc(user.uid).get().then(function(doc) {
@@ -90,21 +106,16 @@ App.prototype.init = function() {
 App.prototype.mostrarTela = function(id) {
     var s = this;
     if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen') s.historicoTelas.push(s.telaAtual);
-    
     document.querySelectorAll('.screen').forEach(function(t) { t.classList.remove('active'); t.style.display = 'none'; });
-    
     var tela = document.getElementById(id);
     if (!tela) { tela = document.createElement('div'); tela.id = id; tela.className = 'screen'; document.querySelector('.app-container')?.appendChild(tela); }
-    
     tela.classList.add('active'); tela.style.display = 'block'; s.telaAtual = id;
     
     var nav = document.getElementById('bottomNav');
     if (nav) {
         var hide = ['loginScreen','cadastroScreen','recuperarSenhaScreen'];
         nav.style.display = hide.indexOf(id) >= 0 ? 'none' : 'flex';
-        nav.querySelectorAll('.nav-item').forEach(function(item) { 
-            item.classList.toggle('active', item.getAttribute('data-screen') === id); 
-        });
+        nav.querySelectorAll('.nav-item').forEach(function(item) { item.classList.toggle('active', item.getAttribute('data-screen') === id); });
     }
     
     switch(id) {
@@ -128,15 +139,33 @@ App.prototype.voltarTela = function() {
     this.mostrarTela(this.historicoTelas.length > 0 ? this.historicoTelas.pop() : 'homeScreen');
 };
 
+// ===== MODAL PERSONALIZADO =====
+App.prototype.mostrarModalConfirmacao = function(titulo, mensagem, onConfirmar, onCancelar) {
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s;';
+    modal.innerHTML = 
+        '<div style="background:white;border-radius:20px;padding:30px;max-width:350px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);border-top:5px solid #F47920;">' +
+            '<div style="font-size:50px;margin-bottom:15px;">⚠️</div>' +
+            '<h3 style="color:#1A3A5C;margin-bottom:10px;">' + (titulo || 'Confirmar') + '</h3>' +
+            '<p style="color:#666;margin-bottom:20px;">' + (mensagem || 'Tem certeza?') + '</p>' +
+            '<div style="display:flex;gap:10px;">' +
+                '<button id="btnCancelarModal" style="flex:1;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#666;font-weight:600;cursor:pointer;">Cancelar</button>' +
+                '<button id="btnConfirmarModal" style="flex:1;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#F47920,#E06B1A);color:white;font-weight:600;cursor:pointer;">Confirmar</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(modal);
+    document.getElementById('btnConfirmarModal').onclick = function() { modal.remove(); if (onConfirmar) onConfirmar(); };
+    document.getElementById('btnCancelarModal').onclick = function() { modal.remove(); if (onCancelar) onCancelar(); };
+    modal.onclick = function(e) { if (e.target === modal) { modal.remove(); if (onCancelar) onCancelar(); } };
+};
+
 // ===== LOGIN =====
 App.prototype.fazerLogin = function() {
     var s = this;
     var email = document.getElementById('loginEmail')?.value?.trim() || '';
     var senha = document.getElementById('loginSenha')?.value || '';
     if (!email || !senha) { s.mostrarToast('Preencha email e senha!', 'erro'); return; }
-    
-    var btn = document.getElementById('btnLogin');
-    if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
+    var btn = document.getElementById('btnLogin'); if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
     
     firebase.auth().signInWithEmailAndPassword(email, senha)
         .then(function(uc) { return db.collection('usuarios').doc(uc.user.uid).get(); })
@@ -178,13 +207,10 @@ App.prototype.cadastrar = function() {
     
     s.mostrarToast('Cadastrando...', 'info');
     firebase.auth().createUserWithEmailAndPassword(d.email, d.senha)
-        .then(function(uc) {
-            d.id = uc.user.uid; d.dataCriacao = firebase.firestore.FieldValue.serverTimestamp(); d.ativo = true;
-            return db.collection('usuarios').doc(d.id).set(d);
-        })
+        .then(function(uc) { d.id = uc.user.uid; d.dataCriacao = firebase.firestore.FieldValue.serverTimestamp(); d.ativo = true; return db.collection('usuarios').doc(d.id).set(d); })
         .then(function() {
             s.usuarioLogado = d; localStorage.setItem('usuarioLPX', JSON.stringify(d));
-            s.notificarTodosUsuarios({ titulo: '👤 Novo Profissional!', mensagem: d.nome + ' (' + (d.profissao || d.tipo) + ') acabou de se cadastrar!', tipo: 'novo_usuario' });
+            s.notificarTodosUsuarios({ titulo: '👤 Novo Profissional!', mensagem: d.nome + ' acabou de se cadastrar!', tipo: 'novo_usuario' });
             s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); s.mostrarTela('homeScreen');
         })
         .catch(function(err) { s.mostrarToast(err.code === 'auth/email-already-in-use' ? 'Email já cadastrado!' : 'Erro ao cadastrar', 'erro'); });
@@ -226,23 +252,19 @@ App.prototype.mudarTab = function(t) {
 };
 
 // ==========================================================
-// 🔥 FEED CORRIGIDO - FUNCIONA PARA TODOS
+// 🔥 FEED INSTANTÂNEO
 // ==========================================================
 App.prototype.iniciarFeedListener = function() {
     var s = this;
     if (s._listenerFeed) { s._listenerFeed(); s._listenerFeed = null; }
     if (typeof db === 'undefined') return;
     
-    console.log('🔥 FEED INICIADO');
-    
     s._listenerFeed = db.collection('vagas').where('ativa', '==', true)
         .onSnapshot(function(snap) {
-            console.log('📢 Feed:', snap.size, 'vagas');
             var vagas = [];
             snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; vagas.push(v); });
             vagas.sort(function(a, b) { return (b.dataCriacao?.toDate?.()||0) - (a.dataCriacao?.toDate?.()||0); });
             s._vagasCache = vagas;
-            
             var container = document.getElementById('feedContainer');
             if (container && s.tabAtual === 'feed') s.renderizarFeed(vagas);
             
@@ -250,13 +272,12 @@ App.prototype.iniciarFeedListener = function() {
                 if (change.type === 'added' && s._feedJaCarregado && s.usuarioLogado) {
                     var vaga = change.doc.data();
                     if (vaga.autorId !== s.usuarioLogado.id) {
+                        tocarSomNotificacao();
                         s.mostrarToast('🆕 ' + (vaga.autorNome||'Alguém') + ' publicou: ' + (vaga.titulo||'Nova obra'), 'info');
                     }
                 }
             });
             s._feedJaCarregado = true;
-        }, function(err) {
-            console.error('❌ Erro feed:', err);
         });
 };
 
@@ -278,11 +299,14 @@ App.prototype.renderizarFeed = function(vagas) {
     container.innerHTML = html;
 };
 
+// Apagar com modal personalizado
 App.prototype.apagarObra = function(oid, ev) {
     if (ev) ev.stopPropagation();
-    if (!confirm('Apagar esta obra?')) return;
-    db.collection('vagas').doc(oid).update({ ativa: false });
-    this.mostrarToast('Obra apagada!', 'sucesso');
+    var s = this;
+    s.mostrarModalConfirmacao('Apagar Obra', 'Tem certeza que deseja apagar esta obra?', function() {
+        db.collection('vagas').doc(oid).update({ ativa: false });
+        s.mostrarToast('Obra apagada!', 'sucesso');
+    });
 };
 
 // ===== PERFIL =====
@@ -296,12 +320,10 @@ App.prototype.buscarProfissionais = function() {
     var s = this, container = document.getElementById('buscaResultados'); if (!container) return;
     var termo = (document.getElementById('buscaInput')?.value || '').toLowerCase().trim();
     container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-    
     db.collection('usuarios').where('ativo', '==', true).get().then(function(snap) {
         var usuarios = []; snap.forEach(function(doc) { var u = doc.data(); u.id = doc.id; if (u.id !== s.usuarioLogado?.id) usuarios.push(u); });
         if (termo) usuarios = usuarios.filter(function(u) { return (u.nome||'').toLowerCase().includes(termo) || (u.profissao||'').toLowerCase().includes(termo); });
         if (usuarios.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum profissional encontrado</div>'; return; }
-        
         var html = '';
         for (var i = 0; i < usuarios.length; i++) {
             var u = usuarios[i], foto = u.fotoPerfil ? '<img src="' + u.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '<i class="fas fa-user" style="font-size:24px;color:#1A3A5C;"></i>';
@@ -349,15 +371,21 @@ App.prototype.adicionarNaRede = function(pid) {
         var existe = false; snap.forEach(function(doc) { if (doc.data().participantes.indexOf(pid) >= 0) existe = true; });
         if (existe) { s.mostrarToast('Já conectado!', 'erro'); return; }
         db.collection('conexoes').add({ participantes: [s.usuarioLogado.id, pid], status: 'pendente', solicitanteId: s.usuarioLogado.id, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }).then(function() {
-            db.collection('notificacoes').add({ usuarioId: pid, titulo: '🔗 Convite', mensagem: s.usuarioLogado.nome + ' quer se conectar!', tipo: 'convite', de: s.usuarioLogado.id, lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() });
+            db.collection('notificacoes').add({ usuarioId: pid, titulo: '🔗 Convite de ' + s.usuarioLogado.nome, mensagem: s.usuarioLogado.nome + ' quer se conectar!', tipo: 'convite', de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome, lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() });
             s.mostrarToast('✅ Convite enviado!', 'sucesso');
         });
     });
 };
+App.prototype.aceitarConvite = function(nid, deId) {
+    var s = this;
+    db.collection('conexoes').where('participantes', 'array-contains', s.usuarioLogado.id).get().then(function(snap) {
+        snap.forEach(function(doc) { var d = doc.data(); if (d.participantes.indexOf(s.usuarioLogado.id) >= 0 && d.participantes.indexOf(deId) >= 0 && d.status === 'pendente') db.collection('conexoes').doc(doc.id).update({ status: 'ativo' }); });
+    });
+    db.collection('notificacoes').doc(nid).update({ lida: true }); s.mostrarToast('✅ Conectados!', 'sucesso');
+};
+App.prototype.recusarConvite = function(nid) { db.collection('notificacoes').doc(nid).update({ lida: true }); this.mostrarToast('Convite recusado', 'info'); };
 
-// ==========================================================
-// 💬 CHAT CORRIGIDO - MENSAGENS CHEGAM
-// ==========================================================
+// ===== CHAT COM BADGE =====
 App.prototype.iniciarBadgeMensagens = function() {
     var s = this;
     if (!s.usuarioLogado) return;
@@ -387,105 +415,90 @@ App.prototype.iniciarBadgeMensagens = function() {
 App.prototype.carregarListaConversas = function() {
     var s = this; s.usuarioSelecionado = null;
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
-    
-    var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">⏳ Carregando...</div>';
-    var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
-    if (inputContainer) inputContainer.style.display = 'none';
-    
+    var chatMessages = document.getElementById('chatMessages'); if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">⏳ Carregando...</div>';
+    var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container'); if (inputContainer) inputContainer.style.display = 'none';
     if (!s.usuarioLogado || !s.usuarioLogado.id) return;
     
-    db.collection('mensagens')
-        .where('participantes', 'array-contains', s.usuarioLogado.id)
-        .get()
-        .then(function(snap) {
-            var conversas = {};
-            snap.forEach(function(doc) {
-                var msg = doc.data();
-                var outroId = msg.participantes.find(function(p) { return p !== s.usuarioLogado.id; });
-                if (!outroId) return;
-                if (!conversas[outroId] || (msg.dataEnvio?.toDate?.()||0) > (conversas[outroId].dataEnvio?.toDate?.()||0)) {
-                    conversas[outroId] = { outroId: outroId, data: msg };
-                }
-            });
-            
-            var lista = Object.values(conversas);
-            lista.sort(function(a, b) { return (b.data.dataEnvio?.toDate?.()||0) - (a.data.dataEnvio?.toDate?.()||0); });
-            
-            if (lista.length === 0) {
-                if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">Nenhuma conversa</div>';
-                return;
+    // Listener para atualizar conversas em tempo real
+    if (s._listenerConversas) s._listenerConversas();
+    s._listenerConversas = db.collection('mensagens').where('participantes', 'array-contains', s.usuarioLogado.id).onSnapshot(function() { s._recarregarListaConversas(); });
+    
+    s._recarregarListaConversas();
+};
+
+App.prototype._recarregarListaConversas = function() {
+    var s = this;
+    var chatMessages = document.getElementById('chatMessages');
+    
+    db.collection('mensagens').where('participantes', 'array-contains', s.usuarioLogado.id).get().then(function(snap) {
+        var conversas = {};
+        snap.forEach(function(doc) {
+            var msg = doc.data();
+            var outroId = msg.participantes.find(function(p) { return p !== s.usuarioLogado.id; });
+            if (!outroId) return;
+            if (!conversas[outroId] || (msg.dataEnvio?.toDate?.()||0) > (conversas[outroId].dataEnvio?.toDate?.()||0)) {
+                conversas[outroId] = { outroId: outroId, data: msg };
             }
-            
-            var html = '', carregados = 0;
-            lista.forEach(function(conv) {
-                db.collection('usuarios').doc(conv.outroId).get().then(function(userDoc) {
-                    carregados++;
-                    if (userDoc.exists) {
-                        var user = userDoc.data(); user.id = userDoc.id;
-                        html += '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="window.app.iniciarChat(\'' + user.id + '\')">' +
-                            '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">' + (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '👷') + '</div>' +
-                            '<div style="flex:1;"><strong>' + (user.nome||'Usuário') + '</strong><br><small>' + (conv.data.conteudo||'') + '</small></div></div>';
-                    }
-                    if (carregados >= lista.length && chatMessages) chatMessages.innerHTML = html;
-                });
-            });
-            setTimeout(function() { if (carregados < lista.length && chatMessages) chatMessages.innerHTML = html; }, 3000);
         });
+        
+        var lista = Object.values(conversas);
+        lista.sort(function(a, b) { return (b.data.dataEnvio?.toDate?.()||0) - (a.data.dataEnvio?.toDate?.()||0); });
+        
+        if (lista.length === 0) { if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">Nenhuma conversa</div>'; return; }
+        
+        var html = '', carregados = 0;
+        lista.forEach(function(conv) {
+            db.collection('usuarios').doc(conv.outroId).get().then(function(userDoc) {
+                carregados++;
+                if (userDoc.exists) {
+                    var user = userDoc.data(); user.id = userDoc.id;
+                    var hora = ''; try { hora = conv.data.dataEnvio?.toDate?.().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) || ''; } catch(e) {}
+                    html += '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="window.app.iniciarChat(\'' + user.id + '\')"><div style="width:50px;height:50px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">' + (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '👷') + '</div><div style="flex:1;"><strong>' + (user.nome||'Usuário') + '</strong><br><small style="color:#666;">' + (conv.data.conteudo||'') + '</small></div><small style="color:#999;">' + hora + '</small></div>';
+                }
+                if (carregados >= lista.length && chatMessages) chatMessages.innerHTML = html;
+            });
+        });
+        setTimeout(function() { if (carregados < lista.length && chatMessages) chatMessages.innerHTML = html; }, 3000);
+    });
 };
 
 App.prototype.iniciarChat = function(uid) {
     var s = this;
-    console.log('💬 Abrindo chat com:', uid);
-    
     if (!s.usuarioLogado || !s.usuarioLogado.id) return;
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
     
-    var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando...</div>';
+    var chatMessages = document.getElementById('chatMessages'); if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando...</div>';
     
     db.collection('usuarios').doc(uid).get().then(function(doc) {
         s.usuarioSelecionado = doc.exists ? doc.data() : { id: uid, nome: 'Usuário', fotoPerfil: null };
         s.usuarioSelecionado.id = uid;
-        
         var user = s.usuarioSelecionado;
+        
         var chatHeader = document.getElementById('chatHeaderInfo');
-        if (chatHeader) {
-            chatHeader.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;">' +
-                '<button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;">⬅</button>' +
-                '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.2);">' + (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '👷') + '</div>' +
-                '<strong>' + (user.nome||'Usuário') + '</strong></div>';
-        }
+        if (chatHeader) chatHeader.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;"><button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;">⬅</button><div style="width:40px;height:40px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.2);">' + (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '👷') + '</div><strong>' + (user.nome||'Usuário') + '</strong></div>';
         
         var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
         if (inputContainer) inputContainer.style.display = 'flex';
         
         var user1 = s.usuarioLogado.id, user2 = uid;
         
-        // LISTENER EM TEMPO REAL
-        s._listenerChat = db.collection('mensagens')
-            .where('participantes', 'array-contains', user1)
+        s._listenerChat = db.collection('mensagens').where('participantes', 'array-contains', user1)
             .onSnapshot(function(snap) {
                 var mensagens = [];
                 snap.forEach(function(doc) {
                     var msg = doc.data();
                     if (msg.participantes && msg.participantes.indexOf(user1) >= 0 && msg.participantes.indexOf(user2) >= 0) {
-                        msg.id = doc.id;
-                        mensagens.push(msg);
-                        // Marca como lida
+                        msg.id = doc.id; mensagens.push(msg);
                         if (msg.destinatarioId === user1 && !msg.lida) {
                             db.collection('mensagens').doc(doc.id).update({ lida: true }).catch(function(){});
                         }
                     }
                 });
-                
                 mensagens.sort(function(a, b) { return (a.dataEnvio?.toDate?.()||0) - (b.dataEnvio?.toDate?.()||0); });
                 
                 if (!chatMessages) return;
-                
-                if (mensagens.length === 0) {
-                    chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">Diga olá! 👋</div>';
-                } else {
+                if (mensagens.length === 0) { chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">Diga olá! 👋</div>'; }
+                else {
                     var html = '';
                     mensagens.forEach(function(msg) {
                         var meu = msg.remetenteId === user1;
@@ -506,61 +519,32 @@ App.prototype.enviarMensagem = function() {
     var s = this;
     var input = document.getElementById('chatInput');
     if (!input || !s.usuarioLogado || !s.usuarioSelecionado || s._enviandoMensagem) return;
-    
-    var texto = input.value.trim();
-    if (!texto) return;
-    
+    var texto = input.value.trim(); if (!texto) return;
     s._enviandoMensagem = true;
-    var btn = document.querySelector('.btn-send') || document.getElementById('btnEnviarMsg');
-    if (btn) btn.disabled = true;
+    var btn = document.querySelector('.btn-send') || document.getElementById('btnEnviarMsg'); if (btn) btn.disabled = true;
     input.value = '';
     
-    var msg = {
-        remetenteId: s.usuarioLogado.id,
-        destinatarioId: s.usuarioSelecionado.id,
+    db.collection('mensagens').add({
+        remetenteId: s.usuarioLogado.id, destinatarioId: s.usuarioSelecionado.id,
         participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
-        conteudo: texto,
-        lida: false,
-        dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    console.log('📤 Enviando mensagem para:', s.usuarioSelecionado.id);
-    
-    db.collection('mensagens').add(msg)
-        .then(function(docRef) {
-            console.log('✅ Mensagem enviada:', docRef.id);
-            
-            // Notificação
-            db.collection('notificacoes').add({
-                usuarioId: s.usuarioSelecionado.id,
-                titulo: '💬 ' + s.usuarioLogado.nome,
-                mensagem: texto.substring(0, 80) + (texto.length > 80 ? '...' : ''),
-                tipo: 'mensagem',
-                de: s.usuarioLogado.id,
-                deNome: s.usuarioLogado.nome,
-                lida: false,
-                dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(function(err) { console.error('Erro notificação:', err); });
-            
-            s.mostrarToast('✅ Enviado!', 'sucesso');
-            setTimeout(function() { if (input) input.focus(); }, 100);
-        })
-        .catch(function(err) {
-            console.error('❌ Erro ao enviar:', err);
-            s.mostrarToast('Erro ao enviar mensagem', 'erro');
-            input.value = texto;
-        })
-        .finally(function() {
-            s._enviandoMensagem = false;
-            if (btn) btn.disabled = false;
-        });
+        conteudo: texto, lida: false, dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function() {
+        db.collection('notificacoes').add({
+            usuarioId: s.usuarioSelecionado.id, titulo: '💬 ' + s.usuarioLogado.nome,
+            mensagem: texto.substring(0, 80) + (texto.length > 80 ? '...' : ''),
+            tipo: 'mensagem', de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome,
+            lida: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(){});
+        s.mostrarToast('✅ Enviado!', 'sucesso');
+        setTimeout(function() { if (input) input.focus(); }, 100);
+    }).catch(function(err) { s.mostrarToast('Erro ao enviar', 'erro'); input.value = texto; })
+    .finally(function() { s._enviandoMensagem = false; if (btn) btn.disabled = false; });
 };
 
-// ===== NOTIFICAÇÕES =====
+// ===== NOTIFICAÇÕES COM SOM E CLICÁVEIS =====
 App.prototype.notificarTodosUsuarios = function(dados) {
     var s = this;
     if (!s.usuarioLogado) return;
-    
     db.collection('usuarios').where('ativo', '==', true).get().then(function(snap) {
         var batch = db.batch();
         snap.forEach(function(doc) {
@@ -583,26 +567,33 @@ App.prototype.iniciarListenerNotificacoes = function() {
     if (!s.usuarioLogado) return;
     
     s._listenerNotificacoes = db.collection('notificacoes')
-        .where('usuarioId', '==', s.usuarioLogado.id)
-        .where('lida', '==', false)
+        .where('usuarioId', '==', s.usuarioLogado.id).where('lida', '==', false)
         .onSnapshot(function(snap) {
             var badge = document.getElementById('badgeNotificacoes');
-            if (badge) {
-                var c = snap.size;
-                if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; }
-                else badge.style.display = 'none';
-            }
+            if (badge) { var c = snap.size; if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; } else badge.style.display = 'none'; }
             
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added') {
                     var n = change.doc.data(), msg = '';
-                    if (n.tipo === 'mensagem') msg = '💬 ' + (n.deNome||'Alguém') + ' enviou mensagem';
-                    else if (n.tipo === 'nova_vaga') msg = '🏗️ ' + (n.deNome||'Alguém') + ' publicou obra';
+                    if (n.tipo === 'mensagem') { msg = '💬 ' + (n.deNome||'Alguém') + ' enviou mensagem'; tocarSomMensagem(); }
+                    else if (n.tipo === 'nova_vaga') { msg = '🏗️ ' + (n.deNome||'Alguém') + ' publicou obra'; tocarSomNotificacao(); }
+                    else if (n.tipo === 'novo_usuario') { msg = '👤 ' + (n.titulo||'Novo cadastro'); tocarSomNotificacao(); }
+                    else if (n.tipo === 'convite') { msg = '🔗 ' + (n.deNome||'Alguém') + ' quer se conectar'; tocarSomNotificacao(); }
                     if (msg) s.mostrarToast(msg, 'info');
+                    
+                    // Push notification nativa
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('LPXConstrutor', { body: msg, icon: 'imagem/logo-sem-fundo-lpxconstrutor.png' });
+                    }
                 }
             });
         });
 };
+
+// Solicita permissão para notificações nativas
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
 
 App.prototype.mostrarNotificacoes = function() {
     var s = this; if (!s.usuarioLogado) return;
@@ -617,16 +608,25 @@ App.prototype.mostrarNotificacoes = function() {
             var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
             modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
             var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()"><div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="this.closest(\'.modal-content\').parentElement.remove()">✕</button></div><div style="max-height:60vh;overflow-y:auto;padding:10px;">';
+            
             if (ns.length === 0) html += '<div style="text-align:center;padding:40px;">Nenhuma notificação</div>';
             else ns.forEach(function(n) {
                 var icone = '📢', cor = '#f0f9ff';
                 if (n.tipo === 'nova_vaga') { icone = '🏗️'; cor = '#fef3c7'; }
                 else if (n.tipo === 'mensagem') { icone = '💬'; cor = '#e0f2fe'; }
                 else if (n.tipo === 'convite') { icone = '🔗'; cor = '#ede9fe'; }
-                html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;"><strong>' + (n.titulo||'') + '</strong><br><small>' + (n.mensagem||'') + '</small>';
-                if (n.tipo === 'convite') html += '<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;">✅ Aceitar</button><button onclick="window.app.recusarConvite(\'' + n.id + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;">❌ Recusar</button></div>';
-                if (n.tipo === 'mensagem' && n.de) html += '<button onclick="window.app.iniciarChat(\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:8px;border-radius:8px;">💬 Responder</button>';
-                html += '</div>';
+                else if (n.tipo === 'novo_usuario') { icone = '👤'; cor = '#d1fae5'; }
+                
+                var data = ''; try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
+                
+                html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;"><div style="display:flex;align-items:start;gap:8px;"><div style="font-size:24px;">' + icone + '</div><div style="flex:1;"><strong>' + (n.titulo||'') + '</strong><br><small>' + (n.mensagem||'') + '</small><br><small style="color:#999;">' + data + '</small>';
+                
+                // Botões clicáveis
+                if (n.tipo === 'convite') html += '<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button><button onclick="window.app.recusarConvite(\'' + n.id + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
+                if (n.tipo === 'nova_vaga' && n.vagaId) html += '<button onclick="window.app.verDetalheObra(\'' + n.vagaId + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#F47920;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">👀 IR PARA OBRA</button>';
+                if (n.tipo === 'mensagem' && n.de) html += '<button onclick="window.app.iniciarChat(\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">💬 IR PARA CONVERSA</button>';
+                
+                html += '</div></div></div>';
             });
             html += '</div></div>'; modal.innerHTML = html; document.body.appendChild(modal);
         });
@@ -644,7 +644,10 @@ App.prototype.publicarVagaApp = function() {
     var descricao = document.getElementById('vagaDescricao')?.value?.trim() || '';
     var profs = []; document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { profs.push(cb.value); });
     if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha todos!', 'erro'); return; }
+    
     s._publicando = true; var btn = document.querySelector('#publicarVagaScreen .btn-primary'); if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
+    
+    console.log('📝 Publicando:', titulo, '-', s.usuarioLogado?.nome);
     
     db.collection('vagas').add({
         titulo, endereco, profissoes: profs.length > 0 ? profs.join(', ') : 'Geral',
@@ -653,10 +656,15 @@ App.prototype.publicarVagaApp = function() {
         autorNome: s.usuarioLogado.nome, autorFoto: s.usuarioLogado.fotoPerfil || null,
         interessados: [], dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
     }).then(function(docRef) {
+        console.log('✅ Publicado:', docRef.id);
         s.notificarTodosUsuarios({ titulo: '📢 Nova Obra!', mensagem: s.usuarioLogado.nome + ' publicou: ' + titulo, tipo: 'nova_vaga', vagaId: docRef.id });
         s.mostrarToast('✅ Publicado!', 'sucesso'); s._publicando = false;
         if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; } s.mostrarTela('homeScreen');
-    }).catch(function() { s.mostrarToast('Erro', 'erro'); s._publicando = false; if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; } });
+    }).catch(function(err) {
+        console.error('❌ Erro ao publicar:', err);
+        s.mostrarToast('Erro: ' + (err.message || 'Tente novamente'), 'erro');
+        s._publicando = false; if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; }
+    });
 };
 
 App.prototype.verDetalheObra = function(oid) {
@@ -664,7 +672,7 @@ App.prototype.verDetalheObra = function(oid) {
         if (!doc.exists) return; var v = doc.data();
         var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
         modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
-        modal.innerHTML = '<div class="modal-content" style="max-width:500px;width:95%;" onclick="event.stopPropagation()">' + (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;">' : '') + '<h2>' + (v.titulo||'') + '</h2><p>📍 ' + (v.endereco||'') + '</p><p>💰 R$' + (v.valorHora||0) + '/h</p><button onclick="this.closest(\'.modal-content\').parentElement.remove()" class="btn btn-outline" style="width:100%;">Fechar</button></div>';
+        modal.innerHTML = '<div class="modal-content" style="max-width:500px;width:95%;" onclick="event.stopPropagation()">' + (v.fotoObra ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;">' : '') + '<h2>' + (v.titulo||'') + '</h2><p>📍 ' + (v.endereco||'') + '</p><p>💰 R$' + (v.valorHora||0) + '/h</p><p>👷 ' + (v.profissoes||'') + '</p><button onclick="this.closest(\'.modal-content\').parentElement.remove()" class="btn btn-outline" style="width:100%;">Fechar</button></div>';
         document.body.appendChild(modal);
     });
 };
@@ -673,19 +681,19 @@ App.prototype.carregarMinhasObras = function() {
     var s = this, container = document.getElementById('listaObrasContainer'); if (!container || !s.usuarioLogado) return;
     db.collection('vagas').where('autorId', '==', s.usuarioLogado.id).where('ativa', '==', true).get().then(function(snap) {
         var obras = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; obras.push(v); });
-        document.getElementById('totalObras').textContent = obras.length;
-        if (obras.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma obra</h3></div>'; return; }
-        var html = ''; obras.forEach(function(v) { html += '<div class="vaga-card"><div style="padding:15px;"><strong>' + (v.titulo||'') + '</strong></div></div>'; });
+        var total = document.getElementById('totalObras'); if (total) total.textContent = obras.length;
+        if (obras.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma obra</h3><button onclick="window.app.novaObra()" class="btn btn-primary">Publicar</button></div>'; return; }
+        var html = ''; obras.forEach(function(v) { html += '<div class="vaga-card"><div style="padding:15px;"><strong>' + (v.titulo||'') + '</strong><br><small>📍 ' + (v.endereco||'') + '</small></div></div>'; });
         container.innerHTML = html;
     });
 };
 
 // ===== UPLOAD / CONFIG =====
 App.prototype.uploadFoto = function(e) { var s = this, f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { s.usuarioLogado.fotoPerfil = ev.target.result; localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); db.collection('usuarios').doc(s.usuarioLogado.id).update({ fotoPerfil: ev.target.result }); s.mostrarToast('📷 Foto atualizada!', 'sucesso'); s.carregarMeuPerfil(); }; r.readAsDataURL(f); };
-App.prototype.abrirEditarPerfil = function() { var s = this, u = s.usuarioLogado; var m = document.createElement('div'); m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;'; m.onclick = function(e) { if (e.target === m) m.remove(); }; m.innerHTML = '<div class="modal-content" onclick="event.stopPropagation()"><h3>Editar Perfil</h3><input id="editNome" value="' + (u.nome||'') + '" class="input-field" placeholder="Nome"><input id="editCelular" value="' + (u.celular||'') + '" class="input-field" placeholder="Celular"><input id="editProfissao" value="' + (u.profissao||'') + '" class="input-field" placeholder="Profissão"><button onclick="window.app.salvarPerfil()" class="btn btn-success">SALVAR</button></div>'; document.body.appendChild(m); };
+App.prototype.abrirEditarPerfil = function() { var s = this, u = s.usuarioLogado; var m = document.createElement('div'); m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;'; m.onclick = function(e) { if (e.target === m) m.remove(); }; m.innerHTML = '<div class="modal-content" onclick="event.stopPropagation()"><h3>✏️ Editar Perfil</h3><input id="editNome" value="' + (u.nome||'') + '" class="input-field" placeholder="Nome"><input id="editCelular" value="' + (u.celular||'') + '" class="input-field" placeholder="Celular"><input id="editProfissao" value="' + (u.profissao||'') + '" class="input-field" placeholder="Profissão"><button onclick="window.app.salvarPerfil()" class="btn btn-success">SALVAR</button></div>'; document.body.appendChild(m); };
 App.prototype.salvarPerfil = function() { var s = this; var d = { nome: document.getElementById('editNome')?.value?.trim() || s.usuarioLogado.nome, celular: document.getElementById('editCelular')?.value?.trim() || '', profissao: document.getElementById('editProfissao')?.value?.trim() || '' }; Object.assign(s.usuarioLogado, d); localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); db.collection('usuarios').doc(s.usuarioLogado.id).update(d); document.querySelector('.modal-content')?.parentElement?.remove(); s.mostrarToast('✅ Atualizado!', 'sucesso'); s.carregarMeuPerfil(); };
 App.prototype.selecionarTema = function(t) { this.temaAtual = t; localStorage.setItem('tema', t); document.body.classList.toggle('dark-theme', t === 'escuro'); };
-App.prototype.carregarConfigScreen = function() { var tela = document.getElementById('configScreen'); if (!tela) return; tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Configurações</h2></div><div style="padding:16px;"><div class="card"><button onclick="window.app.selecionarTema(\'claro\')" class="btn btn-outline">☀️ Claro</button><button onclick="window.app.selecionarTema(\'escuro\')" class="btn btn-outline">🌙 Escuro</button></div><p style="text-align:center;">v' + APP_VERSION + '</p></div>'; };
+App.prototype.carregarConfigScreen = function() { var tela = document.getElementById('configScreen'); if (!tela) return; tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>⚙️ Configurações</h2></div><div style="padding:16px;"><div class="card"><h3>🎨 Tema</h3><button onclick="window.app.selecionarTema(\'claro\')" class="btn btn-outline">☀️ Claro</button><button onclick="window.app.selecionarTema(\'escuro\')" class="btn btn-outline">🌙 Escuro</button></div><div class="card"><a href="termos.html" target="_blank">📄 Termos</a><br><a href="privacidade.html" target="_blank">🔒 Privacidade</a></div><p style="text-align:center;">v' + APP_VERSION + '</p></div>'; };
 App.prototype.proximaEtapa = function(e) { document.getElementById('etapa1').style.display = e === 1 ? 'block' : 'none'; document.getElementById('etapa2').style.display = e === 2 ? 'block' : 'none'; };
 App.prototype.toggleProfissao = function() { var g = document.getElementById('grupoProfissao'); if (g) g.style.display = document.getElementById('cadTipo')?.value === 'profissional' ? 'block' : 'none'; };
 App.prototype.solicitarCodigo = function() { var email = document.getElementById('recEmail')?.value?.trim() || ''; if (!email) { this.mostrarToast('Digite seu email!', 'erro'); return; } firebase.auth().sendPasswordResetEmail(email).then(function() { window.app._app.mostrarToast('📧 Email enviado!', 'sucesso'); }).catch(function() { window.app._app.mostrarToast('Email não encontrado!', 'erro'); }); };
@@ -699,6 +707,7 @@ App.prototype.pararListeners = function() {
     if (this._listenerChat) { this._listenerChat(); this._listenerChat = null; }
     if (this._listenerNotificacoes) { this._listenerNotificacoes(); this._listenerNotificacoes = null; }
     if (this._listenerMsgBadge) { this._listenerMsgBadge(); this._listenerMsgBadge = null; }
+    if (this._listenerConversas) { this._listenerConversas(); this._listenerConversas = null; }
 };
 
 App.prototype.mostrarToast = function(msg, tipo) {
@@ -709,6 +718,6 @@ App.prototype.mostrarToast = function(msg, tipo) {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION);
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - COMPLETO');
     window.app._app = new App();
 });
