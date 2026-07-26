@@ -1,9 +1,9 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.0.5 - COMPLETO E CORRIGIDO
-// FEED, PERFIL, BUSCA, CHAT, NOTIFICAÇÕES - TUDO FUNCIONANDO
+// LPXCONSTRUTOR v2.0.6 - COMPLETO E CORRIGIDO
+// FEED INSTANTÂNEO | CHAT EM TEMPO REAL | NOTIFICAÇÕES PUSH
 // ==========================================================
 
-const APP_VERSION = "2.0.5";
+const APP_VERSION = "2.0.6";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 // Interface global
@@ -43,6 +43,7 @@ var App = function() {
     this._vagasCache = [];
     this._publicando = false;
     this._mapaInicializado = false;
+    this._feedJaCarregado = false;
     this.init();
 };
 
@@ -295,6 +296,9 @@ App.prototype.mudarTab = function(t) {
         if (fc) fc.style.display = 'flex';
         if (rc) rc.style.display = 'none';
         if (tabs[0]) tabs[0].classList.add('active');
+        if (this._vagasCache.length > 0) {
+            this.renderizarFeed(this._vagasCache);
+        }
     } else {
         if (fc) fc.style.display = 'none';
         if (rc) rc.style.display = 'flex';
@@ -303,18 +307,31 @@ App.prototype.mudarTab = function(t) {
     }
 };
 
-// ===== FEED - CORRIGIDO =====
+// ===== FEED INSTANTÂNEO =====
 App.prototype.iniciarFeedListener = function() {
     var s = this;
-    if (s._listenerFeed || typeof db === 'undefined') return;
     
-    console.log('🔥 Iniciando feed listener...');
+    if (s._listenerFeed) {
+        s._listenerFeed();
+        s._listenerFeed = null;
+    }
     
-    // Versão sem índice composto (funciona imediatamente)
+    if (typeof db === 'undefined') {
+        console.error('❌ Firestore não disponível');
+        return;
+    }
+    
+    console.log('🔥 INICIANDO LISTENER DO FEED EM TEMPO REAL');
+    
+    var container = document.getElementById('feedContainer');
+    if (container && s.tabAtual === 'feed') {
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Conectando ao feed...</div>';
+    }
+    
     s._listenerFeed = db.collection('vagas')
         .where('ativa', '==', true)
         .onSnapshot(function(snap) {
-            console.log('📢 Feed atualizado:', snap.size, 'vagas');
+            console.log('📢 Feed recebeu atualização:', snap.size, 'vagas');
             
             var vagas = [];
             snap.forEach(function(doc) {
@@ -323,24 +340,36 @@ App.prototype.iniciarFeedListener = function() {
                 vagas.push(v);
             });
             
-            // Ordena manualmente por data (mais recente primeiro)
             vagas.sort(function(a, b) {
-                var da = a.dataCriacao?.toDate?.().getTime() || 0;
-                var db = b.dataCriacao?.toDate?.().getTime() || 0;
+                var da = 0, db = 0;
+                try { da = a.dataCriacao?.toDate?.().getTime() || 0; } catch(e) {}
+                try { db = b.dataCriacao?.toDate?.().getTime() || 0; } catch(e) {}
                 return db - da;
             });
             
             s._vagasCache = vagas;
-            s.renderizarFeed(vagas);
             
-        }, function(err) {
-            console.error('❌ Erro no feed:', err);
-            var container = document.getElementById('feedContainer');
+            if (container && s.tabAtual === 'feed') {
+                s.renderizarFeed(vagas);
+            }
+            
+            snap.docChanges().forEach(function(change) {
+                if (change.type === 'added' && s._feedJaCarregado && s.usuarioLogado) {
+                    var vaga = change.doc.data();
+                    if (vaga.autorId !== s.usuarioLogado.id) {
+                        s.mostrarToast('🆕 Nova obra: ' + (vaga.titulo || 'Publicação'), 'info');
+                    }
+                }
+            });
+            
+            s._feedJaCarregado = true;
+            
+        }, function(error) {
+            console.error('❌ Erro no feed:', error);
             if (container) {
-                container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:#EF4444;">' +
-                    '<i class="fas fa-exclamation-triangle" style="font-size:50px;"></i>' +
+                container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
+                    '<i class="fas fa-exclamation-triangle" style="font-size:50px;color:#EF4444;"></i>' +
                     '<p style="margin-top:16px;">Erro ao carregar feed</p>' +
-                    '<p style="font-size:12px;color:#999;">' + (err.message || 'Tente novamente') + '</p>' +
                     '<button onclick="window.app._app.iniciarFeedListener()" class="btn btn-primary" style="margin-top:10px;">Tentar Novamente</button></div>';
             }
         });
@@ -349,9 +378,7 @@ App.prototype.iniciarFeedListener = function() {
 App.prototype.renderizarFeed = function(vagas) {
     var s = this;
     var container = document.getElementById('feedContainer');
-    if (!container) return;
-    
-    if (s.tabAtual !== 'feed') return;
+    if (!container || s.tabAtual !== 'feed') return;
     
     if (!vagas || vagas.length === 0) {
         container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">' +
@@ -655,7 +682,7 @@ App.prototype.recusarConvite = function(nid) {
     this.mostrarToast('Convite recusado', 'info');
 };
 
-// ===== CHAT =====
+// ===== CHAT EM TEMPO REAL =====
 App.prototype.carregarListaConversas = function() {
     var s = this;
     s.usuarioSelecionado = null;
@@ -734,10 +761,6 @@ App.prototype.carregarListaConversas = function() {
                     chatMessages.innerHTML = html || '<div style="text-align:center;padding:40px;">Nenhuma conversa</div>';
                 }
             }, 3000);
-        })
-        .catch(function(err) {
-            console.error('Erro ao carregar conversas:', err);
-            if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">Erro ao carregar conversas</div>';
         });
 };
 
@@ -748,7 +771,7 @@ App.prototype.iniciarChat = function(uid) {
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
     
     var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando...</div>';
+    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando mensagens...</div>';
     
     db.collection('usuarios').doc(uid).get().then(function(doc) {
         if (doc.exists) {
@@ -781,16 +804,28 @@ App.prototype.iniciarChat = function(uid) {
                 snap.forEach(function(doc) {
                     var msg = doc.data();
                     if (msg.participantes && msg.participantes.indexOf(user1) >= 0 && msg.participantes.indexOf(user2) >= 0) {
+                        msg.id = doc.id;
                         mensagens.push(msg);
                     }
                 });
                 
                 mensagens.sort(function(a, b) {
-                    return (a.dataEnvio?.toDate?.() || 0) - (b.dataEnvio?.toDate?.() || 0);
+                    var da = 0, db = 0;
+                    try { da = a.dataEnvio?.toDate?.().getTime() || 0; } catch(e) {}
+                    try { db = b.dataEnvio?.toDate?.().getTime() || 0; } catch(e) {}
+                    return da - db;
                 });
                 
+                mensagens.forEach(function(msg) {
+                    if (msg.destinatarioId === user1 && !msg.lida) {
+                        db.collection('mensagens').doc(msg.id).update({ lida: true }).catch(function(){});
+                    }
+                });
+                
+                if (!chatMessages) return;
+                
                 if (mensagens.length === 0) {
-                    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Diga olá! 👋</div>';
+                    chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Diga olá! 👋</div>';
                 } else {
                     var html = '';
                     mensagens.forEach(function(msg) {
@@ -802,18 +837,19 @@ App.prototype.iniciarChat = function(uid) {
                             '<div class="message-content">' + (msg.conteudo || '') + '</div>' +
                             '<div class="message-footer"><span class="message-time">' + hora + '</span></div></div>';
                     });
-                    if (chatMessages) {
-                        chatMessages.innerHTML = html;
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }
+                    chatMessages.innerHTML = html;
+                    setTimeout(function() { chatMessages.scrollTop = chatMessages.scrollHeight; }, 100);
                 }
+            }, function(error) {
+                console.error('❌ Erro no chat:', error);
+                if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;">Erro ao carregar mensagens</div>';
             });
         
         s.mostrarTela('chatScreen');
         setTimeout(function() {
             var input = document.getElementById('chatInput');
             if (input) input.focus();
-        }, 300);
+        }, 500);
     });
 };
 
@@ -862,9 +898,10 @@ App.prototype.enviarMensagem = function() {
     });
 };
 
-// ===== NOTIFICAÇÕES =====
+// ===== NOTIFICAÇÕES PUSH =====
 App.prototype.notificarTodosUsuarios = function(dados) {
     var s = this;
+    console.log('📢 Enviando notificações para todos...');
     
     db.collection('usuarios').where('ativo', '==', true).get()
         .then(function(snap) {
@@ -890,16 +927,28 @@ App.prototype.notificarTodosUsuarios = function(dados) {
             });
             
             if (count > 0) {
-                batch.commit().then(function() {
-                    console.log('📢 Notificações enviadas para ' + count + ' usuários');
-                });
+                return batch.commit();
             }
+        })
+        .then(function() {
+            console.log('✅ Notificações enviadas!');
+        })
+        .catch(function(err) {
+            console.error('❌ Erro ao enviar notificações:', err);
         });
 };
 
 App.prototype.iniciarListenerNotificacoes = function() {
     var s = this;
-    if (s._listenerNotificacoes || !s.usuarioLogado) return;
+    
+    if (s._listenerNotificacoes) {
+        s._listenerNotificacoes();
+        s._listenerNotificacoes = null;
+    }
+    
+    if (typeof db === 'undefined' || !s.usuarioLogado) return;
+    
+    console.log('🔔 Iniciando listener de notificações');
     
     s._listenerNotificacoes = db.collection('notificacoes')
         .where('usuarioId', '==', s.usuarioLogado.id)
@@ -908,21 +957,30 @@ App.prototype.iniciarListenerNotificacoes = function() {
             var badge = document.getElementById('badgeNotificacoes');
             if (badge) {
                 var count = snap.size;
-                badge.textContent = count > 99 ? '99+' : count;
-                badge.style.display = count > 0 ? 'flex' : 'none';
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
             }
             
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added') {
                     var n = change.doc.data();
                     var msg = '';
-                    if (n.tipo === 'mensagem') msg = '💬 ' + n.titulo;
+                    if (n.tipo === 'mensagem') msg = '💬 Nova mensagem de ' + (n.deNome || 'alguém');
                     else if (n.tipo === 'nova_vaga') msg = '🏗️ ' + n.titulo;
                     else if (n.tipo === 'novo_usuario') msg = '👤 ' + n.titulo;
-                    else if (n.tipo === 'convite') msg = '🔗 ' + n.titulo;
+                    else if (n.tipo === 'convite') msg = '🔗 Convite de ' + (n.deNome || 'alguém');
                     if (msg) s.mostrarToast(msg, 'info');
                 }
             });
+        }, function(error) {
+            console.error('❌ Erro nas notificações:', error);
+            setTimeout(function() {
+                if (s.usuarioLogado) s.iniciarListenerNotificacoes();
+            }, 5000);
         });
 };
 
@@ -966,7 +1024,7 @@ App.prototype.mostrarNotificacoes = function() {
                 '<div style="max-height:60vh;overflow-y:auto;padding:10px;">';
             
             if (ns.length === 0) {
-                html += '<div style="text-align:center;padding:40px;"><i class="fas fa-bell-slash" style="font-size:50px;color:#ccc;"></i><p style="margin-top:16px;">Nenhuma notificação</p></div>';
+                html += '<div style="text-align:center;padding:40px;"><i class="fas fa-bell-slash" style="font-size:50px;color:#ccc;"></i><p>Nenhuma notificação</p></div>';
             } else {
                 ns.forEach(function(n) {
                     var icone = '📢', cor = '#f0f9ff', borda = '#1A3A5C';
@@ -985,7 +1043,7 @@ App.prototype.mostrarNotificacoes = function() {
                         '<div style="font-size:24px;">' + icone + '</div>' +
                         '<div style="flex:1;"><strong>' + (n.titulo || '') + '</strong><br><small>' + (n.mensagem || '') + '</small><br><small style="color:#999;">' + data + '</small>';
                     
-                    if (n.tipo === 'convite' && !n.lida) {
+                    if (n.tipo === 'convite') {
                         html += '<div style="display:flex;gap:8px;margin-top:8px;">' +
                             '<button onclick="window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">✅ Aceitar</button>' +
                             '<button onclick="window.app.recusarConvite(\'' + n.id + '\');document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">❌ Recusar</button></div>';
