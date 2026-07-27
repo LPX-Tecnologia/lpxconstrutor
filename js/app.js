@@ -1,7 +1,9 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.1.1 - NOTIFICAÇÕES + CHAT WHATSAPP + MAPA
+// LPXCONSTRUTOR v2.1.2 - MOBILE CORRIGIDO
+// BADGE NO TÍTULO | MODAL FORÇADO | CACHE LIMPO | PUSH
 // ==========================================================
-const APP_VERSION = "2.1.1";
+
+const APP_VERSION = "2.1.2";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 // Sons
@@ -44,6 +46,9 @@ var App = function() {
     this._publicando = false;
     this._feedJaCarregado = false;
     this._conversasCache = {};
+    this._userCache = {};
+    this._mapaIniciado = false;
+    this._tituloOriginal = document.title;
     this.init();
 };
 
@@ -72,22 +77,16 @@ App.prototype.init = function() {
         });
     } else { setTimeout(function() { s.mostrarTela('loginScreen'); }, 1500); }
     
-    // Limpa notificações antigas (mais de 24h)
     s.limparNotificacoesAntigas();
 };
 
-// ===== LIMPAR NOTIFICAÇÕES ANTIGAS =====
+// ===== LIMPAR NOTIFICAÇÕES ANTIGAS (24H) =====
 App.prototype.limparNotificacoesAntigas = function() {
     if (!this.usuarioLogado || typeof db === 'undefined') return;
-    var limite = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 horas atrás
-    db.collection('notificacoes')
-        .where('usuarioId', '==', this.usuarioLogado.id)
-        .where('dataCriacao', '<', limite)
-        .get().then(function(snap) {
-            var batch = db.batch();
-            snap.forEach(function(doc) { batch.delete(doc.ref); });
-            batch.commit().catch(function(){});
-        }).catch(function(){});
+    var limite = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    db.collection('notificacoes').where('usuarioId','==',this.usuarioLogado.id).where('dataCriacao','<',limite).get().then(function(snap) {
+        var batch = db.batch(); snap.forEach(function(doc) { batch.delete(doc.ref); }); batch.commit().catch(function(){});
+    }).catch(function(){});
 };
 
 // ===== NAVEGAÇÃO =====
@@ -109,7 +108,7 @@ App.prototype.voltarTela = function() { this.mostrarTela(this.historicoTelas.len
 // ===== MODAL PERSONALIZADO =====
 App.prototype.mostrarModalConfirmacao = function(titulo, mensagem, onConfirmar, onCancelar) {
     var modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s;';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s;';
     modal.innerHTML = '<div style="background:white;border-radius:20px;padding:30px;max-width:350px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);border-top:5px solid #F47920;"><div style="font-size:50px;margin-bottom:15px;">⚠️</div><h3 style="color:#1A3A5C;margin-bottom:10px;">' + (titulo||'Confirmar') + '</h3><p style="color:#666;margin-bottom:20px;">' + (mensagem||'Tem certeza?') + '</p><div style="display:flex;gap:10px;"><button id="btnCancelarModal" style="flex:1;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#666;font-weight:600;cursor:pointer;">Cancelar</button><button id="btnConfirmarModal" style="flex:1;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#F47920,#E06B1A);color:white;font-weight:600;cursor:pointer;">Confirmar</button></div></div>';
     document.body.appendChild(modal);
     document.getElementById('btnConfirmarModal').onclick = function() { modal.remove(); if (onConfirmar) onConfirmar(); };
@@ -136,7 +135,7 @@ App.prototype.cadastrar = function() {
     firebase.auth().createUserWithEmailAndPassword(d.email, d.senha).then(function(uc) { d.id = uc.user.uid; d.dataCriacao = firebase.firestore.FieldValue.serverTimestamp(); d.ativo = true; return db.collection('usuarios').doc(d.id).set(d); }).then(function() { s.usuarioLogado = d; localStorage.setItem('usuarioLPX', JSON.stringify(d)); s.notificarTodosUsuarios({ titulo: '👤 Novo Profissional!', mensagem: d.nome + ' acabou de se cadastrar!', tipo: 'novo_usuario' }); s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); s.mostrarTela('homeScreen'); }).catch(function(err) { s.mostrarToast(err.code === 'auth/email-already-in-use' ? 'Email já cadastrado!' : 'Erro ao cadastrar', 'erro'); });
 };
 
-App.prototype.sair = function() { this.pararListeners(); firebase.auth().signOut(); this.usuarioLogado = null; this.usuarioSelecionado = null; localStorage.removeItem('usuarioLPX'); this.historicoTelas = []; var modal = document.getElementById('modalSair'); if (modal) modal.style.display = 'none'; this.mostrarTela('loginScreen'); };
+App.prototype.sair = function() { this.pararListeners(); firebase.auth().signOut(); this.usuarioLogado = null; this.usuarioSelecionado = null; localStorage.removeItem('usuarioLPX'); this.historicoTelas = []; document.title = this._tituloOriginal; var modal = document.getElementById('modalSair'); if (modal) modal.style.display = 'none'; this.mostrarTela('loginScreen'); };
 App.prototype.fecharModalSair = function() { var m = document.getElementById('modalSair'); if (m) m.style.display = 'none'; };
 App.prototype.confirmarSair = function() { this.sair(); };
 
@@ -149,7 +148,6 @@ App.prototype.carregarHome = function() {
     var er = document.getElementById('resumoTexto'); if (er) er.textContent = u.tipo === 'empreiteiro' ? '🏰 Empreiteiro' : '👷 ' + (u.profissao || 'Profissional');
     if (!s._listenerFeed) s.iniciarFeedListener();
     if (!s._listenerMsgBadge) s.iniciarBadgeMensagens();
-    // Inicia mapa
     setTimeout(function() { s.iniciarMapa(); }, 300);
 };
 
@@ -160,28 +158,21 @@ App.prototype.mudarTab = function(t) {
     else { if (fc) fc.style.display = 'none'; if (rc) rc.style.display = 'flex'; if (tabs[1]) tabs[1].classList.add('active'); this.carregarRede(); }
 };
 
-// ===== MAPA (OpenStreetMap) =====
+// ===== MAPA =====
 App.prototype.iniciarMapa = function() {
-    var el = document.getElementById('map');
-    if (!el || this._mapaIniciado) return;
-    this._mapaIniciado = true;
-    
+    var el = document.getElementById('map'); if (!el || this._mapaIniciado) return; this._mapaIniciado = true;
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(p) {
             var lat = p.coords.latitude, lng = p.coords.longitude;
             el.innerHTML = '<iframe width="100%" height="300" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (lng - 0.01) + '%2C' + (lat - 0.01) + '%2C' + (lng + 0.01) + '%2C' + (lat + 0.01) + '&amp;layer=mapnik&marker=' + lat + '%2C' + lng + '" style="border-radius:12px;border:1px solid #ccc;"></iframe><small style="display:block;text-align:center;padding:4px;"><a href="https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lng + '#map=15/' + lat + '/' + lng + '" target="_blank" style="color:#1A3A5C;">📍 Ver mapa maior</a></small>';
-        }, function() {
-            el.innerHTML = '<div style="text-align:center;padding:40px;background:#e5e7eb;border-radius:12px;">📍 Ative a localização para ver o mapa</div>';
-        });
-    } else {
-        el.innerHTML = '<div style="text-align:center;padding:40px;background:#e5e7eb;border-radius:12px;">📍 Localização não disponível</div>';
-    }
+        }, function() { el.innerHTML = '<div style="text-align:center;padding:40px;background:#e5e7eb;border-radius:12px;">📍 Ative a localização</div>'; });
+    } else { el.innerHTML = '<div style="text-align:center;padding:40px;background:#e5e7eb;border-radius:12px;">📍 Localização indisponível</div>'; }
 };
 
 // ===== FEED =====
-App.prototype.iniciarFeedListener = function() { var s = this; if (s._listenerFeed) { s._listenerFeed(); s._listenerFeed = null; } if (typeof db === 'undefined') return; s._listenerFeed = db.collection('vagas').where('ativa', '==', true).onSnapshot(function(snap) { var vagas = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; vagas.push(v); }); vagas.sort(function(a, b) { return (b.dataCriacao?.toDate?.()||0) - (a.dataCriacao?.toDate?.()||0); }); s._vagasCache = vagas; var container = document.getElementById('feedContainer'); if (container && s.tabAtual === 'feed') s.renderizarFeed(vagas); snap.docChanges().forEach(function(change) { if (change.type === 'added' && s._feedJaCarregado && s.usuarioLogado) { var vaga = change.doc.data(); if (vaga.autorId !== s.usuarioLogado.id) { tocarSomNotificacao(); s.mostrarToast('🆕 ' + (vaga.autorNome||'Alguém') + ' publicou: ' + (vaga.titulo||'Nova obra'), 'info'); } } }); s._feedJaCarregado = true; }); };
+App.prototype.iniciarFeedListener = function() { var s = this; if (s._listenerFeed) { s._listenerFeed(); s._listenerFeed = null; } if (typeof db === 'undefined') return; s._listenerFeed = db.collection('vagas').where('ativa','==',true).onSnapshot(function(snap) { var vagas = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; vagas.push(v); }); vagas.sort(function(a, b) { return (b.dataCriacao?.toDate?.()||0) - (a.dataCriacao?.toDate?.()||0); }); s._vagasCache = vagas; var container = document.getElementById('feedContainer'); if (container && s.tabAtual === 'feed') s.renderizarFeed(vagas); snap.docChanges().forEach(function(change) { if (change.type === 'added' && s._feedJaCarregado && s.usuarioLogado) { var vaga = change.doc.data(); if (vaga.autorId !== s.usuarioLogado.id) { tocarSomNotificacao(); s.mostrarToast('🆕 ' + (vaga.autorNome||'Alguém') + ' publicou: ' + (vaga.titulo||'Nova obra'), 'info'); } } }); s._feedJaCarregado = true; }); };
 
-App.prototype.renderizarFeed = function(vagas) { var s = this, container = document.getElementById('feedContainer'); if (!container || s.tabAtual !== 'feed') return; if (!vagas || vagas.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>' + (s.usuarioLogado?.tipo === 'empreiteiro' ? '<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary">📢 PUBLICAR</button>' : '') + '</div>'; return; } var html = ''; for (var i = 0; i < vagas.length; i++) { var v = vagas[i], dono = s.usuarioLogado && v.autorId === s.usuarioLogado.id, data = ''; try { data = v.dataCriacao?.toDate?.().toLocaleDateString('pt-BR') || ''; } catch(e) {} html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar">' + (v.autorFoto && v.autorFoto.length > 10 ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '👷') + '</div><div class="vaga-info"><div class="vaga-nome" style="cursor:pointer;color:#1A3A5C;" onclick="event.stopPropagation();window.app.verPerfil(\'' + v.autorId + '\')">' + (v.autorNome||'Anônimo') + '</div><div class="vaga-data">' + data + '</div></div>' + (dono ? '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>' : '') + '</div><div class="vaga-body">' + (v.fotoObra && v.fotoObra.length > 100 ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') + '<div class="vaga-titulo">' + (v.titulo||'Sem título') + '</div><div style="color:#666;font-size:13px;">📍 ' + (v.endereco||'') + '</div><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.valorHora||'0') + '/h</span><span class="vaga-tag">👷 ' + (v.profissoes||'Geral') + '</span></div></div><div class="vaga-footer"><button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>' + (dono ? '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️</button>' : '') + '</div></div>'; } container.innerHTML = html; };
+App.prototype.renderizarFeed = function(vagas) { var s = this, container = document.getElementById('feedContainer'); if (!container || s.tabAtual !== 'feed') return; if (!vagas || vagas.length === 0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>' + (s.usuarioLogado?.tipo==='empreiteiro' ? '<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary">📢 PUBLICAR</button>' : '') + '</div>'; return; } var html = ''; for (var i = 0; i < vagas.length; i++) { var v = vagas[i], dono = s.usuarioLogado && v.autorId === s.usuarioLogado.id, data = ''; try { data = v.dataCriacao?.toDate?.().toLocaleDateString('pt-BR') || ''; } catch(e) {} html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar">' + (v.autorFoto && v.autorFoto.length > 10 ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '👷') + '</div><div class="vaga-info"><div class="vaga-nome" style="cursor:pointer;color:#1A3A5C;" onclick="event.stopPropagation();window.app.verPerfil(\'' + v.autorId + '\')">' + (v.autorNome||'Anônimo') + '</div><div class="vaga-data">' + data + '</div></div>' + (dono ? '<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>' : '') + '</div><div class="vaga-body">' + (v.fotoObra && v.fotoObra.length > 100 ? '<img src="' + v.fotoObra + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">' : '') + '<div class="vaga-titulo">' + (v.titulo||'Sem título') + '</div><div style="color:#666;font-size:13px;">📍 ' + (v.endereco||'') + '</div><div class="vaga-tags"><span class="vaga-tag">💰 R$' + (v.valorHora||'0') + '/h</span><span class="vaga-tag">👷 ' + (v.profissoes||'Geral') + '</span></div></div><div class="vaga-footer"><button onclick="window.app.verDetalheObra(\'' + v.id + '\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>' + (dono ? '<button onclick="window.app.apagarObra(\'' + v.id + '\', event)" class="btn btn-small btn-danger" style="flex:1;">🗑️</button>' : '') + '</div></div>'; } container.innerHTML = html; };
 
 App.prototype.apagarObra = function(oid, ev) { if (ev) ev.stopPropagation(); var s = this; s.mostrarModalConfirmacao('Apagar Obra', 'Tem certeza que deseja apagar esta obra?', function() { db.collection('vagas').doc(oid).update({ ativa: false }); s.mostrarToast('Obra apagada!', 'sucesso'); }); };
 
@@ -196,110 +187,80 @@ App.prototype.adicionarNaRede = function(pid) { var s = this; if (!s.usuarioLoga
 App.prototype.aceitarConvite = function(nid, deId) { var s = this; db.collection('conexoes').where('participantes','array-contains',s.usuarioLogado.id).get().then(function(snap) { snap.forEach(function(doc) { var d = doc.data(); if (d.participantes.indexOf(s.usuarioLogado.id) >= 0 && d.participantes.indexOf(deId) >= 0 && d.status === 'pendente') db.collection('conexoes').doc(doc.id).update({ status: 'ativo' }); }); }); db.collection('notificacoes').doc(nid).update({ lida: true, visto: true }); s.mostrarToast('✅ Conectados!', 'sucesso'); };
 App.prototype.recusarConvite = function(nid) { db.collection('notificacoes').doc(nid).update({ lida: true, visto: true }); this.mostrarToast('Convite recusado', 'info'); };
 
-// ===== CHAT ESTILO WHATSAPP =====
+// ===== CHAT COM BADGE (TÍTULO) =====
 App.prototype.iniciarBadgeMensagens = function() {
     var s = this;
     if (!s.usuarioLogado) return;
     if (s._listenerMsgBadge) s._listenerMsgBadge();
-    s._listenerMsgBadge = db.collection('mensagens').where('destinatarioId','==',s.usuarioLogado.id).where('lida','==',false).onSnapshot(function(snap) {
-        var count = snap.size;
-        var chatNav = document.querySelector('.nav-item[data-screen="chatScreen"]');
-        if (chatNav) {
-            var badge = chatNav.querySelector('.badge-msg');
-            if (!badge) { badge = document.createElement('span'); badge.className = 'badge-msg'; badge.style.cssText = 'position:absolute;top:-2px;right:2px;background:#EF4444;color:white;border-radius:50%;min-width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:bold;padding:0 4px;'; chatNav.style.position = 'relative'; chatNav.appendChild(badge); }
-            if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = 'flex'; }
-            else { badge.style.display = 'none'; }
-        }
-    });
+    
+    s._listenerMsgBadge = db.collection('mensagens')
+        .where('destinatarioId','==',s.usuarioLogado.id).where('lida','==',false)
+        .onSnapshot(function(snap) {
+            var count = snap.size;
+            
+            // Badge visual no ícone do chat
+            var chatNav = document.querySelector('.nav-item[data-screen="chatScreen"]');
+            if (chatNav) {
+                var badge = chatNav.querySelector('.badge-msg');
+                if (!badge) { badge = document.createElement('span'); badge.className = 'badge-msg'; badge.style.cssText = 'position:absolute;top:-2px;right:2px;background:#EF4444;color:white;border-radius:50%;min-width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:bold;padding:0 4px;'; chatNav.style.position = 'relative'; chatNav.appendChild(badge); }
+                if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = 'flex'; }
+                else { badge.style.display = 'none'; }
+            }
+            
+            // Badge no TÍTULO (funciona no WebView mobile)
+            if (count > 0) { document.title = '(' + count + ') 💬 LPXConstrutor'; }
+            else { document.title = s._tituloOriginal || '🏗️ LPXConstrutor'; }
+            
+            // Salva no storage
+            localStorage.setItem('msgNaoLidas', count);
+        });
 };
 
 App.prototype.carregarListaConversas = function() {
-    var s = this;
-    s.usuarioSelecionado = null;
+    var s = this; s.usuarioSelecionado = null;
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
-    
-    var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">⏳ Carregando conversas...</div>';
-    var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
-    if (inputContainer) inputContainer.style.display = 'none';
-    
+    var chatMessages = document.getElementById('chatMessages'); if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">⏳ Carregando...</div>';
+    var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container'); if (inputContainer) inputContainer.style.display = 'none';
     if (!s.usuarioLogado || !s.usuarioLogado.id) return;
-    
-    // Listener para atualizar conversas em tempo real
     if (s._listenerConversas) s._listenerConversas();
     s._listenerConversas = db.collection('mensagens').where('participantes','array-contains',s.usuarioLogado.id).onSnapshot(function() { s._renderizarConversas(); });
     s._renderizarConversas();
 };
 
 App.prototype._renderizarConversas = function() {
-    var s = this;
-    var chatMessages = document.getElementById('chatMessages');
-    if (s.usuarioSelecionado) return; // Não renderiza se estiver em uma conversa
+    var s = this, chatMessages = document.getElementById('chatMessages');
+    if (s.usuarioSelecionado || !chatMessages) return;
     
-    // Usa cache para conversas já carregadas
     db.collection('mensagens').where('participantes','array-contains',s.usuarioLogado.id).get().then(function(snap) {
         var conversas = {};
-        snap.forEach(function(doc) {
-            var msg = doc.data();
-            var outroId = msg.participantes.find(function(p) { return p !== s.usuarioLogado.id; });
-            if (!outroId) return;
-            if (!conversas[outroId] || (msg.dataEnvio?.toDate?.()||0) > (conversas[outroId].dataEnvio?.toDate?.()||0)) {
-                conversas[outroId] = { outroId: outroId, data: msg };
-            }
-        });
+        snap.forEach(function(doc) { var msg = doc.data(); var outroId = msg.participantes.find(function(p) { return p !== s.usuarioLogado.id; }); if (!outroId) return; if (!conversas[outroId] || (msg.dataEnvio?.toDate?.()||0) > (conversas[outroId].dataEnvio?.toDate?.()||0)) { conversas[outroId] = { outroId: outroId, data: msg }; } });
+        var lista = Object.values(conversas); lista.sort(function(a, b) { return (b.data.dataEnvio?.toDate?.()||0) - (a.data.dataEnvio?.toDate?.()||0); });
         
-        var lista = Object.values(conversas);
-        lista.sort(function(a, b) { return (b.data.dataEnvio?.toDate?.()||0) - (a.data.dataEnvio?.toDate?.()||0); });
-        s._conversasCache = lista;
-        
-        if (lista.length === 0) { if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">Nenhuma conversa ainda</div>'; return; }
-        
+        if (lista.length === 0) { chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">Nenhuma conversa</div>'; return; }
         var html = '', carregados = 0;
         lista.forEach(function(conv) {
-            // Usa cache de usuários
-            var userCache = s._userCache || {};
-            if (userCache[conv.outroId]) {
-                carregados++;
-                var user = userCache[conv.outroId];
-                html += s._htmlConversa(user, conv);
-                if (carregados >= lista.length && chatMessages) chatMessages.innerHTML = html;
-            } else {
-                db.collection('usuarios').doc(conv.outroId).get().then(function(userDoc) {
-                    carregados++;
-                    if (userDoc.exists) {
-                        var user = userDoc.data(); user.id = userDoc.id;
-                        if (!s._userCache) s._userCache = {};
-                        s._userCache[conv.outroId] = user;
-                        html += s._htmlConversa(user, conv);
-                    }
-                    if (carregados >= lista.length && chatMessages) chatMessages.innerHTML = html || '<div style="text-align:center;padding:40px;">Nenhuma conversa</div>';
-                });
-            }
+            if (s._userCache[conv.outroId]) { carregados++; html += s._htmlConversa(s._userCache[conv.outroId], conv); if (carregados >= lista.length) chatMessages.innerHTML = html; }
+            else { db.collection('usuarios').doc(conv.outroId).get().then(function(userDoc) { carregados++; if (userDoc.exists) { var user = userDoc.data(); user.id = userDoc.id; s._userCache[conv.outroId] = user; html += s._htmlConversa(user, conv); } if (carregados >= lista.length) chatMessages.innerHTML = html || '<div style="text-align:center;padding:40px;">Nenhuma conversa</div>'; }); }
         });
-        setTimeout(function() { if (carregados < lista.length && chatMessages) chatMessages.innerHTML = html || '<div style="text-align:center;padding:40px;">Nenhuma conversa</div>'; }, 2000);
+        setTimeout(function() { if (carregados < lista.length) chatMessages.innerHTML = html || '<div style="text-align:center;padding:40px;">Nenhuma conversa</div>'; }, 2000);
     });
 };
 
 App.prototype._htmlConversa = function(user, conv) {
+    var s = this;
     var hora = ''; try { hora = conv.data.dataEnvio?.toDate?.().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) || ''; } catch(e) {}
-    var naoLidas = conv.data.destinatarioId === this.usuarioLogado.id && !conv.data.lida;
+    var naoLidas = conv.data.destinatarioId === s.usuarioLogado.id && !conv.data.lida;
     return '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;' + (naoLidas ? 'background:#f0f9ff;' : '') + '" onclick="window.app.iniciarChat(\'' + user.id + '\')"><div style="width:50px;height:50px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f0f0f0;flex-shrink:0;">' + (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '👷') + '</div><div style="flex:1;min-width:0;"><strong>' + (user.nome||'Usuário') + '</strong><br><small style="color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">' + (conv.data.conteudo||'') + '</small></div><div style="text-align:right;flex-shrink:0;"><small style="color:#999;">' + hora + '</small>' + (naoLidas ? '<br><span style="background:#EF4444;color:white;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;margin-top:4px;">●</span>' : '') + '</div></div>';
 };
 
-// ===== ABRIR CHAT (estilo WhatsApp - não sai da conversa ao enviar) =====
 App.prototype.iniciarChat = function(uid) {
-    var s = this;
-    if (!s.usuarioLogado || !s.usuarioLogado.id) return;
+    var s = this; if (!s.usuarioLogado || !s.usuarioLogado.id) return;
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
-    
-    var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando...</div>';
+    var chatMessages = document.getElementById('chatMessages'); if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando...</div>';
     
     // Marca mensagens como lidas (badge some)
     db.collection('mensagens').where('destinatarioId','==',s.usuarioLogado.id).where('remetenteId','==',uid).where('lida','==',false).get().then(function(snap) {
-        var batch = db.batch();
-        snap.forEach(function(doc) { batch.update(doc.ref, { lida: true }); });
-        batch.commit().catch(function(){});
+        var batch = db.batch(); snap.forEach(function(doc) { batch.update(doc.ref, { lida: true }); }); batch.commit().catch(function(){});
     });
     
     db.collection('usuarios').doc(uid).get().then(function(doc) {
@@ -310,34 +271,16 @@ App.prototype.iniciarChat = function(uid) {
         var chatHeader = document.getElementById('chatHeaderInfo');
         if (chatHeader) chatHeader.innerHTML = '<div style="background:#1A3A5C;color:white;padding:15px;display:flex;align-items:center;gap:10px;"><button onclick="window.app.carregarListaConversas();" style="background:none;border:none;color:white;font-size:20px;">⬅</button><div style="width:40px;height:40px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.2);">' + (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '👷') + '</div><strong>' + (user.nome||'Usuário') + '</strong></div>';
         
-        var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
-        if (inputContainer) inputContainer.style.display = 'flex';
+        var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container'); if (inputContainer) inputContainer.style.display = 'flex';
         
         var user1 = s.usuarioLogado.id, user2 = uid;
         
         s._listenerChat = db.collection('mensagens').where('participantes','array-contains',user1).onSnapshot(function(snap) {
-            var mensagens = [];
-            snap.forEach(function(doc) {
-                var msg = doc.data();
-                if (msg.participantes && msg.participantes.indexOf(user1) >= 0 && msg.participantes.indexOf(user2) >= 0) {
-                    msg.id = doc.id; mensagens.push(msg);
-                    if (msg.destinatarioId === user1 && !msg.lida) { db.collection('mensagens').doc(doc.id).update({ lida: true }).catch(function(){}); }
-                }
-            });
+            var mensagens = []; snap.forEach(function(doc) { var msg = doc.data(); if (msg.participantes && msg.participantes.indexOf(user1) >= 0 && msg.participantes.indexOf(user2) >= 0) { msg.id = doc.id; mensagens.push(msg); if (msg.destinatarioId === user1 && !msg.lida) { db.collection('mensagens').doc(doc.id).update({ lida: true }).catch(function(){}); } } });
             mensagens.sort(function(a, b) { return (a.dataEnvio?.toDate?.()||0) - (b.dataEnvio?.toDate?.()||0); });
-            
             if (!chatMessages) return;
             if (mensagens.length === 0) { chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">Diga olá! 👋</div>'; }
-            else {
-                var html = '';
-                mensagens.forEach(function(msg) {
-                    var meu = msg.remetenteId === user1;
-                    var hora = ''; try { hora = msg.dataEnvio?.toDate?.().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) || ''; } catch(e) {}
-                    html += '<div class="message ' + (meu ? 'message-sent' : 'message-received') + '"><div class="message-content">' + (msg.conteudo||'') + '</div><div class="message-footer"><span class="message-time">' + hora + '</span></div></div>';
-                });
-                chatMessages.innerHTML = html;
-                setTimeout(function() { chatMessages.scrollTop = chatMessages.scrollHeight; }, 100);
-            }
+            else { var html = ''; mensagens.forEach(function(msg) { var meu = msg.remetenteId === user1; var hora = ''; try { hora = msg.dataEnvio?.toDate?.().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) || ''; } catch(e) {} html += '<div class="message ' + (meu ? 'message-sent' : 'message-received') + '"><div class="message-content">' + (msg.conteudo||'') + '</div><div class="message-footer"><span class="message-time">' + hora + '</span></div></div>'; }); chatMessages.innerHTML = html; setTimeout(function() { chatMessages.scrollTop = chatMessages.scrollHeight; }, 100); }
         });
         
         s.mostrarTela('chatScreen');
@@ -345,39 +288,19 @@ App.prototype.iniciarChat = function(uid) {
     });
 };
 
-// Enviar mensagem - NÃO sai da conversa
 App.prototype.enviarMensagem = function() {
-    var s = this;
-    var input = document.getElementById('chatInput');
+    var s = this, input = document.getElementById('chatInput');
     if (!input || !s.usuarioLogado || !s.usuarioSelecionado || s._enviandoMensagem) return;
     var texto = input.value.trim(); if (!texto) return;
-    s._enviandoMensagem = true;
-    input.value = '';
-    input.focus(); // Mantém o foco no input
+    s._enviandoMensagem = true; input.value = ''; input.focus();
     
-    db.collection('mensagens').add({
-        remetenteId: s.usuarioLogado.id, destinatarioId: s.usuarioSelecionado.id,
-        participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
-        conteudo: texto, lida: false, dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function() {
-        db.collection('notificacoes').add({
-            usuarioId: s.usuarioSelecionado.id, titulo: '💬 ' + s.usuarioLogado.nome,
-            mensagem: texto.substring(0, 80) + (texto.length > 80 ? '...' : ''),
-            tipo: 'mensagem', de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome,
-            lida: false, visto: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(function(){});
+    db.collection('mensagens').add({ remetenteId: s.usuarioLogado.id, destinatarioId: s.usuarioSelecionado.id, participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id], conteudo: texto, lida: false, dataEnvio: firebase.firestore.FieldValue.serverTimestamp() }).then(function() {
+        db.collection('notificacoes').add({ usuarioId: s.usuarioSelecionado.id, titulo: '💬 ' + s.usuarioLogado.nome, mensagem: texto.substring(0, 80) + (texto.length > 80 ? '...' : ''), tipo: 'mensagem', de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome, lida: false, visto: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }).catch(function(){});
     }).catch(function(err) { s.mostrarToast('Erro ao enviar', 'erro'); }).finally(function() { s._enviandoMensagem = false; });
 };
 
-// ===== NOTIFICAÇÕES COM "VISTO" =====
-App.prototype.notificarTodosUsuarios = function(dados) {
-    var s = this; if (!s.usuarioLogado) return;
-    db.collection('usuarios').where('ativo','==',true).get().then(function(snap) {
-        var batch = db.batch();
-        snap.forEach(function(doc) { if (doc.id !== s.usuarioLogado.id) { batch.set(db.collection('notificacoes').doc(), { usuarioId: doc.id, titulo: dados.titulo, mensagem: dados.mensagem, tipo: dados.tipo, vagaId: dados.vagaId||null, de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome, lida: false, visto: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }); } });
-        batch.commit().catch(function(){});
-    });
-};
+// ===== NOTIFICAÇÕES =====
+App.prototype.notificarTodosUsuarios = function(dados) { var s = this; if (!s.usuarioLogado) return; db.collection('usuarios').where('ativo','==',true).get().then(function(snap) { var batch = db.batch(); snap.forEach(function(doc) { if (doc.id !== s.usuarioLogado.id) { batch.set(db.collection('notificacoes').doc(), { usuarioId: doc.id, titulo: dados.titulo, mensagem: dados.mensagem, tipo: dados.tipo, vagaId: dados.vagaId||null, de: s.usuarioLogado.id, deNome: s.usuarioLogado.nome, lida: false, visto: false, dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }); } }); batch.commit().catch(function(){}); }); };
 
 App.prototype.iniciarListenerNotificacoes = function() {
     var s = this;
@@ -407,44 +330,41 @@ if ('Notification' in window && Notification.permission === 'default') { Notific
 App.prototype.mostrarNotificacoes = function() {
     var s = this; if (!s.usuarioLogado) return;
     
-    // Marca como vistas (não lidas) ao abrir
-    db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).where('visto','==',false).get().then(function(snap) {
-        var batch = db.batch(); snap.forEach(function(doc) { batch.update(doc.ref, { visto: true }); }); batch.commit();
-    });
+    // Marca como vistas
+    db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).where('visto','==',false).get().then(function(snap) { var batch = db.batch(); snap.forEach(function(doc) { batch.update(doc.ref, { visto: true }); }); batch.commit(); });
     
     db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).orderBy('dataCriacao','desc').limit(50).get().then(function(snap) {
         var ns = []; snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); });
-        var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-        modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
-        var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:80vh;" onclick="event.stopPropagation()"><div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="this.closest(\'.modal-content\').parentElement.remove()">✕</button></div><div style="max-height:60vh;overflow-y:auto;padding:10px;">';
+        
+        var modal = document.createElement('div'); modal.id = 'modalNotif';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        document.body.style.overflow = 'hidden';
+        
+        var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:85vh;margin:20px auto;overflow-y:auto;" onclick="event.stopPropagation()"><div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();">✕</button></div><div style="max-height:65vh;overflow-y:auto;padding:10px;">';
         
         if (ns.length === 0) html += '<div style="text-align:center;padding:40px;">Nenhuma notificação</div>';
         else ns.forEach(function(n) {
-            var icone = '📢', cor = '#f0f9ff', opacidade = n.visto ? '0.6' : '1';
-            if (n.tipo === 'nova_vaga') { icone = '🏗️'; cor = '#fef3c7'; }
-            else if (n.tipo === 'mensagem') { icone = '💬'; cor = '#e0f2fe'; }
-            else if (n.tipo === 'convite') { icone = '🔗'; cor = '#ede9fe'; }
-            else if (n.tipo === 'novo_usuario') { icone = '👤'; cor = '#d1fae5'; }
-            
+            var icone = '📢', cor = '#f0f9ff', op = n.visto ? '0.6' : '1';
+            if (n.tipo === 'nova_vaga') { icone = '🏗️'; cor = '#fef3c7'; } else if (n.tipo === 'mensagem') { icone = '💬'; cor = '#e0f2fe'; } else if (n.tipo === 'convite') { icone = '🔗'; cor = '#ede9fe'; } else if (n.tipo === 'novo_usuario') { icone = '👤'; cor = '#d1fae5'; }
             var data = ''; try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
             
-            html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;opacity:' + opacidade + ';cursor:pointer;" onclick="window.app.marcarNotificacaoVista(\'' + n.id + '\')"><div style="display:flex;align-items:start;gap:8px;"><div style="font-size:24px;">' + icone + '</div><div style="flex:1;"><strong>' + (n.titulo||'') + '</strong>' + (n.visto ? ' <small style="color:#10B981;">✓ Visto</small>' : ' <small style="color:#F47920;">● Novo</small>') + '<br><small>' + (n.mensagem||'') + '</small><br><small style="color:#999;">' + data + '</small>';
+            html += '<div style="background:' + cor + ';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;opacity:' + op + ';cursor:pointer;" onclick="window.app.marcarNotificacaoVista(\'' + n.id + '\')"><div style="display:flex;align-items:start;gap:8px;"><div style="font-size:24px;">' + icone + '</div><div style="flex:1;"><strong>' + (n.titulo||'') + '</strong>' + (n.visto ? ' <small style="color:#10B981;">✓ Visto</small>' : ' <small style="color:#F47920;">● Novo</small>') + '<br><small>' + (n.mensagem||'') + '</small><br><small style="color:#999;">' + data + '</small>';
             
-            if (n.tipo === 'convite') html += '<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="event.stopPropagation();window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button><button onclick="event.stopPropagation();window.app.recusarConvite(\'' + n.id + '\');this.closest(\'.modal-content\').parentElement.remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
-            if (n.tipo === 'nova_vaga' && n.vagaId) html += '<button onclick="event.stopPropagation();window.app.verDetalheObra(\'' + n.vagaId + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#F47920;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">👀 IR PARA OBRA</button>';
-            if (n.tipo === 'mensagem' && n.de) html += '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + n.de + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">💬 IR PARA CONVERSA</button>';
+            if (n.tipo === 'convite') html += '<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="event.stopPropagation();window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button><button onclick="event.stopPropagation();window.app.recusarConvite(\'' + n.id + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
+            if (n.tipo === 'nova_vaga' && n.vagaId) html += '<button onclick="event.stopPropagation();window.app.verDetalheObra(\'' + n.vagaId + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:8px;background:#F47920;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">👀 IR PARA OBRA</button>';
+            if (n.tipo === 'mensagem' && n.de) html += '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + n.de + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">💬 IR PARA CONVERSA</button>';
             
             html += '</div></div></div>';
         });
-        html += '</div></div>'; modal.innerHTML = html; document.body.appendChild(modal);
+        html += '</div></div>';
+        modal.innerHTML = html;
+        modal.onclick = function(e) { if (e.target === modal) { document.body.style.overflow = ''; modal.remove(); } };
+        document.body.appendChild(modal);
+        modal.scrollIntoView();
     });
 };
 
-// Marca notificação como vista ao clicar
-App.prototype.marcarNotificacaoVista = function(nid) {
-    db.collection('notificacoes').doc(nid).update({ visto: true, lida: true }).catch(function(){});
-    this.mostrarToast('✅ Marcado como visto', 'sucesso');
-};
+App.prototype.marcarNotificacaoVista = function(nid) { db.collection('notificacoes').doc(nid).update({ visto: true, lida: true }).catch(function(){}); this.mostrarToast('✅ Visto', 'sucesso'); };
 
 // ===== PUBLICAÇÃO =====
 App.prototype.abrirTelaPublicacao = function() { this.mostrarTela('publicarVagaScreen'); this.vagaFotoBase64 = null; };
@@ -483,6 +403,6 @@ App.prototype.mostrarToast = function(msg, tipo) {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - COMPLETO');
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - MOBILE CORRIGIDO');
     window.app._app = new App();
 });
