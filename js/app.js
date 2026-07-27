@@ -1,18 +1,36 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.1.3 - BADGE POR CONVERSA + NOME
+// LPXCONSTRUTOR v2.1.4 - BADGE CORRIGIDO + NOTIFICAÇÕES
 // ==========================================================
-const APP_VERSION = "2.1.3";
+const APP_VERSION = "2.1.4";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 // Sons
 function tocarSomNotificacao() { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 800; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(0); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
 function tocarSomMensagem() { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 600; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(0); osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.15); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
 
-if (localStorage.getItem('appVersion') !== APP_VERSION) {
-    localStorage.setItem('appVersion', APP_VERSION);
-    if (window.caches) { caches.keys().then(function(names) { names.forEach(function(name) { caches.delete(name); }); }); }
-    setTimeout(function() { window.location.reload(true); }, 500);
-}
+// FORÇA LIMPEZA DE CACHE AO ATUALIZAR VERSÃO
+(function() {
+    var versaoAtual = APP_VERSION;
+    var versaoSalva = localStorage.getItem('appVersion');
+    if (versaoSalva !== versaoAtual) {
+        console.log('🔄 Atualizando v' + versaoSalva + ' → v' + versaoAtual);
+        localStorage.setItem('appVersion', versaoAtual);
+        // Remove Service Workers antigos
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) { registration.unregister(); });
+            });
+        }
+        // Limpa cache
+        if (window.caches) {
+            caches.keys().then(function(names) {
+                names.forEach(function(name) { caches.delete(name); });
+            });
+        }
+        // Recarrega após limpar
+        setTimeout(function() { window.location.reload(true); }, 800);
+    }
+})();
 
 window.app = { _app: null };
 ['fazerLogin','mostrarTela','voltarTela','cadastrar','sair','confirmarSair','fecharModalSair','buscarProfissionais','verPerfil','abrirTelaPublicacao','publicarVagaApp','previewFotoObra','carregarMinhasObras','verDetalheObra','uploadFoto','abrirEditarPerfil','salvarPerfil','selecionarTema','mostrarDocumento','mudarTab','adicionarNaRede','apagarObra','mostrarNotificacoes','iniciarChat','enviarMensagem','gerarQRCodeCompartilhar','abrirMapaLocalizacao','salvarLocalizacao','atualizarCidades','atualizarBairros','aceitarConvite','recusarConvite','novaObra','proximaEtapa','toggleProfissao','solicitarCodigo','verificarCodigo','voltarPasso1','carregarListaConversas'].forEach(function(m) { window.app[m] = function() { var a = window.app._app; if (a && a[m]) return a[m].apply(a, arguments); }; });
@@ -36,47 +54,89 @@ var App = function() {
     this._feedJaCarregado = false;
     this._userCache = {};
     this._mapaIniciado = false;
-    this._tituloOriginal = document.title;
-    this._naoLidasPorUsuario = {}; // Contador de não lidas por usuário
+    this._tituloOriginal = '🏗️ LPXConstrutor';
+    this._naoLidasPorUsuario = {};
     this.init();
 };
 
 App.prototype.init = function() {
-    var s = this; console.log('🚀 App v' + APP_VERSION); window.app._app = s;
+    var s = this;
+    console.log('🚀 App v' + APP_VERSION + ' INICIADO');
+    window.app._app = s;
+    document.title = s._tituloOriginal;
     var nav = document.getElementById('bottomNav'); if (nav) nav.style.display = 'none';
     if (s.temaAtual === 'escuro') document.body.classList.add('dark-theme');
-    var savedUser = localStorage.getItem('usuarioLPX'); if (savedUser) { try { s.usuarioLogado = JSON.parse(savedUser); } catch(e) {} }
+    
+    var savedUser = localStorage.getItem('usuarioLPX');
+    if (savedUser) { try { s.usuarioLogado = JSON.parse(savedUser); } catch(e) {} }
+    
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
         firebase.auth().onAuthStateChanged(function(user) {
-            if (user) { db.collection('usuarios').doc(user.uid).get().then(function(doc) { if (doc.exists) { s.usuarioLogado = doc.data(); s.usuarioLogado.id = doc.id; localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); s.mostrarTela('homeScreen'); s.iniciarFeedListener(); s.iniciarListenerNotificacoes(); s.iniciarBadgeMensagens(); } else { s.mostrarTela('loginScreen'); } }).catch(function() { s.mostrarTela('loginScreen'); }); }
-            else { if (s.usuarioLogado && s.usuarioLogado.id) { s.mostrarTela('homeScreen'); s.iniciarFeedListener(); s.iniciarListenerNotificacoes(); s.iniciarBadgeMensagens(); } else { s.usuarioLogado = null; localStorage.removeItem('usuarioLPX'); s.pararListeners(); s.mostrarTela('loginScreen'); } }
+            if (user) {
+                db.collection('usuarios').doc(user.uid).get().then(function(doc) {
+                    if (doc.exists) {
+                        s.usuarioLogado = doc.data(); s.usuarioLogado.id = doc.id;
+                        localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado));
+                        s.mostrarTela('homeScreen');
+                        s.iniciarFeedListener();
+                        s.iniciarListenerNotificacoes();
+                        s.iniciarBadgeMensagens();
+                    } else { s.mostrarTela('loginScreen'); }
+                }).catch(function() { s.mostrarTela('loginScreen'); });
+            } else {
+                if (s.usuarioLogado && s.usuarioLogado.id) {
+                    s.mostrarTela('homeScreen');
+                    s.iniciarFeedListener();
+                    s.iniciarListenerNotificacoes();
+                    s.iniciarBadgeMensagens();
+                } else {
+                    s.usuarioLogado = null; localStorage.removeItem('usuarioLPX');
+                    s.pararListeners(); s.mostrarTela('loginScreen');
+                }
+            }
         });
     } else { setTimeout(function() { s.mostrarTela('loginScreen'); }, 1500); }
     s.limparNotificacoesAntigas();
 };
 
-App.prototype.limparNotificacoesAntigas = function() { if (!this.usuarioLogado || typeof db === 'undefined') return; var limite = new Date(Date.now() - 24*60*60*1000); db.collection('notificacoes').where('usuarioId','==',this.usuarioLogado.id).where('dataCriacao','<',limite).get().then(function(snap) { var batch = db.batch(); snap.forEach(function(doc) { batch.delete(doc.ref); }); batch.commit().catch(function(){}); }).catch(function(){}); };
+App.prototype.limparNotificacoesAntigas = function() {
+    if (!this.usuarioLogado || typeof db === 'undefined') return;
+    var limite = new Date(Date.now() - 24*60*60*1000);
+    db.collection('notificacoes').where('usuarioId','==',this.usuarioLogado.id).where('dataCriacao','<',limite).get()
+        .then(function(snap) { var batch = db.batch(); snap.forEach(function(doc) { batch.delete(doc.ref); }); batch.commit().catch(function(){}); }).catch(function(){});
+};
 
 // ===== NAVEGAÇÃO =====
 App.prototype.mostrarTela = function(id) {
-    var s = this; if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen' && id !== 'chatScreen') s.historicoTelas.push(s.telaAtual);
+    var s = this;
+    if (s.telaAtual && s.telaAtual !== id && s.telaAtual !== 'loginScreen' && id !== 'chatScreen') s.historicoTelas.push(s.telaAtual);
     document.querySelectorAll('.screen').forEach(function(t) { t.classList.remove('active'); t.style.display = 'none'; });
-    var tela = document.getElementById(id); if (!tela) { tela = document.createElement('div'); tela.id = id; tela.className = 'screen'; document.querySelector('.app-container')?.appendChild(tela); }
+    var tela = document.getElementById(id);
+    if (!tela) { tela = document.createElement('div'); tela.id = id; tela.className = 'screen'; document.querySelector('.app-container')?.appendChild(tela); }
     tela.classList.add('active'); tela.style.display = 'block'; s.telaAtual = id;
-    var nav = document.getElementById('bottomNav'); if (nav) { var hide = ['loginScreen','cadastroScreen','recuperarSenhaScreen']; nav.style.display = hide.indexOf(id) >= 0 ? 'none' : 'flex'; nav.querySelectorAll('.nav-item').forEach(function(item) { item.classList.toggle('active', item.getAttribute('data-screen') === id); }); }
+    var nav = document.getElementById('bottomNav');
+    if (nav) { var hide = ['loginScreen','cadastroScreen','recuperarSenhaScreen']; nav.style.display = hide.indexOf(id) >= 0 ? 'none' : 'flex'; nav.querySelectorAll('.nav-item').forEach(function(item) { item.classList.toggle('active', item.getAttribute('data-screen') === id); }); }
     switch(id) { case 'homeScreen': s.carregarHome(); break; case 'meuPerfilScreen': s.carregarMeuPerfil(); break; case 'buscaScreen': s.buscarProfissionais(); break; case 'minhasObrasScreen': s.carregarMinhasObras(); break; case 'chatScreen': if (!s.usuarioSelecionado) s.carregarListaConversas(); break; case 'configScreen': s.carregarConfigScreen(); break; }
     if (id === 'homeScreen' && s.usuarioLogado) { var bp = document.getElementById('btnPublicar'), bo = document.getElementById('btnObras'); var show = s.usuarioLogado.tipo === 'empreiteiro'; if (bp) bp.style.display = show ? 'flex' : 'none'; if (bo) bo.style.display = show ? 'flex' : 'none'; }
 };
 App.prototype.voltarTela = function() { this.mostrarTela(this.historicoTelas.length > 0 ? this.historicoTelas.pop() : 'homeScreen'); };
 
 // ===== MODAL =====
-App.prototype.mostrarModalConfirmacao = function(titulo, mensagem, onConfirmar, onCancelar) { var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;'; modal.innerHTML = '<div style="background:white;border-radius:20px;padding:30px;max-width:350px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);border-top:5px solid #F47920;"><div style="font-size:50px;">⚠️</div><h3 style="color:#1A3A5C;">'+(titulo||'Confirmar')+'</h3><p style="color:#666;">'+(mensagem||'')+'</p><div style="display:flex;gap:10px;"><button id="btnCancelarModal" style="flex:1;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#666;font-weight:600;cursor:pointer;">Cancelar</button><button id="btnConfirmarModal" style="flex:1;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#F47920,#E06B1A);color:white;font-weight:600;cursor:pointer;">Confirmar</button></div></div>'; document.body.appendChild(modal); document.getElementById('btnConfirmarModal').onclick = function() { modal.remove(); if (onConfirmar) onConfirmar(); }; document.getElementById('btnCancelarModal').onclick = function() { modal.remove(); if (onCancelar) onCancelar(); }; modal.onclick = function(e) { if (e.target === modal) { modal.remove(); if (onCancelar) onCancelar(); } }; };
+App.prototype.mostrarModalConfirmacao = function(titulo, mensagem, onConfirmar, onCancelar) {
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = '<div style="background:white;border-radius:20px;padding:30px;max-width:350px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);border-top:5px solid #F47920;"><div style="font-size:50px;">⚠️</div><h3 style="color:#1A3A5C;">'+(titulo||'Confirmar')+'</h3><p style="color:#666;">'+(mensagem||'')+'</p><div style="display:flex;gap:10px;"><button id="btnCancelarModal" style="flex:1;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#666;font-weight:600;cursor:pointer;">Cancelar</button><button id="btnConfirmarModal" style="flex:1;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#F47920,#E06B1A);color:white;font-weight:600;cursor:pointer;">Confirmar</button></div></div>';
+    document.body.appendChild(modal);
+    document.getElementById('btnConfirmarModal').onclick = function() { modal.remove(); if (onConfirmar) onConfirmar(); };
+    document.getElementById('btnCancelarModal').onclick = function() { modal.remove(); if (onCancelar) onCancelar(); };
+    modal.onclick = function(e) { if (e.target === modal) { modal.remove(); if (onCancelar) onCancelar(); } };
+};
 
 // ===== LOGIN / CADASTRO / SAIR =====
 App.prototype.fazerLogin = function() { var s = this, email = document.getElementById('loginEmail')?.value?.trim() || '', senha = document.getElementById('loginSenha')?.value || ''; if (!email || !senha) { s.mostrarToast('Preencha email e senha!', 'erro'); return; } var btn = document.getElementById('btnLogin'); if (btn) { btn.textContent = '⏳...'; btn.disabled = true; } firebase.auth().signInWithEmailAndPassword(email, senha).then(function(uc) { return db.collection('usuarios').doc(uc.user.uid).get(); }).then(function(doc) { if (doc.exists) { s.usuarioLogado = doc.data(); s.usuarioLogado.id = doc.id; localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); s.historicoTelas = []; s.mostrarToast('Bem-vindo, ' + s.usuarioLogado.nome + '!', 'sucesso'); s.mostrarTela('homeScreen'); } else { s.mostrarToast('Usuário não encontrado!', 'erro'); } }).catch(function(err) { var m = 'Erro'; if (err.code === 'auth/user-not-found') m = 'Usuário não encontrado!'; else if (err.code === 'auth/wrong-password') m = 'Senha incorreta!'; s.mostrarToast(m, 'erro'); }).finally(function() { if (btn) { btn.textContent = 'ENTRAR'; btn.disabled = false; } }); };
 App.prototype.cadastrar = function() { var s = this, d = { nome: document.getElementById('cadNome')?.value?.trim() || '', email: document.getElementById('cadEmail')?.value?.trim() || '', senha: document.getElementById('cadSenha')?.value || '', tipo: document.getElementById('cadTipo')?.value || 'profissional', celular: document.getElementById('cadCelular')?.value?.trim() || '', cpf: document.getElementById('cadCPF')?.value?.trim() || '', profissao: document.getElementById('cadProfissao')?.value || '', experiencia: document.getElementById('cadExperiencia')?.value || '0', habilidades: document.getElementById('cadHabilidades')?.value?.trim() || '', score: 0, fotoPerfil: null, localizacao: null }; if (!d.nome || !d.email || !d.senha) { s.mostrarToast('Preencha todos!', 'erro'); return; } if (d.senha.length < 6) { s.mostrarToast('Senha mínima 6 caracteres!', 'erro'); return; } s.mostrarToast('Cadastrando...', 'info'); firebase.auth().createUserWithEmailAndPassword(d.email, d.senha).then(function(uc) { d.id = uc.user.uid; d.dataCriacao = firebase.firestore.FieldValue.serverTimestamp(); d.ativo = true; return db.collection('usuarios').doc(d.id).set(d); }).then(function() { s.usuarioLogado = d; localStorage.setItem('usuarioLPX', JSON.stringify(d)); s.notificarTodosUsuarios({ titulo: '👤 Novo Profissional!', mensagem: d.nome + ' acabou de se cadastrar!', tipo: 'novo_usuario' }); s.mostrarToast('✅ Cadastro realizado!', 'sucesso'); s.mostrarTela('homeScreen'); }).catch(function(err) { s.mostrarToast(err.code==='auth/email-already-in-use'?'Email já cadastrado!':'Erro ao cadastrar', 'erro'); }); };
-App.prototype.sair = function() { this.pararListeners(); firebase.auth().signOut(); this.usuarioLogado = null; this.usuarioSelecionado = null; localStorage.removeItem('usuarioLPX'); this.historicoTelas = []; document.title = this._tituloOriginal; var modal = document.getElementById('modalSair'); if (modal) modal.style.display = 'none'; this.mostrarTela('loginScreen'); };
+App.prototype.sair = function() { this.pararListeners(); firebase.auth().signOut(); this.usuarioLogado = null; this.usuarioSelecionado = null; localStorage.removeItem('usuarioLPX'); this.historicoTelas = []; this._naoLidasPorUsuario = {}; document.title = this._tituloOriginal; var modal = document.getElementById('modalSair'); if (modal) modal.style.display = 'none'; this.mostrarTela('loginScreen'); };
 App.prototype.fecharModalSair = function() { var m = document.getElementById('modalSair'); if (m) m.style.display = 'none'; };
 App.prototype.confirmarSair = function() { this.sair(); };
 
@@ -104,27 +164,33 @@ App.prototype.aceitarConvite = function(nid, deId) { var s = this; db.collection
 App.prototype.recusarConvite = function(nid) { db.collection('notificacoes').doc(nid).update({ lida: true, visto: true }); this.mostrarToast('Convite recusado', 'info'); };
 
 // ==========================================================
-// 🔥 BADGE POR CONVERSA + NOME DO PERFIL
+// 🔥 BADGE POR CONVERSA (CORRIGIDO)
 // ==========================================================
 App.prototype.iniciarBadgeMensagens = function() {
     var s = this;
-    if (!s.usuarioLogado) return;
-    if (s._listenerMsgBadge) s._listenerMsgBadge();
+    if (!s.usuarioLogado || !s.usuarioLogado.id) return;
+    if (s._listenerMsgBadge) { s._listenerMsgBadge(); s._listenerMsgBadge = null; }
+    
+    console.log('🔔 Iniciando badge de mensagens para:', s.usuarioLogado.id);
     
     s._listenerMsgBadge = db.collection('mensagens')
         .where('destinatarioId','==',s.usuarioLogado.id)
         .where('lida','==',false)
         .onSnapshot(function(snap) {
-            // Conta não lidas por remetente
+            // Zera contagem anterior
             s._naoLidasPorUsuario = {};
+            
             snap.forEach(function(doc) {
                 var msg = doc.data();
                 var remetente = msg.remetenteId;
-                if (!s._naoLidasPorUsuario[remetente]) s._naoLidasPorUsuario[remetente] = { count: 0, nome: msg.remetenteNome || 'Alguém' };
+                if (!s._naoLidasPorUsuario[remetente]) {
+                    s._naoLidasPorUsuario[remetente] = { count: 0, nome: msg.remetenteNome || 'Usuário' };
+                }
                 s._naoLidasPorUsuario[remetente].count++;
             });
             
             var totalNaoLidas = snap.size;
+            console.log('📊 Não lidas por usuário:', s._naoLidasPorUsuario, 'Total:', totalNaoLidas);
             
             // Badge no ícone do chat (total)
             var chatNav = document.querySelector('.nav-item[data-screen="chatScreen"]');
@@ -133,44 +199,59 @@ App.prototype.iniciarBadgeMensagens = function() {
                 if (!badge) {
                     badge = document.createElement('span');
                     badge.className = 'badge-msg';
-                    badge.style.cssText = 'position:absolute;top:-2px;right:2px;background:#EF4444;color:white;border-radius:50%;min-width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:bold;padding:0 4px;';
+                    badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#EF4444;color:white;border-radius:50%;min-width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:bold;padding:0 5px;z-index:10;';
                     chatNav.style.position = 'relative';
                     chatNav.appendChild(badge);
                 }
-                if (totalNaoLidas > 0) { badge.textContent = totalNaoLidas > 99 ? '99+' : totalNaoLidas; badge.style.display = 'flex'; }
-                else { badge.style.display = 'none'; }
+                if (totalNaoLidas > 0) {
+                    badge.textContent = totalNaoLidas > 99 ? '99+' : totalNaoLidas;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
             }
             
             // Título da página
-            if (totalNaoLidas > 0) { document.title = '(' + totalNaoLidas + ') 💬 LPXConstrutor'; }
-            else { document.title = s._tituloOriginal || '🏗️ LPXConstrutor'; }
+            if (totalNaoLidas > 0) {
+                document.title = '(' + totalNaoLidas + ') 💬 LPXConstrutor';
+            } else {
+                document.title = s._tituloOriginal;
+            }
             
             // Atualiza lista de conversas se estiver na tela
             if (s.telaAtual === 'chatScreen' && !s.usuarioSelecionado) {
                 s._renderizarConversas();
             }
+        }, function(err) {
+            console.error('❌ Erro no badge:', err);
         });
 };
 
 App.prototype.carregarListaConversas = function() {
-    var s = this; s.usuarioSelecionado = null;
+    var s = this;
+    s.usuarioSelecionado = null;
     if (s._listenerChat) { s._listenerChat(); s._listenerChat = null; }
+    
     var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">⏳ Carregando...</div>';
+    if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">⏳ Carregando conversas...</div>';
     var inputContainer = document.querySelector('#chatInputContainer') || document.querySelector('.chat-input-container');
     if (inputContainer) inputContainer.style.display = 'none';
+    
     if (!s.usuarioLogado || !s.usuarioLogado.id) return;
     
     if (s._listenerConversas) s._listenerConversas();
     s._listenerConversas = db.collection('mensagens')
         .where('participantes','array-contains',s.usuarioLogado.id)
-        .onSnapshot(function() { s._renderizarConversas(); });
+        .onSnapshot(function() {
+            if (!s.usuarioSelecionado) s._renderizarConversas();
+        });
     
     s._renderizarConversas();
 };
 
 App.prototype._renderizarConversas = function() {
-    var s = this, chatMessages = document.getElementById('chatMessages');
+    var s = this;
+    var chatMessages = document.getElementById('chatMessages');
     if (s.usuarioSelecionado || !chatMessages) return;
     
     db.collection('mensagens')
@@ -191,15 +272,16 @@ App.prototype._renderizarConversas = function() {
             lista.sort(function(a, b) { return (b.data.dataEnvio?.toDate?.()||0) - (a.data.dataEnvio?.toDate?.()||0); });
             
             if (lista.length === 0) {
-                chatMessages.innerHTML = '<div style="text-align:center;padding:60px;">Nenhuma conversa ainda</div>';
+                chatMessages.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">Nenhuma conversa ainda</div>';
                 return;
             }
             
             var html = '', carregados = 0;
             lista.forEach(function(conv) {
-                if (s._userCache[conv.outroId]) {
+                var userCache = s._userCache[conv.outroId];
+                if (userCache) {
                     carregados++;
-                    html += s._htmlConversa(s._userCache[conv.outroId], conv);
+                    html += s._htmlConversa(userCache, conv);
                     if (carregados >= lista.length) chatMessages.innerHTML = html;
                 } else {
                     db.collection('usuarios').doc(conv.outroId).get().then(function(userDoc) {
@@ -233,8 +315,8 @@ App.prototype._htmlConversa = function(user, conv) {
     var naoLidasCount = (s._naoLidasPorUsuario && s._naoLidasPorUsuario[user.id]) ? s._naoLidasPorUsuario[user.id].count : 0;
     var temNaoLidas = naoLidasCount > 0;
     
-    return '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;' + (temNaoLidas ? 'background:#f0f9ff;border-left:3px solid #EF4444;' : '') + '" onclick="window.app.iniciarChat(\'' + user.id + '\')">' +
-        '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f0f0f0;flex-shrink:0;position:relative;">' +
+    return '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;' + (temNaoLidas ? 'background:#f0f9ff;border-left:4px solid #EF4444;' : '') + '" onclick="window.app.iniciarChat(\'' + user.id + '\')">' +
+        '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#e5e7eb;flex-shrink:0;">' +
             (user.fotoPerfil ? '<img src="' + user.fotoPerfil + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '<span style="font-size:24px;">👷</span>') +
         '</div>' +
         '<div style="flex:1;min-width:0;">' +
@@ -244,11 +326,11 @@ App.prototype._htmlConversa = function(user, conv) {
             '</div>' +
             '<small style="color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;font-size:13px;">' + (conv.data.conteudo || '') + '</small>' +
         '</div>' +
-        (temNaoLidas ? '<span style="background:#EF4444;color:white;border-radius:20px;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;padding:0 6px;flex-shrink:0;">' + (naoLidasCount > 99 ? '99+' : naoLidasCount) + '</span>' : '') +
+        (temNaoLidas ? '<span style="background:#EF4444;color:white;border-radius:20px;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;padding:0 8px;flex-shrink:0;">' + (naoLidasCount > 99 ? '99+' : naoLidasCount) + '</span>' : '') +
     '</div>';
 };
 
-// Abrir chat - MARCA como lidas e ZERA badge daquele usuário
+// Abrir chat - ZERA badge daquele usuário
 App.prototype.iniciarChat = function(uid) {
     var s = this;
     if (!s.usuarioLogado || !s.usuarioLogado.id) return;
@@ -257,7 +339,7 @@ App.prototype.iniciarChat = function(uid) {
     var chatMessages = document.getElementById('chatMessages');
     if (chatMessages) chatMessages.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Carregando...</div>';
     
-    // ZERA badge deste usuário
+    // ZERA badge deste usuário IMEDIATAMENTE
     if (s._naoLidasPorUsuario && s._naoLidasPorUsuario[uid]) {
         delete s._naoLidasPorUsuario[uid];
     }
@@ -269,9 +351,13 @@ App.prototype.iniciarChat = function(uid) {
         .where('lida','==',false)
         .get()
         .then(function(snap) {
-            var batch = db.batch();
-            snap.forEach(function(doc) { batch.update(doc.ref, { lida: true }); });
-            batch.commit().catch(function(){});
+            if (snap.size > 0) {
+                var batch = db.batch();
+                snap.forEach(function(doc) { batch.update(doc.ref, { lida: true }); });
+                batch.commit().then(function() {
+                    console.log('✅ ' + snap.size + ' mensagens marcadas como lidas de ' + uid);
+                }).catch(function(){});
+            }
         });
     
     db.collection('usuarios').doc(uid).get().then(function(doc) {
@@ -304,7 +390,6 @@ App.prototype.iniciarChat = function(uid) {
                     if (msg.participantes && msg.participantes.indexOf(user1) >= 0 && msg.participantes.indexOf(user2) >= 0) {
                         msg.id = doc.id;
                         mensagens.push(msg);
-                        // Marca como lida
                         if (msg.destinatarioId === user1 && !msg.lida) {
                             db.collection('mensagens').doc(doc.id).update({ lida: true }).catch(function(){});
                         }
@@ -347,11 +432,10 @@ App.prototype.enviarMensagem = function() {
         destinatarioId: s.usuarioSelecionado.id,
         participantes: [s.usuarioLogado.id, s.usuarioSelecionado.id],
         conteudo: texto,
-        remetenteNome: s.usuarioLogado.nome, // SALVA O NOME
+        remetenteNome: s.usuarioLogado.nome,
         lida: false,
         dataEnvio: firebase.firestore.FieldValue.serverTimestamp()
     }).then(function() {
-        // Notificação COM NOME DO PERFIL
         db.collection('notificacoes').add({
             usuarioId: s.usuarioSelecionado.id,
             titulo: '💬 ' + s.usuarioLogado.nome,
@@ -380,19 +464,22 @@ App.prototype.iniciarListenerNotificacoes = function() {
         .where('lida','==',false)
         .onSnapshot(function(snap) {
             var badge = document.getElementById('badgeNotificacoes');
-            if (badge) { var c = snap.size; if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; } else badge.style.display = 'none'; }
+            if (badge) {
+                var c = snap.size;
+                if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; }
+                else { badge.style.display = 'none'; }
+            }
             
             snap.docChanges().forEach(function(change) {
                 if (change.type === 'added') {
                     var n = change.doc.data(), msg = '';
-                    // MOSTRA O NOME DO PERFIL
                     if (n.tipo === 'mensagem') { msg = '💬 ' + (n.deNome||'Alguém') + ' enviou uma mensagem'; tocarSomMensagem(); }
                     else if (n.tipo === 'nova_vaga') { msg = '🏗️ ' + (n.deNome||'Alguém') + ' publicou: ' + (n.titulo||'Nova obra'); tocarSomNotificacao(); }
                     else if (n.tipo === 'novo_usuario') { msg = '👤 ' + (n.titulo||'Novo cadastro'); tocarSomNotificacao(); }
                     else if (n.tipo === 'convite') { msg = '🔗 ' + (n.deNome||'Alguém') + ' quer se conectar'; tocarSomNotificacao(); }
                     if (msg) s.mostrarToast(msg, 'info');
                     if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('LPXConstrutor', { body: msg, icon: 'imagem/logo-sem-fundo-lpxconstrutor.png' });
+                        try { new Notification('LPXConstrutor', { body: msg, icon: 'imagem/logo-sem-fundo-lpxconstrutor.png' }); } catch(e) {}
                     }
                 }
             });
@@ -402,31 +489,95 @@ App.prototype.iniciarListenerNotificacoes = function() {
 if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
 
 App.prototype.mostrarNotificacoes = function() {
-    var s = this; if (!s.usuarioLogado) return;
-    db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).where('visto','==',false).get().then(function(snap) { var batch = db.batch(); snap.forEach(function(doc) { batch.update(doc.ref, { visto: true }); }); batch.commit(); });
-    db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).orderBy('dataCriacao','desc').limit(50).get().then(function(snap) {
-        var ns = []; snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); });
-        var modal = document.createElement('div'); modal.id = 'modalNotif'; modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;';
-        document.body.style.overflow = 'hidden';
-        var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()"><div class="modal-header"><h3>🔔 Notificações</h3><button class="modal-close" onclick="document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();">✕</button></div><div style="padding:10px;">';
-        if (ns.length===0) html += '<div style="text-align:center;padding:40px;">Nenhuma notificação</div>';
-        else ns.forEach(function(n) {
-            var icone = '📢', cor = '#f0f9ff', op = n.visto?'0.6':'1';
-            if (n.tipo==='nova_vaga') { icone='🏗️'; cor='#fef3c7'; } else if (n.tipo==='mensagem') { icone='💬'; cor='#e0f2fe'; } else if (n.tipo==='convite') { icone='🔗'; cor='#ede9fe'; } else if (n.tipo==='novo_usuario') { icone='👤'; cor='#d1fae5'; }
-            var data = ''; try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
-            html += '<div style="background:'+cor+';border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1A3A5C;opacity:'+op+';cursor:pointer;" onclick="window.app.marcarNotificacaoVista(\''+n.id+'\')"><strong>'+(n.titulo||'')+'</strong>'+(n.visto?' <small style="color:#10B981;">✓ Visto</small>':' <small style="color:#F47920;">● Novo</small>')+'<br><small>'+(n.mensagem||'')+'</small><br><small style="color:#999;">'+data+'</small>';
-            if (n.tipo==='convite') html += '<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="event.stopPropagation();window.app.aceitarConvite(\''+n.id+'\',\''+n.de+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">✅ Aceitar</button><button onclick="event.stopPropagation();window.app.recusarConvite(\''+n.id+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:8px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>';
-            if (n.tipo==='nova_vaga' && n.vagaId) html += '<button onclick="event.stopPropagation();window.app.verDetalheObra(\''+n.vagaId+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:8px;background:#F47920;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">👀 IR PARA OBRA</button>';
-            if (n.tipo==='mensagem' && n.de) html += '<button onclick="event.stopPropagation();window.app.iniciarChat(\''+n.de+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:8px;background:#3B82F6;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">💬 IR PARA CONVERSA</button>';
-            html += '</div>';
+    var s = this;
+    if (!s.usuarioLogado) return;
+    
+    // Marca como vistas
+    db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).where('visto','==',false).get()
+        .then(function(snap) {
+            var batch = db.batch();
+            snap.forEach(function(doc) { batch.update(doc.ref, { visto: true }); });
+            batch.commit();
         });
-        html += '</div></div>'; modal.innerHTML = html;
-        modal.onclick = function(e) { if (e.target===modal) { document.body.style.overflow=''; modal.remove(); } };
-        document.body.appendChild(modal);
-    });
+    
+    // Busca notificações
+    db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).orderBy('dataCriacao','desc').limit(50).get()
+        .then(function(snap) {
+            var ns = [];
+            snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); });
+            
+            // Remove modal antigo
+            var modalAntigo = document.getElementById('modalNotif');
+            if (modalAntigo) modalAntigo.remove();
+            
+            // Cria novo modal
+            var modal = document.createElement('div');
+            modal.id = 'modalNotif';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+            document.body.style.overflow = 'hidden';
+            
+            var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:85vh;overflow-y:auto;background:white;border-radius:20px;" onclick="event.stopPropagation()">';
+            html += '<div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid #eee;position:sticky;top:0;background:white;z-index:1;border-radius:20px 20px 0 0;">';
+            html += '<h3 style="margin:0;color:#1A3A5C;">🔔 Notificações</h3>';
+            html += '<button onclick="document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>';
+            html += '</div>';
+            html += '<div style="padding:15px;">';
+            
+            if (ns.length === 0) {
+                html += '<div style="text-align:center;padding:60px;color:#999;">Nenhuma notificação</div>';
+            } else {
+                ns.forEach(function(n) {
+                    var icone = '📢', cor = '#f0f9ff', op = n.visto ? '0.6' : '1';
+                    if (n.tipo === 'nova_vaga') { icone = '🏗️'; cor = '#fef3c7'; }
+                    else if (n.tipo === 'mensagem') { icone = '💬'; cor = '#e0f2fe'; }
+                    else if (n.tipo === 'convite') { icone = '🔗'; cor = '#ede9fe'; }
+                    else if (n.tipo === 'novo_usuario') { icone = '👤'; cor = '#d1fae5'; }
+                    
+                    var data = '';
+                    try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {}
+                    
+                    html += '<div style="background:' + cor + ';border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid #1A3A5C;opacity:' + op + ';cursor:pointer;" onclick="window.app.marcarNotificacaoVista(\'' + n.id + '\')">';
+                    html += '<div style="display:flex;align-items:start;gap:10px;">';
+                    html += '<div style="font-size:28px;">' + icone + '</div>';
+                    html += '<div style="flex:1;">';
+                    html += '<strong style="font-size:14px;">' + (n.titulo || 'Notificação') + '</strong>';
+                    html += (n.visto ? ' <small style="color:#10B981;">✓ Visto</small>' : ' <small style="color:#F47920;">● Novo</small>');
+                    html += '<br><small style="color:#555;">' + (n.mensagem || '') + '</small>';
+                    html += '<br><small style="color:#999;font-size:11px;">' + data + '</small>';
+                    
+                    if (n.tipo === 'convite') {
+                        html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+                        html += '<button onclick="event.stopPropagation();window.app.aceitarConvite(\'' + n.id + '\',\'' + n.de + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600;">✅ Aceitar</button>';
+                        html += '<button onclick="event.stopPropagation();window.app.recusarConvite(\'' + n.id + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600;">❌ Recusar</button>';
+                        html += '</div>';
+                    }
+                    if (n.tipo === 'nova_vaga' && n.vagaId) {
+                        html += '<button onclick="event.stopPropagation();window.app.verDetalheObra(\'' + n.vagaId + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:10px;background:#F47920;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600;">👀 IR PARA OBRA</button>';
+                    }
+                    if (n.tipo === 'mensagem' && n.de) {
+                        html += '<button onclick="event.stopPropagation();window.app.iniciarChat(\'' + n.de + '\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:10px;background:#3B82F6;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600;">💬 IR PARA CONVERSA</button>';
+                    }
+                    
+                    html += '</div></div></div>';
+                });
+            }
+            html += '</div></div>';
+            
+            modal.innerHTML = html;
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    document.body.style.overflow = '';
+                    modal.remove();
+                }
+            };
+            document.body.appendChild(modal);
+        });
 };
 
-App.prototype.marcarNotificacaoVista = function(nid) { db.collection('notificacoes').doc(nid).update({ visto: true, lida: true }).catch(function(){}); this.mostrarToast('✅ Visto', 'sucesso'); };
+App.prototype.marcarNotificacaoVista = function(nid) {
+    db.collection('notificacoes').doc(nid).update({ visto: true, lida: true }).catch(function(){});
+    this.mostrarToast('✅ Marcado como visto', 'sucesso');
+};
 
 // ===== PUBLICAÇÃO =====
 App.prototype.abrirTelaPublicacao = function() { this.mostrarTela('publicarVagaScreen'); this.vagaFotoBase64 = null; };
@@ -465,6 +616,6 @@ App.prototype.mostrarToast = function(msg, tipo) {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - BADGE POR CONVERSA');
+    console.log('🏗️ LPXCONSTRUTOR v' + APP_VERSION + ' - BADGE CORRIGIDO');
     window.app._app = new App();
 });
