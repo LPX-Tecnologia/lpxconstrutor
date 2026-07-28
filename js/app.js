@@ -1,6 +1,6 @@
 // ==========================================================
 // LPXCONSTRUTOR v2.1.9 - COMPLETO E CORRIGIDO
-// FOTO COMPRIMIDA | BADGE | CHAT | NOTIFICAÇÕES
+// FOTO COMPRIMIDA | BADGE | CHAT | NOTIFICAÇÕES | COMPARTILHAR
 // ==========================================================
 const APP_VERSION = "2.1.9";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
@@ -95,118 +95,112 @@ App.prototype.notificarTodosUsuarios = function(dados) { var s = this; if (!s.us
 App.prototype.iniciarListenerNotificacoes = function() { var s = this; if (s._listenerNotificacoes) { s._listenerNotificacoes(); s._listenerNotificacoes = null; } if (!s.usuarioLogado) return; s._listenerNotificacoes = db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).where('lida','==',false).onSnapshot(function(snap) { var badge = document.getElementById('badgeNotificacoes'); if (badge) { var c = snap.size; if (c > 0) { badge.textContent = c > 99 ? '99+' : c; badge.style.display = 'flex'; } else badge.style.display = 'none'; } snap.docChanges().forEach(function(change) { if (change.type==='added') { var n = change.doc.data(), msg = ''; if (n.tipo==='mensagem') { msg = '💬 '+(n.deNome||'Alguém')+' enviou mensagem'; tocarSomMensagem(); } else if (n.tipo==='nova_vaga') { msg = '🏗️ '+(n.deNome||'Alguém')+' publicou obra'; tocarSomNotificacao(); } else if (n.tipo==='novo_usuario') { msg = '👤 '+(n.titulo||'Novo cadastro'); tocarSomNotificacao(); } else if (n.tipo==='convite') { msg = '🔗 '+(n.deNome||'Alguém')+' quer se conectar'; tocarSomNotificacao(); } if (msg) s.mostrarToast(msg, 'info'); } }); }); };
 App.prototype.mostrarNotificacoes = function() { var s = this; if (!s.usuarioLogado) return; db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).where('lida','==',false).get().then(function(snap) { var batch = db.batch(); snap.forEach(function(doc) { batch.update(doc.ref, { lida: true, visto: true }); }); batch.commit().then(function() { var badge = document.getElementById('badgeNotificacoes'); if (badge) badge.style.display = 'none'; }); }); db.collection('notificacoes').where('usuarioId','==',s.usuarioLogado.id).get().then(function(snap) { var ns = []; snap.forEach(function(doc) { var n = doc.data(); n.id = doc.id; ns.push(n); }); ns.sort(function(a,b) { return (b.dataCriacao?.toDate?.()||0) - (a.dataCriacao?.toDate?.()||0); }); var ma = document.getElementById('modalNotif'); if (ma) ma.remove(); var modal = document.createElement('div'); modal.id = 'modalNotif'; modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;'; document.body.style.overflow = 'hidden'; var html = '<div class="modal-content" style="max-width:500px;width:95%;max-height:85vh;overflow-y:auto;background:white;border-radius:20px;" onclick="event.stopPropagation()"><div style="display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid #eee;position:sticky;top:0;background:white;z-index:1;border-radius:20px 20px 0 0;"><h3 style="margin:0;color:#1A3A5C;">🔔 Notificações</h3><button onclick="document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button></div><div style="padding:15px;">'; if (ns.length===0) html += '<div style="text-align:center;padding:60px;">Nenhuma notificação</div>'; else ns.forEach(function(n) { var icone = '📢', cor = '#f0f9ff'; if (n.tipo==='nova_vaga') { icone='🏗️'; cor='#fef3c7'; } else if (n.tipo==='mensagem') { icone='💬'; cor='#e0f2fe'; } else if (n.tipo==='convite') { icone='🔗'; cor='#ede9fe'; } var data = ''; try { if (n.dataCriacao?.toDate) data = n.dataCriacao.toDate().toLocaleString('pt-BR'); } catch(e) {} html += '<div style="background:'+cor+';border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid #1A3A5C;"><div style="display:flex;align-items:start;gap:10px;"><div style="font-size:28px;">'+icone+'</div><div style="flex:1;"><strong>'+(n.titulo||'')+'</strong><br><small>'+(n.mensagem||'')+'</small><br><small style="color:#999;">'+data+'</small>'; if (n.tipo==='convite') html += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="event.stopPropagation();window.app.aceitarConvite(\''+n.id+'\',\''+n.de+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#10B981;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">✅ Aceitar</button><button onclick="event.stopPropagation();window.app.recusarConvite(\''+n.id+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="flex:1;background:#EF4444;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">❌ Recusar</button></div>'; if (n.tipo==='nova_vaga' && n.vagaId) html += '<button onclick="event.stopPropagation();window.app.verDetalheObra(\''+n.vagaId+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:10px;background:#F47920;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">👀 VER OBRA</button>'; if (n.tipo==='mensagem' && n.de) html += '<button onclick="event.stopPropagation();window.app.iniciarChat(\''+n.de+'\');document.body.style.overflow=\'\';document.getElementById(\'modalNotif\').remove();" style="width:100%;margin-top:10px;background:#3B82F6;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;">💬 RESPONDER</button>'; html += '</div></div></div>'; }); html += '</div></div>'; modal.innerHTML = html; modal.onclick = function(e) { if (e.target===modal) { document.body.style.overflow=''; modal.remove(); } }; document.body.appendChild(modal); }); };
 
-// ==========================================================
-// PUBLICAÇÃO COM FOTO COMPRIMIDA
-// ==========================================================
+// ===== PUBLICAÇÃO COM FOTO COMPRIMIDA =====
 App.prototype.abrirTelaPublicacao = function() { this.mostrarTela('publicarVagaScreen'); this.vagaFotoBase64 = null; };
+App.prototype.previewFotoObra = function(e) { var s = this; var f = e.target.files[0]; if (!f) return; var reader = new FileReader(); reader.onload = function(ev) { var img = new Image(); img.onload = function() { var canvas = document.createElement('canvas'); var maxW = 600; var maxH = 400; var w = img.width; var h = img.height; if (w > h) { if (w > maxW) { h = h * (maxW / w); w = maxW; } } else { if (h > maxH) { w = w * (maxH / h); h = maxH; } } canvas.width = w; canvas.height = h; var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h); var compressed = canvas.toDataURL('image/jpeg', 0.5); var preview = document.getElementById('vagaFotoPreview'); if (preview) { preview.src = compressed; preview.style.objectFit = 'cover'; } s.vagaFotoBase64 = compressed; }; img.src = ev.target.result; }; reader.readAsDataURL(f); };
+App.prototype._publicarVaga = function(titulo, endereco, profStr, valor, descricao) { var s = this; var foto = s.vagaFotoBase64 || ''; s._publicando = true; var btn = document.querySelector('#publicarVagaScreen .btn-primary'); if (btn) { btn.textContent = '⏳...'; btn.disabled = true; } var vaga = { titulo: titulo, endereco: endereco, profissoes: profStr, valorHora: parseFloat(valor) || 0, descricao: descricao, fotoObra: foto, status: 'disponivel', ativa: true, autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome, autorFoto: s.usuarioLogado.fotoPerfil || null, interessados: [], dataCriacao: firebase.firestore.FieldValue.serverTimestamp() }; db.collection('vagas').add(vaga).then(function(docRef) { s.notificarTodosUsuarios({ titulo: '📢 Nova Obra!', mensagem: s.usuarioLogado.nome + ' publicou: ' + titulo, tipo: 'nova_vaga', vagaId: docRef.id }); s.mostrarToast('✅ Obra publicada!', 'sucesso'); s.vagaFotoBase64 = null; s.mostrarTela('homeScreen'); }).catch(function(err) { s.mostrarToast('❌ Erro: ' + (err.message || 'Tente novamente'), 'erro'); }).finally(function() { s._publicando = false; if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; } }); };
+App.prototype.publicarVagaApp = function() { var s = this; if (s._publicando) return; var titulo = document.getElementById('vagaTitulo')?.value?.trim() || ''; var endereco = document.getElementById('vagaEndereco')?.value?.trim() || ''; var valor = document.getElementById('vagaValorHora')?.value || ''; var descricao = document.getElementById('vagaDescricao')?.value?.trim() || ''; var profs = []; document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { profs.push(cb.value); }); var profStr = profs.length > 0 ? profs.join(', ') : 'Geral'; if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha título, endereço e valor!', 'erro'); return; } var foto = s.vagaFotoBase64 || ''; var fotoKB = (foto.length / 1024).toFixed(0); if (fotoKB > 800) { var img = new Image(); img.onload = function() { var canvas = document.createElement('canvas'); canvas.width = 400; canvas.height = 300; var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, 400, 300); s.vagaFotoBase64 = canvas.toDataURL('image/jpeg', 0.4); s._publicarVaga(titulo, endereco, profStr, valor, descricao); }; img.src = foto; s.mostrarToast('🔄 Comprimindo foto...', 'info'); return; } s._publicarVaga(titulo, endereco, profStr, valor, descricao); };
 
-App.prototype.previewFotoObra = function(e) {
-    var s = this;
-    var f = e.target.files[0];
-    if (!f) return;
-    
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-        var img = new Image();
-        img.onload = function() {
-            var canvas = document.createElement('canvas');
-            var maxW = 600;
-            var maxH = 400;
-            var w = img.width;
-            var h = img.height;
-            
-            if (w > h) { if (w > maxW) { h = h * (maxW / w); w = maxW; } }
-            else { if (h > maxH) { w = w * (maxH / h); h = maxH; } }
-            
-            canvas.width = w;
-            canvas.height = h;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            
-            var compressed = canvas.toDataURL('image/jpeg', 0.5);
-            var preview = document.getElementById('vagaFotoPreview');
-            if (preview) { preview.src = compressed; preview.style.objectFit = 'cover'; }
-            s.vagaFotoBase64 = compressed;
-            console.log('📷 Foto comprimida:', (compressed.length / 1024).toFixed(0), 'KB');
-        };
-        img.src = ev.target.result;
-    };
-    reader.readAsDataURL(f);
+// ==========================================================
+// VER DETALHE DA OBRA (COM BOTÕES DE CONTATO E COMPARTILHAR)
+// ==========================================================
+App.prototype.verDetalheObra = function(oid) {
+    db.collection('vagas').doc(oid).get().then(function(doc) {
+        if (!doc.exists) return;
+        var v = doc.data();
+        var s = window.app._app;
+        
+        var modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
+        modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+        
+        var html = '<div class="modal-content" style="max-width:500px;width:100%;background:white;border-radius:20px;overflow:hidden;" onclick="event.stopPropagation()">';
+        
+        // Foto da obra
+        if (v.fotoObra && v.fotoObra.length > 100) {
+            html += '<img src="' + v.fotoObra + '" style="width:100%;max-height:300px;object-fit:cover;">';
+        }
+        
+        html += '<div style="padding:20px;">';
+        html += '<h2 style="color:#1A3A5C;margin-bottom:10px;font-size:20px;">' + (v.titulo || 'Sem título') + '</h2>';
+        
+        // Informações
+        html += '<div style="background:#f9fafb;border-radius:12px;padding:15px;margin-bottom:15px;">';
+        html += '<p style="margin-bottom:8px;"><i class="fas fa-map-marker-alt" style="color:#F47920;width:20px;"></i> <strong>' + (v.endereco || 'Não informado') + '</strong></p>';
+        html += '<p style="margin-bottom:8px;"><i class="fas fa-money-bill-wave" style="color:#10B981;width:20px;"></i> <strong>R$' + (v.valorHora || '0') + '/h</strong></p>';
+        html += '<p style="margin-bottom:8px;"><i class="fas fa-users" style="color:#1A3A5C;width:20px;"></i> ' + (v.profissoes || 'Geral') + '</p>';
+        html += '<p style="margin-bottom:0;"><i class="fas fa-align-left" style="color:#F47920;width:20px;"></i> ' + (v.descricao || 'Sem descrição') + '</p>';
+        html += '</div>';
+        
+        // Autor
+        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;padding:10px;background:#f0f9ff;border-radius:12px;">';
+        html += '<div style="width:45px;height:45px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#e5e7eb;flex-shrink:0;">';
+        html += (v.autorFoto ? '<img src="' + v.autorFoto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : '<span style="font-size:22px;">👷</span>');
+        html += '</div>';
+        html += '<div><strong style="color:#1A3A5C;">' + (v.autorNome || 'Anônimo') + '</strong><br><small style="color:#666;">Publicado por</small></div>';
+        html += '</div>';
+        
+        // Botões
+        html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+        
+        // WhatsApp
+        html += '<button onclick="window.app._app._contatarAutor(\'' + (v.autorId || '') + '\')" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#25D366,#128C7E);color:white;font-weight:700;font-size:15px;cursor:pointer;">';
+        html += '<i class="fab fa-whatsapp" style="font-size:20px;"></i> ENTRAR EM CONTATO</button>';
+        
+        // Chat
+        html += '<button onclick="window.app.iniciarChat(\'' + (v.autorId || '') + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;padding:14px;border:none;border-radius:12px;background:#1A3A5C;color:white;font-weight:700;font-size:15px;cursor:pointer;">';
+        html += '<i class="fas fa-comments" style="font-size:18px;"></i> ENVIAR MENSAGEM NO CHAT</button>';
+        
+        // Compartilhar
+        html += '<button onclick="window.app._app._compartilharObra(\'' + oid + '\', \'' + (v.titulo || 'Obra').replace(/'/g, "\\'") + '\')" style="width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#1A3A5C;font-weight:700;font-size:15px;cursor:pointer;">';
+        html += '<i class="fas fa-share-alt" style="font-size:18px;"></i> COMPARTILHAR OBRA</button>';
+        
+        // Fechar
+        html += '<button onclick="this.closest(\'.modal-content\').parentElement.remove()" style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#999;font-weight:600;font-size:14px;cursor:pointer;">✕ FECHAR</button>';
+        
+        html += '</div></div></div>';
+        
+        modal.innerHTML = html;
+        document.body.appendChild(modal);
+    });
 };
 
-App.prototype._publicarVaga = function(titulo, endereco, profStr, valor, descricao) {
+// Contatar autor via WhatsApp
+App.prototype._contatarAutor = function(autorId) {
     var s = this;
-    var foto = s.vagaFotoBase64 || '';
-    
-    s._publicando = true;
-    var btn = document.querySelector('#publicarVagaScreen .btn-primary');
-    if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
-    
-    var vaga = {
-        titulo: titulo, endereco: endereco, profissoes: profStr,
-        valorHora: parseFloat(valor) || 0, descricao: descricao,
-        fotoObra: foto, status: 'disponivel', ativa: true,
-        autorId: s.usuarioLogado.id, autorNome: s.usuarioLogado.nome,
-        autorFoto: s.usuarioLogado.fotoPerfil || null, interessados: [],
-        dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    console.log('📝 Publicando (foto: ' + (foto.length / 1024).toFixed(0) + ' KB)');
-    
-    db.collection('vagas').add(vaga)
-        .then(function(docRef) {
-            console.log('✅ Publicado!');
-            s.notificarTodosUsuarios({ titulo: '📢 Nova Obra!', mensagem: s.usuarioLogado.nome + ' publicou: ' + titulo, tipo: 'nova_vaga', vagaId: docRef.id });
-            s.mostrarToast('✅ Obra publicada!', 'sucesso');
-            s.vagaFotoBase64 = null;
-            s.mostrarTela('homeScreen');
-        })
-        .catch(function(err) {
-            console.error('❌ Erro:', err);
-            s.mostrarToast('❌ Erro: ' + (err.message || 'Tente novamente'), 'erro');
-        })
-        .finally(function() {
-            s._publicando = false;
-            if (btn) { btn.textContent = 'PUBLICAR'; btn.disabled = false; }
-        });
+    if (!autorId) return;
+    db.collection('usuarios').doc(autorId).get().then(function(doc) {
+        if (doc.exists) {
+            var u = doc.data();
+            var celular = u.celular || '';
+            celular = celular.replace(/\D/g, '');
+            if (celular) {
+                window.open('https://wa.me/55' + celular, '_blank');
+            } else {
+                s.mostrarToast('📱 WhatsApp não disponível para este usuário', 'info');
+            }
+        }
+    });
 };
 
-App.prototype.publicarVagaApp = function() {
-    var s = this;
-    if (s._publicando) return;
+// Compartilhar obra
+App.prototype._compartilharObra = function(oid, titulo) {
+    var url = window.location.origin + window.location.pathname + '?obra=' + oid;
+    var texto = '🏗️ ' + titulo + ' - Veja esta obra no LPXConstrutor! ' + url;
     
-    var titulo = document.getElementById('vagaTitulo')?.value?.trim() || '';
-    var endereco = document.getElementById('vagaEndereco')?.value?.trim() || '';
-    var valor = document.getElementById('vagaValorHora')?.value || '';
-    var descricao = document.getElementById('vagaDescricao')?.value?.trim() || '';
-    var profs = [];
-    document.querySelectorAll('#profissoesCheckboxes input:checked').forEach(function(cb) { profs.push(cb.value); });
-    var profStr = profs.length > 0 ? profs.join(', ') : 'Geral';
-    
-    if (!titulo || !endereco || !valor) { s.mostrarToast('Preencha título, endereço e valor!', 'erro'); return; }
-    
-    var foto = s.vagaFotoBase64 || '';
-    var fotoKB = (foto.length / 1024).toFixed(0);
-    
-    if (fotoKB > 800) {
-        var img = new Image();
-        img.onload = function() {
-            var canvas = document.createElement('canvas');
-            canvas.width = 400; canvas.height = 300;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, 400, 300);
-            s.vagaFotoBase64 = canvas.toDataURL('image/jpeg', 0.4);
-            s._publicarVaga(titulo, endereco, profStr, valor, descricao);
-        };
-        img.src = foto;
-        s.mostrarToast('🔄 Comprimindo foto...', 'info');
-        return;
+    if (navigator.share) {
+        navigator.share({ title: titulo, text: texto, url: url }).catch(function() {});
+    } else {
+        var input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        this.mostrarToast('📋 Link copiado! Compartilhe com seus contatos.', 'sucesso');
     }
-    
-    s._publicarVaga(titulo, endereco, profStr, valor, descricao);
 };
 
-App.prototype.verDetalheObra = function(oid) { db.collection('vagas').doc(oid).get().then(function(doc) { if (!doc.exists) return; var v = doc.data(); var modal = document.createElement('div'); modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;'; modal.onclick = function(e) { if (e.target===modal) modal.remove(); }; modal.innerHTML = '<div class="modal-content" style="max-width:500px;width:95%;" onclick="event.stopPropagation()">'+(v.fotoObra?'<img src="'+v.fotoObra+'" style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;">':'')+'<h2>'+(v.titulo||'')+'</h2><p>📍 '+(v.endereco||'')+'</p><p>💰 R$'+(v.valorHora||0)+'/h</p><button onclick="this.closest(\'.modal-content\').parentElement.remove()" class="btn btn-outline" style="width:100%;">Fechar</button></div>'; document.body.appendChild(modal); }); };
 App.prototype.carregarMinhasObras = function() { var s = this, container = document.getElementById('listaObrasContainer'); if (!container||!s.usuarioLogado) return; db.collection('vagas').where('autorId','==',s.usuarioLogado.id).where('ativa','==',true).get().then(function(snap) { var obras = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; obras.push(v); }); var total = document.getElementById('totalObras'); if (total) total.textContent = obras.length; if (obras.length===0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><h3>Nenhuma obra</h3></div>'; return; } var html = ''; obras.forEach(function(v) { html += '<div class="vaga-card"><div style="padding:15px;"><strong>'+(v.titulo||'')+'</strong></div></div>'; }); container.innerHTML = html; }); };
 
 App.prototype.uploadFoto = function(e) { var s = this, f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { s.usuarioLogado.fotoPerfil = ev.target.result; localStorage.setItem('usuarioLPX', JSON.stringify(s.usuarioLogado)); db.collection('usuarios').doc(s.usuarioLogado.id).update({ fotoPerfil: ev.target.result }); s.mostrarToast('📷 Foto atualizada!', 'sucesso'); s.carregarMeuPerfil(); }; r.readAsDataURL(f); };
