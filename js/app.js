@@ -1,8 +1,8 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.2.0 - COMPLETO E CORRIGIDO
+// LPXCONSTRUTOR v2.2.1 - COMPLETO E CORRIGIDO
 // FOTO COMPRIMIDA | BADGE | CHAT | NOTIFICAÇÕES | COMPARTILHAR
 // ==========================================================
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "2.2.1";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 function tocarSomNotificacao() { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 800; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(0); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
@@ -76,7 +76,7 @@ App.prototype.iniciarMapa = function() { var el = document.getElementById('map')
 
 App.prototype.iniciarFeedListener = function() { var s = this; if (s._listenerFeed) { s._listenerFeed(); s._listenerFeed = null; } if (typeof db==='undefined') return; s._listenerFeed = db.collection('vagas').where('ativa','==',true).onSnapshot(function(snap) { var vagas = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; vagas.push(v); }); vagas.sort(function(a,b) { return (b.dataCriacao?.toDate?.()||0)-(a.dataCriacao?.toDate?.()||0); }); s._vagasCache = vagas; var container = document.getElementById('feedContainer'); if (container && s.tabAtual==='feed') s.renderizarFeed(vagas); snap.docChanges().forEach(function(change) { if (change.type==='added' && s._feedJaCarregado && s.usuarioLogado) { var vaga = change.doc.data(); if (vaga.autorId !== s.usuarioLogado.id) { tocarSomNotificacao(); s.mostrarToast('🆕 '+(vaga.autorNome||'Alguém')+' publicou: '+(vaga.titulo||'Nova obra'), 'info'); } } }); s._feedJaCarregado = true; }); };
 
-// FEED COM BOTÃO DE COMPARTILHAR WHATSAPP DIRETO NO CARD
+// FEED COM BOTÃO DE COMPARTILHAR NATIVO NO CARD
 App.prototype.renderizarFeed = function(vagas) { 
     var s = this, container = document.getElementById('feedContainer'); 
     if (!container || s.tabAtual!=='feed') return; 
@@ -94,10 +94,10 @@ App.prototype.renderizarFeed = function(vagas) {
         
         html += '<div class="vaga-body">'+(v.fotoObra&&v.fotoObra.length>100?'<img src="'+v.fotoObra+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">':'')+'<div class="vaga-titulo">'+(v.titulo||'Sem título')+'</div><div style="color:#666;font-size:13px;">📍 '+(v.endereco||'')+'</div><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.profissoes||'Geral')+'</span></div></div>';
         
-        // FOOTER DO CARD COM BOTÃO DE SHARE DO WHATSAPP
+        // FOOTER DO CARD COM BOTÃO DE COMPARTILHAR
         html += '<div class="vaga-footer">';
-        html += '<button onclick="window.app.verDetalheObra(\''+v.id+'\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>';
-        html += '<button onclick="event.stopPropagation();window.app._app._compartilharWhatsApp(\''+v.id+'\', \''+(v.titulo||'Obra').replace(/'/g, "\\'")+'\')" class="btn btn-small" style="flex:1;background:#25D366;color:white;border:none;border-radius:8px;"><i class="fab fa-whatsapp"></i> Enviar</button>';
+        html += '<button onclick="window.app.verDetalheObra(\''+v.id+'\')" class="btn btn-small btn-outline" style="flex:2;">Ver</button>';
+        html += '<button onclick="event.stopPropagation();window.app._app._compartilharNativo(\''+v.id+'\', \''+(v.titulo||'Obra').replace(/'/g, "\\'")+'\')" class="btn btn-small btn-outline" style="flex:1; color:#1A3A5C;"><i class="fas fa-share-alt"></i> Compartilhar</button>';
         if (dono) {
             html += '<button onclick="window.app.apagarObra(\''+v.id+'\',event)" class="btn btn-small btn-danger" style="flex:0.5;">🗑️</button>';
         }
