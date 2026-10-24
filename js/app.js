@@ -1,8 +1,8 @@
 // ==========================================================
-// LPXCONSTRUTOR v2.1.9 - COMPLETO E CORRIGIDO
+// LPXCONSTRUTOR v2.2.0 - COMPLETO E CORRIGIDO
 // FOTO COMPRIMIDA | BADGE | CHAT | NOTIFICAÇÕES | COMPARTILHAR
 // ==========================================================
-const APP_VERSION = "2.1.9";
+const APP_VERSION = "2.2.0";
 console.log(`🏗️ LPXCONSTRUTOR v${APP_VERSION}`);
 
 function tocarSomNotificacao() { try { var ctx = new (window.AudioContext || window.webkitAudioContext)(); var osc = ctx.createOscillator(); var gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 800; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(0); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
@@ -75,7 +75,36 @@ App.prototype.mudarTab = function(t) { this.tabAtual = t; var fc = document.getE
 App.prototype.iniciarMapa = function() { var el = document.getElementById('map'); if (!el || this._mapaIniciado) return; this._mapaIniciado = true; if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(function(p) { var lat = p.coords.latitude, lng = p.coords.longitude; el.innerHTML = '<iframe width="100%" height="300" frameborder="0" scrolling="no" src="https://www.openstreetmap.org/export/embed.html?bbox='+(lng-0.01)+'%2C'+(lat-0.01)+'%2C'+(lng+0.01)+'%2C'+(lat+0.01)+'&amp;layer=mapnik&marker='+lat+'%2C'+lng+'" style="border-radius:12px;border:1px solid #ccc;"></iframe>'; }, function() { el.innerHTML = '<div style="text-align:center;padding:40px;background:#e5e7eb;border-radius:12px;">📍 Ative a localização</div>'; }); } else { el.innerHTML = '<div style="text-align:center;padding:40px;background:#e5e7eb;border-radius:12px;">📍 Localização indisponível</div>'; } };
 
 App.prototype.iniciarFeedListener = function() { var s = this; if (s._listenerFeed) { s._listenerFeed(); s._listenerFeed = null; } if (typeof db==='undefined') return; s._listenerFeed = db.collection('vagas').where('ativa','==',true).onSnapshot(function(snap) { var vagas = []; snap.forEach(function(doc) { var v = doc.data(); v.id = doc.id; vagas.push(v); }); vagas.sort(function(a,b) { return (b.dataCriacao?.toDate?.()||0)-(a.dataCriacao?.toDate?.()||0); }); s._vagasCache = vagas; var container = document.getElementById('feedContainer'); if (container && s.tabAtual==='feed') s.renderizarFeed(vagas); snap.docChanges().forEach(function(change) { if (change.type==='added' && s._feedJaCarregado && s.usuarioLogado) { var vaga = change.doc.data(); if (vaga.autorId !== s.usuarioLogado.id) { tocarSomNotificacao(); s.mostrarToast('🆕 '+(vaga.autorNome||'Alguém')+' publicou: '+(vaga.titulo||'Nova obra'), 'info'); } } }); s._feedJaCarregado = true; }); };
-App.prototype.renderizarFeed = function(vagas) { var s = this, container = document.getElementById('feedContainer'); if (!container || s.tabAtual!=='feed') return; if (!vagas||vagas.length===0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>'+(s.usuarioLogado?.tipo==='empreiteiro'?'<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary">📢 PUBLICAR</button>':'')+'</div>'; return; } var html = ''; for (var i=0;i<vagas.length;i++) { var v = vagas[i], dono = s.usuarioLogado && v.autorId===s.usuarioLogado.id, data = ''; try { data = v.dataCriacao?.toDate?.().toLocaleDateString('pt-BR')||''; } catch(e) {} html += '<div class="vaga-card"><div class="vaga-header"><div class="vaga-avatar">'+(v.autorFoto&&v.autorFoto.length>10?'<img src="'+v.autorFoto+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'👷')+'</div><div class="vaga-info"><div class="vaga-nome" style="cursor:pointer;color:#1A3A5C;" onclick="event.stopPropagation();window.app.verPerfil(\''+v.autorId+'\')">'+(v.autorNome||'Anônimo')+'</div><div class="vaga-data">'+data+'</div></div>'+(dono?'<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>':'')+'</div><div class="vaga-body">'+(v.fotoObra&&v.fotoObra.length>100?'<img src="'+v.fotoObra+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">':'')+'<div class="vaga-titulo">'+(v.titulo||'Sem título')+'</div><div style="color:#666;font-size:13px;">📍 '+(v.endereco||'')+'</div><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.profissoes||'Geral')+'</span></div></div><div class="vaga-footer"><button onclick="window.app.verDetalheObra(\''+v.id+'\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>'+(dono?'<button onclick="window.app.apagarObra(\''+v.id+'\',event)" class="btn btn-small btn-danger" style="flex:1;">🗑️</button>':'')+'</div></div>'; } container.innerHTML = html; };
+
+// FEED COM BOTÃO DE COMPARTILHAR WHATSAPP DIRETO NO CARD
+App.prototype.renderizarFeed = function(vagas) { 
+    var s = this, container = document.getElementById('feedContainer'); 
+    if (!container || s.tabAtual!=='feed') return; 
+    if (!vagas||vagas.length===0) { 
+        container.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:50px;">🏗️</div><h3>Nenhuma obra</h3>'+(s.usuarioLogado?.tipo==='empreiteiro'?'<button onclick="window.app.abrirTelaPublicacao()" class="btn btn-primary">📢 PUBLICAR</button>':'')+'</div>'; 
+        return; 
+    } 
+    var html = ''; 
+    for (var i=0;i<vagas.length;i++) { 
+        var v = vagas[i], dono = s.usuarioLogado && v.autorId===s.usuarioLogado.id, data = ''; 
+        try { data = v.dataCriacao?.toDate?.().toLocaleDateString('pt-BR')||''; } catch(e) {} 
+        
+        html += '<div class="vaga-card">';
+        html += '<div class="vaga-header"><div class="vaga-avatar">'+(v.autorFoto&&v.autorFoto.length>10?'<img src="'+v.autorFoto+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">':'👷')+'</div><div class="vaga-info"><div class="vaga-nome" style="cursor:pointer;color:#1A3A5C;" onclick="event.stopPropagation();window.app.verPerfil(\''+v.autorId+'\')">'+(v.autorNome||'Anônimo')+'</div><div class="vaga-data">'+data+'</div></div>'+(dono?'<span style="background:#f59e0b;color:white;padding:4px 10px;border-radius:12px;font-size:11px;">⭐ SUA</span>':'')+'</div>';
+        
+        html += '<div class="vaga-body">'+(v.fotoObra&&v.fotoObra.length>100?'<img src="'+v.fotoObra+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:12px;">':'')+'<div class="vaga-titulo">'+(v.titulo||'Sem título')+'</div><div style="color:#666;font-size:13px;">📍 '+(v.endereco||'')+'</div><div class="vaga-tags"><span class="vaga-tag">💰 R$'+(v.valorHora||'0')+'/h</span><span class="vaga-tag">👷 '+(v.profissoes||'Geral')+'</span></div></div>';
+        
+        // FOOTER DO CARD COM BOTÃO DE SHARE DO WHATSAPP
+        html += '<div class="vaga-footer">';
+        html += '<button onclick="window.app.verDetalheObra(\''+v.id+'\')" class="btn btn-small btn-outline" style="flex:1;">Ver</button>';
+        html += '<button onclick="event.stopPropagation();window.app._app._compartilharWhatsApp(\''+v.id+'\', \''+(v.titulo||'Obra').replace(/'/g, "\\'")+'\')" class="btn btn-small" style="flex:1;background:#25D366;color:white;border:none;border-radius:8px;"><i class="fab fa-whatsapp"></i> Enviar</button>';
+        if (dono) {
+            html += '<button onclick="window.app.apagarObra(\''+v.id+'\',event)" class="btn btn-small btn-danger" style="flex:0.5;">🗑️</button>';
+        }
+        html += '</div></div>'; 
+    } 
+    container.innerHTML = html; 
+};
 
 App.prototype.carregarMeuPerfil = function() { var s = this, u = s.usuarioLogado, tela = document.getElementById('meuPerfilScreen'); if (!tela||!u) return; tela.innerHTML = '<div class="screen-header"><button class="btn-voltar" onclick="window.app.voltarTela()"><i class="fas fa-arrow-left"></i></button><h2>Meu Perfil</h2></div><div class="profile-header-container"><div class="profile-cover"></div><div class="profile-avatar-container"><div class="profile-avatar" onclick="document.getElementById(\'inputFoto\').click()"><img src="'+(u.fotoPerfil||'imagem/logo-sem-fundo-lpxconstrutor.png')+'" style="width:100%;height:100%;object-fit:'+(u.fotoPerfil?'cover':'contain')+';"></div></div><input type="file" id="inputFoto" accept="image/*" onchange="window.app.uploadFoto(event)" style="display:none;"></div><div class="profile-info-card"><h2>'+(u.nome||'')+'</h2><p>👷 '+(u.profissao||u.tipo||'')+'</p><p>📧 '+(u.email||'')+'</p><p>📱 '+(u.celular||'')+'</p></div><div style="display:flex;flex-direction:column;gap:10px;padding:0 16px;"><button onclick="window.app.abrirEditarPerfil()" class="btn btn-primary">✏️ Editar</button><button onclick="window.app.gerarQRCodeCompartilhar()" class="btn btn-outline">📱 QR Code</button><button onclick="window.app.mostrarTela(\'minhasObrasScreen\')" class="btn btn-outline">🏗️ Obras</button><button onclick="window.app.mostrarTela(\'configScreen\')" class="btn btn-outline">⚙️ Config</button><button onclick="document.getElementById(\'modalSair\').style.display=\'flex\'" class="btn btn-danger">🚪 Sair</button></div>'; };
 App.prototype.buscarProfissionais = function() { var s = this, container = document.getElementById('buscaResultados'); if (!container) return; var termo = (document.getElementById('buscaInput')?.value||'').toLowerCase().trim(); container.innerHTML = '<div class="loading">Buscando...</div>'; db.collection('usuarios').where('ativo','==',true).get().then(function(snap) { var usuarios = []; snap.forEach(function(doc) { var u = doc.data(); u.id = doc.id; if (u.id !== s.usuarioLogado?.id) usuarios.push(u); }); if (termo) usuarios = usuarios.filter(function(u) { return (u.nome||'').toLowerCase().includes(termo)||(u.profissao||'').toLowerCase().includes(termo); }); if (usuarios.length===0) { container.innerHTML = '<div class="card" style="text-align:center;padding:40px;">Nenhum profissional</div>'; return; } var html = ''; for (var i=0;i<usuarios.length;i++) { var u = usuarios[i], foto = u.fotoPerfil?'<img src="'+u.fotoPerfil+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">':'<i class="fas fa-user" style="font-size:24px;color:#1A3A5C;"></i>'; html += '<div class="vaga-card" style="padding:12px;"><div style="display:flex;align-items:center;gap:12px;"><div style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #1A3A5C;display:flex;align-items:center;justify-content:center;background:#f0f0f0;flex-shrink:0;cursor:pointer;" onclick="window.app.verPerfil(\''+u.id+'\')">'+foto+'</div><div style="flex:1;cursor:pointer;" onclick="window.app.verPerfil(\''+u.id+'\')"><strong style="color:#1A3A5C;">'+(u.nome||'')+'</strong><br><small>'+(u.tipo==='empreiteiro'?'🏢 Empreiteiro':'👷 '+(u.profissao||''))+'</small></div><button onclick="event.stopPropagation();window.app.iniciarChat(\''+u.id+'\')" style="background:#1A3A5C;color:white;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;">💬</button></div></div>'; } container.innerHTML = html; }); };
@@ -108,7 +137,6 @@ App.prototype.verDetalheObra = function(oid) {
     db.collection('vagas').doc(oid).get().then(function(doc) {
         if (!doc.exists) return;
         var v = doc.data();
-        var s = window.app._app;
         
         var modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;';
@@ -143,7 +171,7 @@ App.prototype.verDetalheObra = function(oid) {
         // Botões
         html += '<div style="display:flex;flex-direction:column;gap:10px;">';
         
-        // WhatsApp
+        // WhatsApp Contato
         html += '<button onclick="window.app._app._contatarAutor(\'' + (v.autorId || '') + '\')" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#25D366,#128C7E);color:white;font-weight:700;font-size:15px;cursor:pointer;">';
         html += '<i class="fab fa-whatsapp" style="font-size:20px;"></i> ENTRAR EM CONTATO</button>';
         
@@ -151,9 +179,20 @@ App.prototype.verDetalheObra = function(oid) {
         html += '<button onclick="window.app.iniciarChat(\'' + (v.autorId || '') + '\');this.closest(\'.modal-content\').parentElement.remove();" style="width:100%;padding:14px;border:none;border-radius:12px;background:#1A3A5C;color:white;font-weight:700;font-size:15px;cursor:pointer;">';
         html += '<i class="fas fa-comments" style="font-size:18px;"></i> ENVIAR MENSAGEM NO CHAT</button>';
         
-        // Compartilhar
-        html += '<button onclick="window.app._app._compartilharObra(\'' + oid + '\', \'' + (v.titulo || 'Obra').replace(/'/g, "\\'") + '\')" style="width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#1A3A5C;font-weight:700;font-size:15px;cursor:pointer;">';
-        html += '<i class="fas fa-share-alt" style="font-size:18px;"></i> COMPARTILHAR OBRA</button>';
+        // SEPARADOR
+        html += '<hr style="border:none;border-top:1px solid #e5e7eb;margin:5px 0;">';
+        
+        // WhatsApp Compartilhar
+        html += '<button onclick="window.app._app._compartilharWhatsApp(\'' + oid + '\', \'' + (v.titulo || 'Obra').replace(/'/g, "\\'") + '\')" style="width:100%;padding:14px;border:none;border-radius:12px;background:#25D366;color:white;font-weight:700;font-size:15px;cursor:pointer;">';
+        html += '<i class="fab fa-whatsapp" style="font-size:18px;"></i> COMPARTILHAR NO WHATSAPP</button>';
+        
+        // Facebook Compartilhar
+        html += '<button onclick="window.app._app._compartilharFacebook(\'' + oid + '\')" style="width:100%;padding:14px;border:none;border-radius:12px;background:#1877F2;color:white;font-weight:700;font-size:15px;cursor:pointer;">';
+        html += '<i class="fab fa-facebook" style="font-size:18px;"></i> COMPARTILHAR NO FACEBOOK</button>';
+        
+        // Outras opções / Copiar Link
+        html += '<button onclick="window.app._app._compartilharNativo(\'' + oid + '\', \'' + (v.titulo || 'Obra').replace(/'/g, "\\'") + '\')" style="width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#1A3A5C;font-weight:700;font-size:15px;cursor:pointer;">';
+        html += '<i class="fas fa-share-alt" style="font-size:18px;"></i> OUTRAS OPÇÕES / COPIAR LINK</button>';
         
         // Fechar
         html += '<button onclick="this.closest(\'.modal-content\').parentElement.remove()" style="width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:12px;background:white;color:#999;font-weight:600;font-size:14px;cursor:pointer;">✕ FECHAR</button>';
@@ -183,15 +222,28 @@ App.prototype._contatarAutor = function(autorId) {
     });
 };
 
-// Compartilhar obra
-App.prototype._compartilharObra = function(oid, titulo) {
+// Compartilhar via WhatsApp
+App.prototype._compartilharWhatsApp = function(oid, titulo) {
+    var url = window.location.origin + window.location.pathname + '?obra=' + oid;
+    var texto = '🏗️ ' + titulo + ' - Veja esta obra no LPXConstrutor! ' + url;
+    window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(texto), '_blank');
+};
+
+// Compartilhar via Facebook
+App.prototype._compartilharFacebook = function(oid) {
+    var url = window.location.origin + window.location.pathname + '?obra=' + oid;
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url), '_blank', 'width=600,height=400');
+};
+
+// Compartilhar via Nativo / Copiar Link
+App.prototype._compartilharNativo = function(oid, titulo) {
     var url = window.location.origin + window.location.pathname + '?obra=' + oid;
     var texto = '🏗️ ' + titulo + ' - Veja esta obra no LPXConstrutor! ' + url;
     
     if (navigator.share) {
         navigator.share({ title: titulo, text: texto, url: url }).catch(function() {});
     } else {
-        var input = document.createElement('input');
+        var input = document.createElement('textarea');
         input.value = url;
         document.body.appendChild(input);
         input.select();
